@@ -62,6 +62,13 @@ export default function LoginScreen() {
                 style={styles.container}
                 behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
             >
+                {/* Skip Button Header */}
+                <View style={styles.header}>
+                    <TouchableOpacity onPress={() => router.push('/welcome')}>
+                        <Text style={styles.skipText}>Skip</Text>
+                    </TouchableOpacity>
+                </View>
+
                 <View style={styles.content}>
                     <Text style={styles.title}>Log in with phone number</Text>
 
@@ -113,12 +120,22 @@ const styles = StyleSheet.create({
         flex: 1,
         justifyContent: 'space-between',
         paddingHorizontal: 24,
-        paddingTop: 80, // Adjust depending on if there's a header
+        paddingTop: 20, // Adjust depending on if there's a header
         paddingBottom: 40,
+    },
+    header: {
+        flexDirection: 'row',
+        justifyContent: 'flex-end',
+        width: '100%',
+    },
+    skipText: {
+        fontSize: 16,
+        fontFamily: 'Gilroy-Medium',
+        color: colors.primary,
     },
     content: {
         flex: 1,
-        marginTop: 100, // To roughly match the position in the image
+        marginTop: 60, // To roughly match the position in the image
     },
     title: {
         fontSize: 24,

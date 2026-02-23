@@ -8,11 +8,13 @@ import {
     ScrollView,
     Dimensions,
     Image,
+    Alert,
+    ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-
+import { supabase } from '../lib/supabase';
 
 const { width } = Dimensions.get('window');
 
@@ -24,24 +26,107 @@ const colors = {
     inputBg: '#F4F3FF',
     inputActiveBorder: '#C7C7CC',
     headerBorder: '#F2F2F7',
+    success: '#34C759',
+    error: '#FF3B30',
 };
-
 
 export default function OnboardQRScreen() {
     const router = useRouter();
+    const [qrCodeId, setQrCodeId] = useState('');
     const [name, setName] = useState('');
     const [location, setLocation] = useState('');
+    const [loading, setLoading] = useState(false);
+
+    const handleActivate = async () => {
+        // Validate inputs
+        if (!qrCodeId.trim()) {
+            Alert.alert('Missing QR ID', 'Please enter the QR Unique ID Number printed on your QR code.');
+            return;
+        }
+        if (!name.trim()) {
+            Alert.alert('Missing Name', 'Please enter your name.');
+            return;
+        }
+        if (!location.trim()) {
+            Alert.alert('Missing Location', 'Please enter your location name.');
+            return;
+        }
+
+        setLoading(true);
+
+        try {
+            // 1. Check if the QR code exists in the database
+            const { data: existingQr, error: fetchError } = await supabase
+                .from('qr_codes')
+                .select('*')
+                .eq('qr_id', qrCodeId.trim())
+                .single();
+
+            if (fetchError || !existingQr) {
+                Alert.alert(
+                    'QR Code Not Found',
+                    'This QR Code ID does not exist in our system. Please check the ID and try again.'
+                );
+                setLoading(false);
+                return;
+            }
+
+            // 2. Check if it's already linked to someone
+            if (existingQr.user_id || existingQr.phone_number) {
+                Alert.alert(
+                    'Already Linked',
+                    'This QR Code is already linked to another user. Please use a different QR code.'
+                );
+                setLoading(false);
+                return;
+            }
+
+            // 3. Get the current logged-in user (may be null if skipped login)
+            const { data: { user } } = await supabase.auth.getUser();
+
+            // 4. Update the QR code record with user info
+            const { error: updateError } = await supabase
+                .from('qr_codes')
+                .update({
+                    user_id: user?.id || null,
+                    phone_number: user?.phone || null,
+                    location: location.trim(),
+                })
+                .eq('qr_id', qrCodeId.trim());
+
+            if (updateError) {
+                Alert.alert('Error', `Failed to activate QR code: ${updateError.message}`);
+                setLoading(false);
+                return;
+            }
+
+            // 5. Success! Navigate to the home screen
+            Alert.alert(
+                '✅ QR Code Activated!',
+                `Your QR code "${qrCodeId}" has been successfully linked and is now active.`,
+                [
+                    {
+                        text: 'Go to Home',
+                        onPress: () => router.replace('/(Tabs)/home'),
+                    },
+                ]
+            );
+        } catch (error: any) {
+            Alert.alert('Unexpected Error', error.message || 'Something went wrong. Please try again.');
+        } finally {
+            setLoading(false);
+        }
+    };
 
     return (
         <SafeAreaView style={styles.safeArea} edges={['top', 'bottom']}>
             {/* Header */}
             <View style={styles.header}>
                 <TouchableOpacity
-                    onPress={() => router.back()}
+                    onPress={() => router.replace('/welcome')}
                     hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
                 >
-                    <Ionicons name="arrow-back" size={22} color={colors.textMain}
-                     onPress={() => router.replace('/welcome')} />
+                    <Ionicons name="arrow-back" size={22} color={colors.textMain} />
                 </TouchableOpacity>
                 <Text style={styles.headerTitle}>Onboard Your QR Code</Text>
             </View>
@@ -52,11 +137,16 @@ export default function OnboardQRScreen() {
                 showsVerticalScrollIndicator={false}
                 keyboardShouldPersistTaps="handled"
             >
-                {/* QR Unique ID */}
-                <Text style={styles.label}>QR Unique ID Number</Text>
-                <View style={styles.readonlyInput}>
-                    <Text style={styles.readonlyText}>KNO021545221IN54</Text>
-                </View>
+                {/* QR Unique ID - Now editable */}
+                <Text style={styles.label}>QR Unique ID Number*</Text>
+                <TextInput
+                    style={styles.input}
+                    placeholder="Enter QR Code ID (e.g. KNO8A2C3F1B2D)"
+                    placeholderTextColor={colors.textMuted}
+                    value={qrCodeId}
+                    onChangeText={setQrCodeId}
+                    autoCapitalize="characters"
+                />
 
                 {/* Name */}
                 <Text style={styles.label}>Name*</Text>
@@ -81,11 +171,16 @@ export default function OnboardQRScreen() {
 
                 {/* Activate Button */}
                 <TouchableOpacity
-                    style={styles.activateButton}
+                    style={[styles.activateButton, loading && styles.activateButtonDisabled]}
                     activeOpacity={0.85}
-                    onPress={() => router.replace('/(Tabs)/home')}
+                    onPress={handleActivate}
+                    disabled={loading}
                 >
-                    <Text style={styles.activateButtonText}>Active QR Code</Text>
+                    {loading ? (
+                        <ActivityIndicator color="#FFFFFF" />
+                    ) : (
+                        <Text style={styles.activateButtonText}>Active QR Code</Text>
+                    )}
                 </TouchableOpacity>
 
                 {/* Background decorative image */}
@@ -137,17 +232,6 @@ const styles = StyleSheet.create({
         marginBottom: 8,
         marginTop: 16,
     },
-    readonlyInput: {
-        backgroundColor: colors.inputBg,
-        borderRadius: 10,
-        paddingHorizontal: 16,
-        paddingVertical: 16,
-    },
-    readonlyText: {
-        fontSize: 15,
-        fontFamily: 'Gilroy-Medium',
-        color: colors.textMuted,
-    },
     input: {
         borderWidth: 1,
         borderColor: colors.inputActiveBorder,
@@ -172,6 +256,9 @@ const styles = StyleSheet.create({
         height: 56,
         justifyContent: 'center',
         alignItems: 'center',
+    },
+    activateButtonDisabled: {
+        opacity: 0.7,
     },
     activateButtonText: {
         color: '#FFFFFF',
