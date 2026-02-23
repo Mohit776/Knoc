@@ -1,5 +1,6 @@
 import { supabase } from '../../../lib/supabase';
 import { notFound } from 'next/navigation';
+import ActionButtons from './ActionButtons';
 
 interface QRData {
     qr_id: string;
@@ -73,19 +74,7 @@ export default async function QRPage({ params }: { params: Promise<{ qr_id: stri
                 <div className="flex-1" />
 
                 {/* Action Buttons Section */}
-                <div className="flex flex-col gap-[14px] pb-6">
-                    <button className="w-full h-[56px] bg-[#431BB8] text-white rounded-[12px] font-semibold text-[16px] hover:bg-[#32138A] active:scale-[0.98] transition-all shadow-sm">
-                        Alarm &amp; Live Footage
-                    </button>
-
-                    <button className="w-full h-[56px] bg-white border border-[#926FF3] text-[#1A1A1A] rounded-[12px] font-semibold text-[16px] hover:bg-gray-50 active:scale-[0.98] transition-all">
-                        No Entry
-                    </button>
-
-                    <button className="w-full h-[56px] bg-white border border-[#926FF3] text-[#1A1A1A] rounded-[12px] font-semibold text-[16px] hover:bg-gray-50 active:scale-[0.98] transition-all">
-                        Entry
-                    </button>
-                </div>
+                <ActionButtons qrId={qrData.qr_id} />
 
             </div>
         </div>

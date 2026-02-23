@@ -3,6 +3,7 @@ import { useFonts } from 'expo-font';
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect } from 'react';
 import { View, Image, StyleSheet, Dimensions } from 'react-native';
+import { registerForPushNotificationsAsync } from '../lib/notifications';
 
 const { width, height } = Dimensions.get('window');
 
@@ -23,6 +24,14 @@ export default function RootLayout() {
   useEffect(() => {
     if (fontsLoaded || fontError) {
       SplashScreen.hideAsync();
+
+      // Request permissions and get FCM token on startup
+      registerForPushNotificationsAsync().then(token => {
+        if (token) {
+          console.log("Registered for push notifications successfully");
+          // TODO: send token to Supabase users table here if authenticated
+        }
+      });
     }
   }, [fontsLoaded, fontError]);
 

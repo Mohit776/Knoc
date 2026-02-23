@@ -9,6 +9,8 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { supabase } from '../../lib/supabase';
 
 type ThemeOption = 'automatic' | 'light' | 'dark';
 
@@ -36,6 +38,21 @@ export default function SettingsScreen() {
         { key: 'light', label: 'Light' },
         { key: 'dark', label: 'Dark' },
     ];
+
+    const handleLogout = async () => {
+        try {
+            // Sign out of Supabase
+            await supabase.auth.signOut();
+
+            // Clear AsyncStorage guest states and the onboarding flag
+            await AsyncStorage.multiRemove(['is_guest', 'guest_phone', 'has_onboarded']);
+
+            // Send back to origin wrapper
+            router.replace('/');
+        } catch (error) {
+            console.error('Logout error:', error);
+        }
+    };
 
     return (
         <SafeAreaView style={styles.safeArea}>
@@ -95,7 +112,7 @@ export default function SettingsScreen() {
                 </Text>
 
                 {/* Logout Button */}
-                <TouchableOpacity style={styles.logoutButton} activeOpacity={0.8}>
+                <TouchableOpacity onPress={handleLogout} style={styles.logoutButton} activeOpacity={0.8}>
                     <Text style={styles.logoutText}>Logout</Text>
                 </TouchableOpacity>
 

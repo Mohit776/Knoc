@@ -16,6 +16,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { supabase } from '../lib/supabase';
+import { registerForPushNotificationsAsync } from '../lib/notifications';
 
 const { width } = Dimensions.get('window');
 
@@ -89,13 +90,18 @@ export default function OnboardQRScreen() {
             const guestPhone = await AsyncStorage.getItem('guest_phone');
             const phoneToSave = guestPhone ? `+91${guestPhone}` : (user?.phone || null);
 
-            // 4. Update the QR code record with user info
+            // Fetch push token for this device
+            const pushToken = await registerForPushNotificationsAsync();
+
+            // 4. Update the QR code record with user info, name and push token
             const { error: updateError } = await supabase
                 .from('qr_codes')
                 .update({
                     user_id: user?.id || null,
                     phone_number: phoneToSave,
                     location: location.trim(),
+                    name: name.trim(),
+                    fcm_token: pushToken || null,
                 })
                 .eq('qr_id', qrCodeId.trim());
 
@@ -104,6 +110,13 @@ export default function OnboardQRScreen() {
                 setLoading(false);
                 return;
             }
+
+            // Mark onboarding as complete and save name + qr_id to session
+            await AsyncStorage.multiSet([
+                ['has_onboarded', 'true'],
+                ['user_name', name.trim()],
+                ['linked_qr_id', qrCodeId.trim()],
+            ]);
 
             // 5. Success! Navigate to the home screen
             Alert.alert(
