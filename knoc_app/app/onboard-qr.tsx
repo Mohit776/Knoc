@@ -11,6 +11,7 @@ import {
     Alert,
     ActivityIndicator,
 } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
@@ -84,12 +85,16 @@ export default function OnboardQRScreen() {
             // 3. Get the current logged-in user (may be null if skipped login)
             const { data: { user } } = await supabase.auth.getUser();
 
+            // Fetch guest phone if they signed in as guest
+            const guestPhone = await AsyncStorage.getItem('guest_phone');
+            const phoneToSave = guestPhone ? `+91${guestPhone}` : (user?.phone || null);
+
             // 4. Update the QR code record with user info
             const { error: updateError } = await supabase
                 .from('qr_codes')
                 .update({
                     user_id: user?.id || null,
-                    phone_number: user?.phone || null,
+                    phone_number: phoneToSave,
                     location: location.trim(),
                 })
                 .eq('qr_id', qrCodeId.trim());

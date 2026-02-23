@@ -13,18 +13,23 @@ SUPABASE_URL = os.getenv("SUPABASE_URL")
 # Use the anon key or service role key
 SUPABASE_KEY = os.getenv("SUPABASE_ANON_KEY")
 
+# Change this to your production domain before deploying
+BASE_URL = os.getenv("BASE_URL", "http://localhost:3000")
+
 def generate_blank_qr():
     # 1. Generate a unique QR ID (e.g. KNO + random string)
     qr_id = "KNO" + str(uuid.uuid4().hex)[:10].upper()
 
-    # 2. Create the QR image
+    # 2. Create the QR image — encode the full URL so scanning redirects to the Next.js page
+    qr_url = f"{BASE_URL}/qr/{qr_id}"
+    
     qr = qrcode.QRCode(
         version=1,
         error_correction=qrcode.constants.ERROR_CORRECT_H,
         box_size=10,
         border=4,
     )
-    qr.add_data(qr_id)
+    qr.add_data(qr_url)
     qr.make(fit=True)
 
     img = qr.make_image(fill_color="black", back_color="white")
