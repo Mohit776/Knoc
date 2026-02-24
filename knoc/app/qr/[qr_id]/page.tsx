@@ -4,7 +4,6 @@ import ActionButtons from './ActionButtons';
 
 interface QRData {
     qr_id: string;
-    user_id: string | null;
     phone_number: string | null;
     location: string | null;
     fcm_token: string | null;
@@ -30,7 +29,7 @@ export default async function QRPage({ params }: { params: Promise<{ qr_id: stri
         notFound();
     }
 
-    const isLinked = !!qrData.location || !!qrData.user_id;
+    const isLinked = !!qrData.location;
 
     return (
         <div className="flex flex-col min-h-screen bg-white font-sans">

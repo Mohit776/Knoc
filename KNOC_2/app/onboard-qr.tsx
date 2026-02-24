@@ -74,7 +74,7 @@ export default function OnboardQRScreen() {
             }
 
             // 2. Check if it's already linked to someone
-            if (existingQr.user_id || existingQr.phone_number) {
+            if (existingQr.phone_number) {
                 Alert.alert(
                     'Already Linked',
                     'This QR Code is already linked to another user. Please use a different QR code.'
@@ -83,12 +83,9 @@ export default function OnboardQRScreen() {
                 return;
             }
 
-            // 3. Get the current logged-in user (may be null if skipped login)
-            const { data: { user } } = await supabase.auth.getUser();
-
-            // Fetch guest phone if they signed in as guest
+            // Fetch phone from AsyncStorage (set during login/OTP flow)
             const guestPhone = await AsyncStorage.getItem('guest_phone');
-            const phoneToSave = guestPhone ? `+91${guestPhone}` : (user?.phone || null);
+            const phoneToSave = guestPhone ? `+91${guestPhone}` : null;
 
             // 4. Request notification permissions and get FCM token
             console.log('[Onboard] Requesting notification permissions...');
@@ -112,7 +109,6 @@ export default function OnboardQRScreen() {
             const { error: updateError } = await supabase
                 .from('qr_codes')
                 .update({
-                    user_id: user?.id || null,
                     phone_number: phoneToSave,
                     location: location.trim(),
                     name: name.trim(),

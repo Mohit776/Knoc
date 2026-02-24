@@ -1,28 +1,37 @@
-import os
+import io
 import uuid
 import qrcode
 import streamlit as st
-from PIL import Image
+from PIL import Image, ImageDraw, ImageFont
 from dotenv import load_dotenv
 from supabase import create_client, Client
+from reportlab.lib.pagesizes import A4
+from reportlab.lib.utils import ImageReader
+from reportlab.lib.units import cm
+from reportlab.pdfgen import canvas
+import os
 
 # Load environment variables from the local .env file
 load_dotenv()
 
 SUPABASE_URL = os.getenv("SUPABASE_URL")
-# Use the anon key or service role key
 SUPABASE_KEY = os.getenv("SUPABASE_ANON_KEY")
 
 # Change this to your production domain before deploying
 BASE_URL = os.getenv("BASE_URL", "http://localhost:3000")
 
+
 def generate_blank_qr():
-    # 1. Generate a unique QR ID (e.g. KNO + random string)
+    """
+    Generates a unique QR code, registers it in Supabase,
+    and returns the qr_id, the QR PIL image, and the Supabase status.
+    Nothing is written to disk.
+    """
+    # 1. Generate a unique QR ID
     qr_id = "KNO" + str(uuid.uuid4().hex)[:10].upper()
 
-    # 2. Create the QR image — encode the full URL so scanning redirects to the Next.js page
+    # 2. Build QR image in memory
     qr_url = f"{BASE_URL}/qr/{qr_id}"
-    
     qr = qrcode.QRCode(
         version=1,
         error_correction=qrcode.constants.ERROR_CORRECT_H,
@@ -31,66 +40,122 @@ def generate_blank_qr():
     )
     qr.add_data(qr_url)
     qr.make(fit=True)
+    qr_img: Image.Image = qr.make_image(fill_color="black", back_color="white").convert("RGB")
 
-    img = qr.make_image(fill_color="black", back_color="white")
-    
-    # Ensure output directory exists
-    output_dir = "qrs_output"
-    os.makedirs(output_dir, exist_ok=True)
-    file_path = f"{output_dir}/{qr_id}.png"
-    img.save(file_path)
-
-    # 3. Add the blank record to Supabase
+    # 3. Register in Supabase
     db_status = ""
     if SUPABASE_URL and SUPABASE_KEY:
         try:
             supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
-            
-            # Insert the qr_id (other fields remain empty)
-            result = supabase.table("qr_codes").insert({
-                "qr_id": qr_id
-            }).execute()
-            
-            db_status = f"✅ Successfully added empty QR code `{qr_id}` to Supabase Database!"
+            supabase.table("qr_codes").insert({"qr_id": qr_id}).execute()
+            db_status = f"✅ Successfully added `{qr_id}` to Supabase!"
         except Exception as e:
             db_status = f"❌ Could not add to Supabase. Error: {e}"
     else:
         db_status = "⚠️ Missing Supabase credentials in .env file."
 
-    return qr_id, file_path, db_status
+    return qr_id, qr_img, db_status
 
-# --- Streamlit UI ---
+
+def build_pdf(qr_items: list) -> bytes:
+    """
+    Builds a multi-page A4 PDF entirely in memory.
+    Each (qr_id, qr_img) pair gets its own page with the QR centred
+    and the QR ID printed below it.
+    Returns raw PDF bytes.
+    """
+    buf = io.BytesIO()
+    c = canvas.Canvas(buf, pagesize=A4)
+    page_w, page_h = A4
+
+    for i, (qr_id, qr_img) in enumerate(qr_items):
+        if i > 0:
+            c.showPage()  # new page for each additional QR
+
+        # --- QR image (centred, slightly above middle) ---
+        qr_size = 10 * cm
+        qr_x = (page_w - qr_size) / 2
+        qr_y = (page_h - qr_size) / 2 + 1 * cm
+
+        qr_buf = io.BytesIO()
+        qr_img.save(qr_buf, format="PNG")
+        qr_buf.seek(0)
+        c.drawImage(ImageReader(qr_buf), qr_x, qr_y, width=qr_size, height=qr_size)
+
+        # --- QR ID text ---
+        c.setFont("Helvetica-Bold", 14)
+        c.setFillColorRGB(0.26, 0.11, 0.72)   # KNOC purple
+        text_y = qr_y - 0.8 * cm
+        c.drawCentredString(page_w / 2, text_y, qr_id)
+
+        # --- Subtitle ---
+        c.setFont("Helvetica", 10)
+        c.setFillColorRGB(0.56, 0.56, 0.58)
+        c.drawCentredString(page_w / 2, text_y - 0.55 * cm, "Scan to KNOC")
+
+        # --- Page number (bottom centre) ---
+        c.setFont("Helvetica", 8)
+        c.setFillColorRGB(0.75, 0.75, 0.75)
+        c.drawCentredString(page_w / 2, 1 * cm, f"{i + 1} / {len(qr_items)}")
+
+    c.save()
+    return buf.getvalue()
+
+
+# ── Streamlit UI ──────────────────────────────────────────────────────────────
+
 st.set_page_config(page_title="KNOC QR Generator", page_icon="🔲", layout="centered")
 
 st.title("KNOC QR Code Generator")
-st.markdown("Generate blank, unique QR codes and pre-register them in Supabase. These QR codes can later be assigned to a user via the React Native app onboarding flow.")
 
 st.divider()
 
-if st.button("Generate New QR Code", type="primary", use_container_width=True):
-    with st.spinner("Generating QR and syncing with Supabase..."):
-        qr_id, file_path, db_status = generate_blank_qr()
-        
-        st.success(f"Generated QR ID: **{qr_id}**")
-        
-        # Database Status
-        if "✅" in db_status:
-            st.info(db_status)
-        else:
-            st.error(db_status)
-            
-        # Display the image
-        col1, col2, col3 = st.columns([1,2,1])
-        with col2:
-            img = Image.open(file_path)
-            st.image(img, caption=qr_id, use_column_width=True)
-            
-            # Download button
-            with open(file_path, "rb") as file:
-                st.download_button(
-                    label="Download QR PNG",
-                    data=file,
-                    file_name=f"{qr_id}.png",
-                    mime="image/png",
-                    use_container_width=True
-                )
+# ── Number of QR codes to generate ───────────────────────────────────────────
+qr_count = st.number_input(
+    "Number of QR codes to generate",
+    min_value=1,
+    max_value=50,
+    value=1,
+    step=1,
+    help="Each QR code will get its own page in the downloaded PDF."
+)
+
+if st.button(f"Generate {qr_count} QR Code{'s' if qr_count > 1 else ''}", type="primary", use_container_width=True):
+    qr_items = []   # list of (qr_id, qr_img)
+    errors = []
+
+    with st.spinner(f"Generating {qr_count} QR code(s) and syncing with Supabase..."):
+        for i in range(qr_count):
+            qr_id, qr_img, db_status = generate_blank_qr()
+            qr_items.append((qr_id, qr_img))
+            if "❌" in db_status or "⚠️" in db_status:
+                errors.append(f"`{qr_id}`: {db_status}")
+
+    # ── Results banner ────────────────────────────────────────────────────────
+    if errors:
+        st.warning(f"{len(errors)} QR(s) had Supabase issues:")
+        for e in errors:
+            st.error(e)
+    else:
+        st.success(f"✅ {qr_count} QR code(s) registered in Supabase!")
+
+    # ── Preview grid (max 3 per row) ──────────────────────────────────────────
+    st.markdown("### Preview")
+    cols_per_row = 3
+    for row_start in range(0, len(qr_items), cols_per_row):
+        row_items = qr_items[row_start:row_start + cols_per_row]
+        cols = st.columns(cols_per_row)
+        for col, (qr_id, qr_img) in zip(cols, row_items):
+            with col:
+                st.image(qr_img, caption=qr_id, use_column_width=True)
+
+    # ── Download button — single PDF with all QR codes ────────────────────────
+    pdf_bytes = build_pdf(qr_items)
+    file_label = f"KNOC_{qr_count}_QR_codes" if qr_count > 1 else qr_items[0][0]
+    st.download_button(
+        label=f"⬇️ Download PDF ({qr_count} page{'s' if qr_count > 1 else ''})",
+        data=pdf_bytes,
+        file_name=f"{file_label}.pdf",
+        mime="application/pdf",
+        use_container_width=True,
+    )

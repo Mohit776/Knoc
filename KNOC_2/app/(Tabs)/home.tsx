@@ -77,26 +77,10 @@ export default function HomeScreen() {
                 return cachedQrId;
             }
 
-            // Fallback: query Supabase if AsyncStorage has no QR ID
-            const { data: { user } } = await supabase.auth.getUser();
+            // Fallback: query Supabase by phone number if AsyncStorage has no QR ID
             const guestPhone = await AsyncStorage.getItem('guest_phone');
 
             let qrId: string | null = null;
-
-            if (user?.id) {
-                const { data } = await supabase
-                    .from('qr_codes')
-                    .select('qr_id, location, name')
-                    .eq('user_id', user.id)
-                    .limit(1)
-                    .single();
-                if (data) {
-                    qrId = data.qr_id;
-                    setLocationName(data.location || 'Home');
-                    if (data.name) { setUserName(data.name); await AsyncStorage.setItem('user_name', data.name); }
-                    await AsyncStorage.setItem('linked_qr_id', data.qr_id);
-                }
-            }
 
             if (!qrId && guestPhone) {
                 const { data } = await supabase

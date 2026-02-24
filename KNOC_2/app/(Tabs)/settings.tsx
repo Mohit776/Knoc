@@ -1,19 +1,19 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
     View,
     Text,
     TouchableOpacity,
     StyleSheet,
     ScrollView,
+    ActivityIndicator,
+    Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { supabase } from '../../lib/supabase';
-
-
-type ThemeOption = 'automatic' | 'light' | 'dark';
+import Constants from 'expo-constants';
 
 const colors = {
     primary: '#431BB8',
@@ -21,42 +21,140 @@ const colors = {
     cardBg: '#FFFFFF',
     textMain: '#1A1A1A',
     textMuted: '#8E8E93',
-    headerBg: '#F2F2F7',
     headerBorder: '#E5E5EA',
     separator: '#E5E5EA',
     avatarBg: '#EDE7FF',
     avatarIcon: '#7B5CF0',
-    logoutText: '#431BB8',
+    danger: '#FF3B30',
     noteText: '#6B6B6B',
+    green: '#34C759',
 };
+
+interface UserInfo {
+    name: string;
+    phone: string;
+    qrId: string;
+    location: string;
+}
 
 export default function SettingsScreen() {
     const router = useRouter();
-    const [theme, setTheme] = useState<ThemeOption>('automatic');
+    const [userInfo, setUserInfo] = useState<UserInfo>({
+        name: '',
+        phone: '',
+        qrId: '',
+        location: '',
+    });
+    const [loading, setLoading] = useState(true);
+    const [loggingOut, setLoggingOut] = useState(false);
 
-    const themeOptions: { key: ThemeOption; label: string }[] = [
-        { key: 'automatic', label: 'Automatic' },
-        { key: 'light', label: 'Light' },
-        { key: 'dark', label: 'Dark' },
-    ];
+    const appVersion = Constants.expoConfig?.version ?? '1.0.0';
 
-    const handleLogout = async () => {
+    useEffect(() => {
+        loadUserInfo();
+    }, []);
+
+    const loadUserInfo = async () => {
         try {
-            // Sign out of Supabase
-            await supabase.auth.signOut();
+            // Load from AsyncStorage first (fast)
+            const [storedName, storedQrId, guestPhone] = await Promise.all([
+                AsyncStorage.getItem('user_name'),
+                AsyncStorage.getItem('linked_qr_id'),
+                AsyncStorage.getItem('guest_phone'),
+            ]);
 
-            // Clear AsyncStorage guest states and the onboarding flag
-            await AsyncStorage.multiRemove(['is_guest', 'guest_phone', 'has_onboarded']);
+            // Set whatever we have right away
+            setUserInfo(prev => ({
+                ...prev,
+                name: storedName || '',
+                phone: guestPhone ? `+91 ${guestPhone}` : '',
+                qrId: storedQrId || '',
+            }));
 
-            // Send back to origin wrapper
-            router.replace('/');
-        } catch (error) {
-            console.error('Logout error:', error);
+            // Fetch more details from Supabase if we have a QR ID
+            if (storedQrId) {
+                const { data } = await supabase
+                    .from('qr_codes')
+                    .select('name, location, phone_number')
+                    .eq('qr_id', storedQrId)
+                    .single();
+
+                if (data) {
+                    setUserInfo({
+                        name: data.name || storedName || 'Unknown',
+                        phone: data.phone_number
+                            ? formatPhone(data.phone_number)
+                            : (guestPhone ? `+91 ${guestPhone}` : ''),
+                        qrId: storedQrId,
+                        location: data.location || '',
+                    });
+                }
+            }
+        } catch (e) {
+            console.error('[Settings] Error loading user info:', e);
+        } finally {
+            setLoading(false);
         }
     };
 
+    const formatPhone = (phone: string) => {
+        // Format +919876543210 → +91 98765 43210
+        const digits = phone.replace('+91', '').trim();
+        if (digits.length === 10) {
+            return `+91 ${digits.slice(0, 5)} ${digits.slice(5)}`;
+        }
+        return phone;
+    };
+
+    const handleLogout = () => {
+        Alert.alert(
+            'Logout',
+            'Are you sure you want to log out?',
+            [
+                { text: 'Cancel', style: 'cancel' },
+                {
+                    text: 'Logout',
+                    style: 'destructive',
+                    onPress: async () => {
+                        setLoggingOut(true);
+                        try {
+                            await supabase.auth.signOut();
+                            await AsyncStorage.multiRemove([
+                                'is_guest',
+                                'guest_phone',
+                                'has_onboarded',
+                                'user_name',
+                                'linked_qr_id',
+                            ]);
+                            router.replace('/login');
+                        } catch (error) {
+                            console.error('Logout error:', error);
+                            Alert.alert('Error', 'Could not log out. Please try again.');
+                        } finally {
+                            setLoggingOut(false);
+                        }
+                    },
+                },
+            ]
+        );
+    };
+
+    const InfoRow = ({ icon, label, value }: { icon: string; label: string; value: string }) => (
+        <View style={styles.infoRow}>
+            <View style={styles.infoIconWrap}>
+                <Ionicons name={icon as any} size={18} color={colors.primary} />
+            </View>
+            <View style={styles.infoText}>
+                <Text style={styles.infoLabel}>{label}</Text>
+                <Text style={styles.infoValue} numberOfLines={1}>
+                    {value || '—'}
+                </Text>
+            </View>
+        </View>
+    );
+
     return (
-        <SafeAreaView style={styles.safeArea}>
+        <SafeAreaView style={styles.safeArea} edges={['top', 'bottom']}>
             {/* Header */}
             <View style={styles.header}>
                 <TouchableOpacity
@@ -74,54 +172,97 @@ export default function SettingsScreen() {
                 contentContainerStyle={styles.scrollContent}
                 showsVerticalScrollIndicator={false}
             >
-                {/* User Profile Row */}
-                <View style={styles.profileCard}>
-                    <View style={styles.avatarCircle}>
-                        <Ionicons name="person" size={26} color={colors.avatarIcon} />
-                    </View>
-                    <Text style={styles.profileName}>Your Name</Text>
-                </View>
+                {loading ? (
+                    <ActivityIndicator color={colors.primary} style={{ marginTop: 40 }} />
+                ) : (
+                    <>
+                        {/* Profile Card */}
+                        <View style={styles.profileCard}>
+                            <View style={styles.avatarCircle}>
+                                <Text style={styles.avatarInitial}>
+                                    {userInfo.name ? userInfo.name.charAt(0).toUpperCase() : '?'}
+                                </Text>
+                            </View>
+                            <View style={{ flex: 1 }}>
+                                <Text style={styles.profileName} numberOfLines={1}>
+                                    {userInfo.name || 'Unknown User'}
+                                </Text>
+                                <Text style={styles.profilePhone} numberOfLines={1}>
+                                    {userInfo.phone || 'No phone'}
+                                </Text>
+                            </View>
+                        </View>
 
-                {/* Theme Section */}
-                <Text style={styles.sectionLabel}>Theme</Text>
-                <View style={styles.optionCard}>
-                    {themeOptions.map((option, index) => {
-                        const isSelected = theme === option.key;
-                        const isLast = index === themeOptions.length - 1;
+                        {/* Account Info */}
+                        <Text style={styles.sectionLabel}>Account</Text>
+                        <View style={styles.infoCard}>
+                            <InfoRow
+                                icon="call-outline"
+                                label="Phone Number"
+                                value={userInfo.phone}
+                            />
+                            <View style={styles.separator} />
+                            <InfoRow
+                                icon="person-outline"
+                                label="Name"
+                                value={userInfo.name}
+                            />
+                        </View>
 
-                        return (
-                            <React.Fragment key={option.key}>
-                                <TouchableOpacity
-                                    style={styles.optionRow}
-                                    activeOpacity={0.65}
-                                    onPress={() => setTheme(option.key)}
-                                >
-                                    <Text style={styles.optionLabel}>{option.label}</Text>
-                                    <View style={[styles.radioOuter, isSelected && styles.radioOuterSelected]}>
-                                        {isSelected && <View style={styles.radioInner} />}
-                                    </View>
-                                </TouchableOpacity>
-                                {!isLast && <View style={styles.separator} />}
-                            </React.Fragment>
-                        );
-                    })}
-                </View>
+                        {/* QR Info */}
+                        <Text style={styles.sectionLabel}>Linked QR Code</Text>
+                        <View style={styles.infoCard}>
+                            <InfoRow
+                                icon="qr-code-outline"
+                                label="QR ID"
+                                value={userInfo.qrId}
+                            />
+                            <View style={styles.separator} />
+                            <InfoRow
+                                icon="location-outline"
+                                label="Location"
+                                value={userInfo.location}
+                            />
+                        </View>
 
-                {/* Hint note */}
-                <Text style={styles.hintText}>
-                    Automatic is only supported on operating systems that allow you to control the system-wide color scheme
-                </Text>
+                        {/* QR Status Badge */}
+                        {userInfo.qrId ? (
+                            <View style={styles.statusBadge}>
+                                <View style={styles.statusDot} />
+                                <Text style={styles.statusText}>QR code is active and linked</Text>
+                            </View>
+                        ) : (
+                            <View style={[styles.statusBadge, styles.statusBadgeWarn]}>
+                                <Ionicons name="warning-outline" size={14} color="#B45309" />
+                                <Text style={[styles.statusText, { color: '#B45309' }]}>
+                                    No QR code linked yet
+                                </Text>
+                            </View>
+                        )}
 
-                {/* Logout Button */}
-                <TouchableOpacity onPress={handleLogout} style={styles.logoutButton} activeOpacity={0.8}>
-                    <Text style={styles.logoutText}>Logout</Text>
-                </TouchableOpacity>
+                        {/* Logout */}
+                        <TouchableOpacity
+                            onPress={handleLogout}
+                            style={styles.logoutButton}
+                            activeOpacity={0.8}
+                            disabled={loggingOut}
+                        >
+                            {loggingOut ? (
+                                <ActivityIndicator color={colors.danger} />
+                            ) : (
+                                <>
+                                    <Ionicons name="log-out-outline" size={18} color={colors.danger} />
+                                    <Text style={styles.logoutText}>Logout</Text>
+                                </>
+                            )}
+                        </TouchableOpacity>
 
-                {/* App Version */}
-                <View style={styles.versionContainer}>
-                    <Text style={styles.versionLabel}>App version</Text>
-                    <Text style={styles.versionNumber}>54.26.0</Text>
-                </View>
+                        {/* App Version */}
+                        <View style={styles.versionContainer}>
+                            <Text style={styles.versionLabel}>KNOC · v{appVersion}</Text>
+                        </View>
+                    </>
+                )}
             </ScrollView>
         </SafeAreaView>
     );
@@ -144,9 +285,7 @@ const styles = StyleSheet.create({
         borderBottomColor: colors.headerBorder,
         gap: 10,
     },
-    backButton: {
-        padding: 2,
-    },
+    backButton: { padding: 2 },
     headerTitle: {
         fontSize: 18,
         fontFamily: 'Gilroy-Bold',
@@ -161,126 +300,145 @@ const styles = StyleSheet.create({
         paddingBottom: 48,
     },
 
-    // Profile
+    // Profile card
     profileCard: {
         flexDirection: 'row',
         alignItems: 'center',
         gap: 14,
         backgroundColor: colors.cardBg,
-        borderRadius: 14,
+        borderRadius: 16,
         paddingHorizontal: 16,
-        paddingVertical: 14,
+        paddingVertical: 16,
         marginBottom: 28,
     },
     avatarCircle: {
-        width: 48,
-        height: 48,
-        borderRadius: 24,
+        width: 52,
+        height: 52,
+        borderRadius: 26,
         backgroundColor: colors.avatarBg,
         justifyContent: 'center',
         alignItems: 'center',
+    },
+    avatarInitial: {
+        fontSize: 22,
+        fontFamily: 'Gilroy-Bold',
+        color: colors.avatarIcon,
     },
     profileName: {
         fontSize: 16,
         fontFamily: 'Gilroy-SemiBold',
         color: colors.textMain,
     },
+    profilePhone: {
+        fontSize: 13,
+        fontFamily: 'Gilroy-Regular',
+        color: colors.textMuted,
+        marginTop: 2,
+    },
 
     // Section label
     sectionLabel: {
-        fontSize: 13,
+        fontSize: 12,
         fontFamily: 'Gilroy-Medium',
         color: colors.textMuted,
         marginBottom: 8,
         marginLeft: 4,
         textTransform: 'uppercase',
-        letterSpacing: 0.5,
+        letterSpacing: 0.6,
     },
 
-    // Theme option card
-    optionCard: {
+    // Info card
+    infoCard: {
         backgroundColor: colors.cardBg,
         borderRadius: 14,
         overflow: 'hidden',
+        marginBottom: 20,
     },
-    optionRow: {
+    infoRow: {
         flexDirection: 'row',
         alignItems: 'center',
-        justifyContent: 'space-between',
         paddingHorizontal: 16,
-        paddingVertical: 16,
+        paddingVertical: 14,
+        gap: 12,
     },
-    optionLabel: {
-        fontSize: 16,
-        fontFamily: 'Gilroy-Regular',
-        color: colors.textMain,
-    },
-
-    // Radio button
-    radioOuter: {
-        width: 22,
-        height: 22,
-        borderRadius: 11,
-        borderWidth: 2,
-        borderColor: colors.separator,
+    infoIconWrap: {
+        width: 32,
+        height: 32,
+        borderRadius: 8,
+        backgroundColor: '#F0ECFF',
         justifyContent: 'center',
         alignItems: 'center',
     },
-    radioOuterSelected: {
-        borderColor: colors.primary,
+    infoText: { flex: 1 },
+    infoLabel: {
+        fontSize: 12,
+        fontFamily: 'Gilroy-Regular',
+        color: colors.textMuted,
+        marginBottom: 2,
     },
-    radioInner: {
-        width: 11,
-        height: 11,
-        borderRadius: 5.5,
-        backgroundColor: colors.primary,
+    infoValue: {
+        fontSize: 15,
+        fontFamily: 'Gilroy-SemiBold',
+        color: colors.textMain,
     },
 
     // Separator
     separator: {
         height: 1,
         backgroundColor: colors.separator,
-        marginLeft: 16,
+        marginLeft: 60,
     },
 
-    // Hint note
-    hintText: {
+    // Status badge
+    statusBadge: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 6,
+        backgroundColor: '#E6F9EE',
+        borderRadius: 8,
+        paddingHorizontal: 12,
+        paddingVertical: 8,
+        marginBottom: 28,
+    },
+    statusBadgeWarn: {
+        backgroundColor: '#FFFBEB',
+    },
+    statusDot: {
+        width: 8,
+        height: 8,
+        borderRadius: 4,
+        backgroundColor: colors.green,
+    },
+    statusText: {
         fontSize: 13,
-        fontFamily: 'Gilroy-Regular',
-        color: colors.noteText,
-        marginTop: 12,
-        marginHorizontal: 4,
-        lineHeight: 19,
+        fontFamily: 'Gilroy-Medium',
+        color: '#1A7A3A',
     },
 
     // Logout
     logoutButton: {
-        marginTop: 40,
-        backgroundColor: colors.cardBg,
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: 8,
+        backgroundColor: '#FFF0F0',
         borderRadius: 14,
         height: 54,
-        justifyContent: 'center',
-        alignItems: 'center',
+        marginBottom: 16,
     },
     logoutText: {
         fontSize: 16,
         fontFamily: 'Gilroy-SemiBold',
-        color: colors.logoutText,
+        color: colors.danger,
     },
 
     // Version
     versionContainer: {
-        marginTop: 20,
         alignItems: 'center',
-        gap: 4,
+        paddingTop: 4,
     },
     versionLabel: {
-        fontSize: 14,
-        fontFamily: 'Gilroy-Regular',
-        color: colors.textMuted,
-    },
-    versionNumber: {
-        fontSize: 14,
+        fontSize: 13,
         fontFamily: 'Gilroy-Regular',
         color: colors.textMuted,
     },

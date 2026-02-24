@@ -223,7 +223,7 @@ export default function ActionButtons({ qrId }: { qrId: string }) {
                 )}
             </div>
 
-            <button
+            {/* <button
                 onClick={() => handleAction('Entry')}
                 className="w-full h-[56px] bg-white border border-[#926FF3] text-[#1A1A1A] rounded-[12px] font-semibold text-[16px] hover:bg-gray-50 active:scale-[0.98] transition-all"
             >
@@ -235,7 +235,7 @@ export default function ActionButtons({ qrId }: { qrId: string }) {
                 className="w-full h-[56px] bg-white border border-[#926FF3] text-[#1A1A1A] rounded-[12px] font-semibold text-[16px] hover:bg-gray-50 active:scale-[0.98] transition-all"
             >
                 No Entry
-            </button>
+            </button> */}
         </div>
     );
 }
