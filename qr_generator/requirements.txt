@@ -5,3 +5,4 @@ python-dotenv==1.0.1
 streamlit==1.32.2
 reportlab==4.4.10
 websockets<16,>=11
+truststore

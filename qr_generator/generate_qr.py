@@ -10,6 +10,8 @@ from reportlab.lib.utils import ImageReader
 from reportlab.lib.units import cm
 from reportlab.pdfgen import canvas
 import os
+import truststore
+truststore.inject_into_ssl()
 
 # Load environment variables from the local .env file
 load_dotenv()
@@ -18,7 +20,7 @@ SUPABASE_URL = os.getenv("SUPABASE_URL")
 SUPABASE_KEY = os.getenv("SUPABASE_ANON_KEY")
 
 # Change this to your production domain before deploying
-BASE_URL = os.getenv("BASE_URL", "http://localhost:3000")
+BASE_URL = os.getenv("BASE_URL")
 
 
 def generate_blank_qr():
@@ -26,7 +28,7 @@ def generate_blank_qr():
     Generates a unique QR code, registers it in Supabase,
     and returns the qr_id, the QR PIL image, and the Supabase status.
     Nothing is written to disk.
-    """
+    """ 
     # 1. Generate a unique QR ID
     qr_id = "KNO" + str(uuid.uuid4().hex)[:10].upper()
 
