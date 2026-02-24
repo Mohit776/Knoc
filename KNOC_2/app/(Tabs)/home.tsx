@@ -13,9 +13,9 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import * as Notifications from 'expo-notifications';
-import type { Subscription } from 'expo-modules-core';
+import type { EventSubscription } from 'expo-modules-core';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { supabase } from '../../../KNOC_2/lib/supabase';
+import { supabase } from '../../lib/supabase';
 
 const { width } = Dimensions.get('window');
 
@@ -59,8 +59,8 @@ export default function HomeScreen() {
     const [linkedQrId, setLinkedQrId] = useState<string | null>(null);
     const [locationName, setLocationName] = useState<string>('Home');
     const [userName, setUserName] = useState<string>('');
-    const notificationListener = useRef<Subscription | undefined>(undefined);
-    const responseListener = useRef<Subscription | undefined>(undefined);
+    const notificationListener = useRef<EventSubscription | undefined>(undefined);
+    const responseListener = useRef<EventSubscription | undefined>(undefined);
 
     // Load name + QR ID from AsyncStorage (set during onboarding) and sync from DB if needed
     const loadLinkedQr = useCallback(async () => {

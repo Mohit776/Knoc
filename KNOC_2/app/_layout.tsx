@@ -3,7 +3,7 @@ import { useFonts } from 'expo-font';
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect } from 'react';
 import { View, Image, StyleSheet, Dimensions } from 'react-native';
-import { registerForPushNotificationsAsync } from '../../KNOC_2/lib/notifications';
+import { registerForPushNotificationsAsync } from '../lib/notifications';
 
 const { width, height } = Dimensions.get('window');
 

@@ -11,7 +11,7 @@ import {
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { supabase } from '../../KNOC_2/lib/supabase';
+import { supabase } from '../lib/supabase';
 
 const colors = {
     primary: '#431BB8',

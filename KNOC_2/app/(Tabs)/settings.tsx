@@ -10,7 +10,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { supabase } from '../../../KNOC_2/lib/supabase';
+import { supabase } from '../../lib/supabase';
+
 
 type ThemeOption = 'automatic' | 'light' | 'dark';
 

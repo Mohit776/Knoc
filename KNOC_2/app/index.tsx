@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Redirect } from 'expo-router';
 import { View, ActivityIndicator } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { supabase } from '../../KNOC_2/lib/supabase';
+import { supabase } from '../lib/supabase';
 
 export default function Index() {
   const [session, setSession] = useState<any>(null);

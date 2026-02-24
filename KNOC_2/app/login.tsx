@@ -11,7 +11,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { supabase } from '../../KNOC_2/lib/supabase';
+import { supabase } from '../lib/supabase';
 
 // Design system colors based on previous Knoc colors and the new image
 const colors = {

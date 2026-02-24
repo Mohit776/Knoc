@@ -15,8 +15,8 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import { supabase } from '../../KNOC_2/lib/supabase';
-import { registerForPushNotificationsAsync } from '../../KNOC_2/lib/notifications';
+import { supabase } from '../lib/supabase';
+import { registerForPushNotificationsAsync } from '../lib/notifications';
 
 const { width } = Dimensions.get('window');
 

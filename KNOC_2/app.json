@@ -1,0 +1,55 @@
+{
+  "expo": {
+    "name": "KNOC",
+    "slug": "KNOC",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/logo/logo2.png",
+    "scheme": "knoc",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
+    "ios": {
+      "supportsTablet": true
+    },
+    "android": {
+      "googleServicesFile": "./google-services.json",
+      "adaptiveIcon": {
+        "backgroundColor": "#E6F4FE",
+        "foregroundImage": "./assets/logo/logo2.png"
+      },
+      "edgeToEdgeEnabled": true,
+      "predictiveBackGestureEnabled": false,
+      "package": "com.mohit551.KNOC"
+    },
+    "web": {
+      "output": "static",
+      "favicon": "./assets/logo/logo2.png"
+    },
+    "plugins": [
+      "expo-router",
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/logo/Group 1171275857.png",
+          "imageWidth": 200,
+          "resizeMode": "contain",
+          "backgroundColor": "#ffffff",
+          "dark": {
+            "backgroundColor": "#000000"
+          }
+        }
+      ],
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/logo/logo2.png",
+          "color": "#431BB8"
+        }
+      ]
+    ],
+    "experiments": {
+      "typedRoutes": true,
+      "reactCompiler": true
+    }
+  }
+}
