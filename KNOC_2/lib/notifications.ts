@@ -17,6 +17,7 @@ export async function registerForPushNotificationsAsync(): Promise<string | unde
     let token;
 
     if (Platform.OS === 'android') {
+        console.log('[Notifications] Setting up Android notification channel...');
         await Notifications.setNotificationChannelAsync('default', {
             name: 'default',
             importance: Notifications.AndroidImportance.MAX,
@@ -26,29 +27,34 @@ export async function registerForPushNotificationsAsync(): Promise<string | unde
     }
 
     if (Device.isDevice) {
+        console.log('[Notifications] Physical device detected. Checking permissions...');
         const { status: existingStatus } = await Notifications.getPermissionsAsync();
+        console.log('[Notifications] Current permission status:', existingStatus);
         let finalStatus = existingStatus;
 
         if (existingStatus !== 'granted') {
+            console.log('[Notifications] Requesting permissions from user...');
             const { status } = await Notifications.requestPermissionsAsync();
             finalStatus = status;
+            console.log('[Notifications] Permission result:', status);
         }
 
         if (finalStatus !== 'granted') {
-            console.log('Failed to get push token for push notification!');
+            console.log('[Notifications] Permission DENIED. Cannot get push token.');
             return;
         }
 
         // Use raw FCM device token (works with google-services.json, no Expo project ID needed)
         try {
+            console.log('[Notifications] Getting FCM device token...');
             const tokenResponse = await Notifications.getDevicePushTokenAsync();
             token = tokenResponse.data as string;
-            console.log('FCM Device Token:', token);
+            console.log('[Notifications] FCM Device Token obtained:', token.substring(0, 20) + '...');
         } catch (e) {
-            console.error('Error getting FCM device token:', e);
+            console.error('[Notifications] Error getting FCM device token:', e);
         }
     } else {
-        console.log('Must use physical device for Push Notifications');
+        console.log('[Notifications] Not a physical device. Push notifications not available.');
     }
 
     return token;

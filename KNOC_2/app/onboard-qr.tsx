@@ -90,10 +90,25 @@ export default function OnboardQRScreen() {
             const guestPhone = await AsyncStorage.getItem('guest_phone');
             const phoneToSave = guestPhone ? `+91${guestPhone}` : (user?.phone || null);
 
-            // Fetch push token for this device
-            const pushToken = await registerForPushNotificationsAsync();
+            // 4. Request notification permissions and get FCM token
+            console.log('[Onboard] Requesting notification permissions...');
+            let pushToken: string | undefined;
+            try {
+                pushToken = await registerForPushNotificationsAsync();
+                console.log('[Onboard] FCM token result:', pushToken ? pushToken.substring(0, 20) + '...' : 'NONE');
+            } catch (tokenError) {
+                console.error('[Onboard] Error getting push token:', tokenError);
+            }
 
-            // 4. Update the QR code record with user info, name and push token
+            if (!pushToken) {
+                // Warn user but don't block onboarding
+                Alert.alert(
+                    'Notifications Disabled',
+                    'We could not enable push notifications. You may miss important knoc alerts. You can enable notifications later from your phone\'s Settings > Apps > KNOC > Notifications.',
+                );
+            }
+
+            // 5. Update the QR code record with user info, name and push token
             const { error: updateError } = await supabase
                 .from('qr_codes')
                 .update({
@@ -106,10 +121,13 @@ export default function OnboardQRScreen() {
                 .eq('qr_id', qrCodeId.trim());
 
             if (updateError) {
+                console.error('[Onboard] Supabase update error:', updateError);
                 Alert.alert('Error', `Failed to activate QR code: ${updateError.message}`);
                 setLoading(false);
                 return;
             }
+
+            console.log('[Onboard] QR code updated successfully. Token saved:', !!pushToken);
 
             // Mark onboarding as complete and save name + qr_id to session
             await AsyncStorage.multiSet([

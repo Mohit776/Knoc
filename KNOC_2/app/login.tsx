@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
     View,
     Text,
@@ -22,8 +21,6 @@ const colors = {
     inputBg: '#F2F2F7',
     divider: '#C7C7CC',
 };
-
-const GUEST_PHONE = '9205394233';
 
 export default function LoginScreen() {
     const [phoneNumber, setPhoneNumber] = useState('');
@@ -59,20 +56,7 @@ export default function LoginScreen() {
         }
     };
 
-    const handleGuestSignIn = async () => {
-        setLoading(true);
-        try {
-            // Store guest session in AsyncStorage — persists across app restarts
-            await AsyncStorage.setItem('is_guest', 'true');
-            await AsyncStorage.setItem('guest_phone', GUEST_PHONE);
-            // Skip OTP — navigate directly to the welcome/home screen
-            router.replace('/welcome');
-        } catch (error: any) {
-            alert('Unable to sign in as guest. Please try again.');
-        } finally {
-            setLoading(false);
-        }
-    };
+
 
     return (
         <SafeAreaView style={styles.safeArea}>
@@ -117,17 +101,6 @@ export default function LoginScreen() {
                         </Text>
                     </TouchableOpacity>
 
-                    {/* Sign in as Guest */}
-                    <TouchableOpacity
-                        style={styles.guestButton}
-                        activeOpacity={0.7}
-                        onPress={handleGuestSignIn}
-                        disabled={loading}
-                    >
-                        <Text style={styles.guestButtonText}>
-                            Sign in as Guest
-                        </Text>
-                    </TouchableOpacity>
                 </View>
 
                 {/* Footer */}
@@ -212,22 +185,7 @@ const styles = StyleSheet.create({
         fontSize: 16,
         fontFamily: 'Gilroy-Medium',
     },
-    guestButton: {
-        borderWidth: 1.5,
-        borderColor: '#C4B5FD',
-        borderStyle: 'dashed',
-        borderRadius: 8,
-        height: 52,
-        justifyContent: 'center',
-        alignItems: 'center',
-        marginTop: 14,
-        backgroundColor: 'transparent',
-    },
-    guestButtonText: {
-        color: '#7C5CBF',
-        fontSize: 15,
-        fontFamily: 'Gilroy-Medium',
-    },
+
     footer: {
         alignItems: 'center',
         paddingBottom: 20,

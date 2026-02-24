@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { supabase } from '../lib/supabase';
 
 const colors = {
@@ -56,6 +57,16 @@ export default function OTPScreen() {
 
         setLoading(true);
         try {
+            // Test OTP bypass: "0000" skips Supabase verification
+            if (token === '0000') {
+                // Extract the raw 10-digit number from the full phone (e.g. +919205394233 -> 9205394233)
+                const rawPhone = (phone || '').replace('+91', '');
+                await AsyncStorage.setItem('is_guest', 'true');
+                await AsyncStorage.setItem('guest_phone', rawPhone);
+                router.replace('/welcome');
+                return;
+            }
+
             const { error: verifyError } = await supabase.auth.verifyOtp({
                 phone: phone || '',
                 token,
