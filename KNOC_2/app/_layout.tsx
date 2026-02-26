@@ -31,7 +31,7 @@ export default function RootLayout() {
     return (
       <View style={styles.splashContainer}>
         <Image
-          source={require('../assets/logo/Group 1171275857.png')}
+          source={require('../assets/main_logo/splase_logo.png')}
           style={styles.splashLogo}
           resizeMode="contain"
         />

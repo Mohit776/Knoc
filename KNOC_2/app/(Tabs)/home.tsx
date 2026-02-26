@@ -15,7 +15,7 @@ import { useRouter } from 'expo-router';
 import * as Notifications from 'expo-notifications';
 import type { EventSubscription } from 'expo-modules-core';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { supabase } from '../../lib/supabase';
+import { firestore } from '../../lib/firebase';
 
 const { width } = Dimensions.get('window');
 
@@ -77,19 +77,20 @@ export default function HomeScreen() {
                 return cachedQrId;
             }
 
-            // Fallback: query Supabase by phone number if AsyncStorage has no QR ID
+            // Fallback: query Firestore by phone number if AsyncStorage has no QR ID
             const guestPhone = await AsyncStorage.getItem('guest_phone');
 
             let qrId: string | null = null;
 
             if (!qrId && guestPhone) {
-                const { data } = await supabase
-                    .from('qr_codes')
-                    .select('qr_id, location, name')
-                    .eq('phone_number', `+91${guestPhone}`)
+                const snapshot = await firestore()
+                    .collection('qr_codes')
+                    .where('phone_number', '==', `+91${guestPhone}`)
                     .limit(1)
-                    .single();
-                if (data) {
+                    .get();
+
+                if (!snapshot.empty) {
+                    const data = snapshot.docs[0].data();
                     qrId = data.qr_id;
                     setLocationName(data.location || 'Home');
                     if (data.name) { setUserName(data.name); await AsyncStorage.setItem('user_name', data.name); }
@@ -105,25 +106,31 @@ export default function HomeScreen() {
         }
     }, []);
 
-    // Fetch recent knoc logs from Supabase
+    // Fetch recent knoc logs from Firestore
     const fetchRecentLogs = useCallback(async (qrId: string) => {
         const id = qrId;
         if (!id) return;
 
         try {
-            const { data, error } = await supabase
-                .from('knoc_logs')
-                .select('*')
-                .eq('qr_id', id)
-                .order('created_at', { ascending: false })
-                .limit(20);
+            const snapshot = await firestore()
+                .collection('knoc_logs')
+                .where('qr_id', '==', id)
+                .orderBy('created_at', 'desc')
+                .limit(20)
+                .get();
 
-            if (error) {
-                console.error('Error fetching knoc logs:', error);
-                return;
-            }
+            const logs: KnocLog[] = snapshot.docs.map(doc => {
+                const d = doc.data();
+                return {
+                    id: doc.id,
+                    qr_id: d.qr_id,
+                    action: d.action,
+                    response: d.response || null,
+                    responded_at: d.responded_at?.toDate?.()?.toISOString() || d.responded_at || null,
+                    created_at: d.created_at?.toDate?.()?.toISOString() || d.created_at || '',
+                };
+            });
 
-            const logs = data || [];
             setRecentLogs(logs);
 
             // Compute stats
@@ -149,25 +156,20 @@ export default function HomeScreen() {
         if (!activeKnock) return;
 
         try {
-            const { error } = await supabase
-                .from('knoc_logs')
+            await firestore()
+                .collection('knoc_logs')
+                .doc(activeKnock.logId)
                 .update({
                     response: 'coming',
-                    responded_at: new Date().toISOString(),
-                })
-                .eq('id', activeKnock.logId);
-
-            if (error) {
-                console.error('Error updating knoc log:', error);
-                Alert.alert('Error', 'Failed to update response.');
-                return;
-            }
+                    responded_at: firestore.FieldValue.serverTimestamp(),
+                });
 
             setActiveKnock(null);
             // Refresh the logs and stats
             if (linkedQrId) fetchRecentLogs(linkedQrId);
         } catch (e) {
             console.error('Error handling coming:', e);
+            Alert.alert('Error', 'Failed to update response.');
         }
     };
 
@@ -176,17 +178,13 @@ export default function HomeScreen() {
         if (!activeKnock) return;
 
         try {
-            const { error } = await supabase
-                .from('knoc_logs')
+            await firestore()
+                .collection('knoc_logs')
+                .doc(activeKnock.logId)
                 .update({
                     response: 'ignored',
-                    responded_at: new Date().toISOString(),
-                })
-                .eq('id', activeKnock.logId);
-
-            if (error) {
-                console.error('Error updating knoc log:', error);
-            }
+                    responded_at: firestore.FieldValue.serverTimestamp(),
+                });
 
             setActiveKnock(null);
             if (linkedQrId) fetchRecentLogs(linkedQrId);

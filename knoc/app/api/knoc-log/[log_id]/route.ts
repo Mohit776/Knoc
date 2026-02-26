@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
-import { supabase } from '../../../../lib/supabase';
+import { db } from '../../../../lib/firebase';
+import * as admin from 'firebase-admin';
 
 // PATCH /api/knoc-log/[log_id]  — update response (coming / ignored)
 export async function PATCH(request: Request, { params }: { params: Promise<{ log_id: string }> }) {
@@ -17,21 +18,15 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ lo
             );
         }
 
-        const { data, error } = await supabase
-            .from('knoc_logs')
-            .update({
-                response,
-                responded_at: new Date().toISOString(),
-            })
-            .eq('id', logId)
-            .select()
-            .single();
+        const logRef = db.collection('knoc_logs').doc(logId);
+        await logRef.update({
+            response,
+            responded_at: admin.firestore.FieldValue.serverTimestamp(),
+        });
 
-        if (error || !data) {
-            return NextResponse.json({ error: error?.message || 'Log not found' }, { status: 404 });
-        }
+        const updatedDoc = await logRef.get();
 
-        return NextResponse.json({ success: true, log: data });
+        return NextResponse.json({ success: true, log: { id: updatedDoc.id, ...updatedDoc.data() } });
     } catch (err: any) {
         console.error('Knoc-log PATCH error:', err);
         return NextResponse.json({ error: err.message }, { status: 500 });
@@ -44,17 +39,13 @@ export async function GET(request: Request, { params }: { params: Promise<{ log_
     const logId = resolvedParams.log_id;
 
     try {
-        const { data, error } = await supabase
-            .from('knoc_logs')
-            .select('*')
-            .eq('id', logId)
-            .single();
+        const doc = await db.collection('knoc_logs').doc(logId).get();
 
-        if (error || !data) {
+        if (!doc.exists) {
             return NextResponse.json({ error: 'Log not found' }, { status: 404 });
         }
 
-        return NextResponse.json(data);
+        return NextResponse.json({ id: doc.id, ...doc.data() });
     } catch (err: any) {
         return NextResponse.json({ error: err.message }, { status: 500 });
     }

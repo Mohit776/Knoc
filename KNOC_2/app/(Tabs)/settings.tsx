@@ -12,7 +12,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { supabase } from '../../lib/supabase';
+import { firestore } from '../../lib/firebase';
+import { auth } from '../../lib/firebase';
 import Constants from 'expo-constants';
 
 const colors = {
@@ -71,22 +72,22 @@ export default function SettingsScreen() {
                 qrId: storedQrId || '',
             }));
 
-            // Fetch more details from Supabase if we have a QR ID
+            // Fetch more details from Firestore if we have a QR ID
             if (storedQrId) {
-                const { data } = await supabase
-                    .from('qr_codes')
-                    .select('name, location, phone_number')
-                    .eq('qr_id', storedQrId)
-                    .single();
+                const doc = await firestore()
+                    .collection('qr_codes')
+                    .doc(storedQrId)
+                    .get();
 
+                const data = doc.data();
                 if (data) {
                     setUserInfo({
-                        name: data.name || storedName || 'Unknown',
-                        phone: data.phone_number
+                        name: data?.name || storedName || 'Unknown',
+                        phone: data?.phone_number
                             ? formatPhone(data.phone_number)
                             : (guestPhone ? `+91 ${guestPhone}` : ''),
                         qrId: storedQrId,
-                        location: data.location || '',
+                        location: data?.location || '',
                     });
                 }
             }
@@ -118,7 +119,7 @@ export default function SettingsScreen() {
                     onPress: async () => {
                         setLoggingOut(true);
                         try {
-                            await supabase.auth.signOut();
+                            await auth().signOut();
                             await AsyncStorage.multiRemove([
                                 'is_guest',
                                 'guest_phone',

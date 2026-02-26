@@ -10,7 +10,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { supabase } from '../lib/supabase';
+import { auth } from '../lib/firebase';
 
 // Design system colors based on previous Knoc colors and the new image
 const colors = {
@@ -21,6 +21,9 @@ const colors = {
     inputBg: '#F2F2F7',
     divider: '#C7C7CC',
 };
+
+// Store the Firebase confirmation result globally so the OTP screen can access it
+export let firebaseConfirmation: any = null;
 
 export default function LoginScreen() {
     const [phoneNumber, setPhoneNumber] = useState('');
@@ -37,26 +40,27 @@ export default function LoginScreen() {
         const fullPhone = `+91${phoneNumber}`;
 
         try {
-            const { error } = await supabase.auth.signInWithOtp({
-                phone: fullPhone,
-            });
+            // Firebase sends the OTP SMS automatically
+            const confirmation = await auth().signInWithPhoneNumber(fullPhone);
+            firebaseConfirmation = confirmation;
 
-            if (error) {
-                alert(error.message);
-            } else {
-                router.push({
-                    pathname: '/otp',
-                    params: { phone: fullPhone }
-                });
-            }
+            router.push({
+                pathname: '/otp',
+                params: { phone: fullPhone }
+            });
         } catch (error: any) {
-            alert('An unexpected error occurred. Please try again.');
+            console.error('Firebase OTP error:', error);
+            if (error.code === 'auth/invalid-phone-number') {
+                alert('Invalid phone number. Please check and try again.');
+            } else if (error.code === 'auth/too-many-requests') {
+                alert('Too many attempts. Please try again later.');
+            } else {
+                alert(error.message || 'An unexpected error occurred. Please try again.');
+            }
         } finally {
             setLoading(false);
         }
     };
-
-
 
     return (
         <SafeAreaView style={styles.safeArea}>
@@ -65,11 +69,7 @@ export default function LoginScreen() {
                 behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
             >
                 {/* Skip Button Header */}
-                <View style={styles.header}>
-                    <TouchableOpacity onPress={() => router.push('/welcome')}>
-                        <Text style={styles.skipText}>Skip</Text>
-                    </TouchableOpacity>
-                </View>
+               
 
                 <View style={styles.content}>
                     <Text style={styles.title}>Log in with phone number</Text>

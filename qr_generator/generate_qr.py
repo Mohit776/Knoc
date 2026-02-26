@@ -2,33 +2,43 @@ import io
 import uuid
 import qrcode
 import streamlit as st
-from PIL import Image, ImageDraw, ImageFont
+from PIL import Image
 from dotenv import load_dotenv
-from supabase import create_client, Client
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.utils import ImageReader
 from reportlab.lib.units import cm
 from reportlab.pdfgen import canvas
 import os
-import truststore
-truststore.inject_into_ssl()
+
+import firebase_admin
+from firebase_admin import credentials, firestore
 
 # Load environment variables from the local .env file
 load_dotenv()
 
-SUPABASE_URL = os.getenv("SUPABASE_URL")
-SUPABASE_KEY = os.getenv("SUPABASE_ANON_KEY")
-
 # Change this to your production domain before deploying
 BASE_URL = os.getenv("BASE_URL")
+
+# ── Firebase Initialization ──────────────────────────────────────────────────
+FIREBASE_SERVICE_ACCOUNT = os.getenv("FIREBASE_SERVICE_ACCOUNT", "firebase-service-account.json")
+
+if not firebase_admin._apps:
+    try:
+        cred = credentials.Certificate(FIREBASE_SERVICE_ACCOUNT)
+        firebase_admin.initialize_app(cred)
+    except Exception as e:
+        st.error(f"❌ Could not initialize Firebase: {e}")
+        st.stop()
+
+db = firestore.client()
 
 
 def generate_blank_qr():
     """
-    Generates a unique QR code, registers it in Supabase,
-    and returns the qr_id, the QR PIL image, and the Supabase status.
+    Generates a unique QR code, registers it in Firebase Firestore,
+    and returns the qr_id, the QR PIL image, and the Firestore status.
     Nothing is written to disk.
-    """ 
+    """
     # 1. Generate a unique QR ID
     qr_id = "KNO" + str(uuid.uuid4().hex)[:10].upper()
 
@@ -44,17 +54,19 @@ def generate_blank_qr():
     qr.make(fit=True)
     qr_img: Image.Image = qr.make_image(fill_color="black", back_color="white").convert("RGB")
 
-    # 3. Register in Supabase
+    # 3. Register in Firebase Firestore
     db_status = ""
-    if SUPABASE_URL and SUPABASE_KEY:
-        try:
-            supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
-            supabase.table("qr_codes").insert({"qr_id": qr_id}).execute()
-            db_status = f"✅ Successfully added `{qr_id}` to Supabase!"
-        except Exception as e:
-            db_status = f"❌ Could not add to Supabase. Error: {e}"
-    else:
-        db_status = "⚠️ Missing Supabase credentials in .env file."
+    try:
+        db.collection("qr_codes").document(qr_id).set({
+            "qr_id": qr_id,
+            "name": None,
+            "location": None,
+            "phone_number": None,
+            "created_at": firestore.SERVER_TIMESTAMP,
+        })
+        db_status = f"✅ Successfully added `{qr_id}` to Firestore!"
+    except Exception as e:
+        db_status = f"❌ Could not add to Firestore. Error: {e}"
 
     return qr_id, qr_img, db_status
 
@@ -126,20 +138,20 @@ if st.button(f"Generate {qr_count} QR Code{'s' if qr_count > 1 else ''}", type="
     qr_items = []   # list of (qr_id, qr_img)
     errors = []
 
-    with st.spinner(f"Generating {qr_count} QR code(s) and syncing with Supabase..."):
+    with st.spinner(f"Generating {qr_count} QR code(s) and syncing with Firestore..."):
         for i in range(qr_count):
             qr_id, qr_img, db_status = generate_blank_qr()
             qr_items.append((qr_id, qr_img))
-            if "❌" in db_status or "⚠️" in db_status:
+            if "❌" in db_status:
                 errors.append(f"`{qr_id}`: {db_status}")
 
     # ── Results banner ────────────────────────────────────────────────────────
     if errors:
-        st.warning(f"{len(errors)} QR(s) had Supabase issues:")
+        st.warning(f"{len(errors)} QR(s) had Firestore issues:")
         for e in errors:
             st.error(e)
     else:
-        st.success(f"✅ {qr_count} QR code(s) registered in Supabase!")
+        st.success(f"✅ {qr_count} QR code(s) registered in Firestore!")
 
     # ── Preview grid (max 3 per row) ──────────────────────────────────────────
     st.markdown("### Preview")

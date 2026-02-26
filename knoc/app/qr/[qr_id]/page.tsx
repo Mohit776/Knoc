@@ -1,4 +1,4 @@
-import { supabase } from '../../../lib/supabase';
+import { db } from '../../../lib/firebase';
 import { notFound } from 'next/navigation';
 import ActionButtons from './ActionButtons';
 
@@ -7,18 +7,18 @@ interface QRData {
     phone_number: string | null;
     location: string | null;
     fcm_token: string | null;
-    created_at: string;
+    created_at: any;
 }
 
 async function getQRData(qrId: string): Promise<QRData | null> {
-    const { data, error } = await supabase
-        .from('qr_codes')
-        .select('*')
-        .eq('qr_id', qrId)
-        .single();
-
-    if (error || !data) return null;
-    return data as QRData;
+    try {
+        const doc = await db.collection('qr_codes').doc(qrId).get();
+        if (!doc.exists) return null;
+        return doc.data() as QRData;
+    } catch (e) {
+        console.error('Error fetching QR data:', e);
+        return null;
+    }
 }
 
 export default async function QRPage({ params }: { params: Promise<{ qr_id: string }> }) {

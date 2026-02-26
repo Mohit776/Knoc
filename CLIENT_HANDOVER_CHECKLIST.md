@@ -9,16 +9,22 @@ _Basic details required to configure the app for app stores._
 - [ ] **App Icon:** A high-resolution PNG (1024x1024px) without a transparent background.
 - [ ] **Splash Screen Logo:** A high-resolution PNG with a transparent background.
 
-## 2. Supabase (Database & Authentication)
-_The backend and database for the app. The client must create a free account at [supabase.com](https://supabase.com/)._
-- [ ] **Supabase Project URL** (e.g., `https://xxxx.supabase.co`)
-- [ ] **Supabase Anon Public Key** (e.g., `eyJhbGci...`)
-> **Note to Developer:** Once you have these, update the EAS Dashboard environment variables. You will also need to run the SQL scripts in the new Supabase project to recreate the tables and schema.
+## 2. Firebase (Database, Authentication & Notifications)
+_The backend, database, OTP authentication, and push notifications for the app. The client must create a Google account and set up a Firebase project at [console.firebase.google.com](https://console.firebase.google.com/)._
 
-## 3. Firebase (Push Notifications)
-_Required for sending push notifications. The client must create a free account at [console.firebase.google.com](https://console.firebase.google.com/)._
-- [ ] **For Android:** Create an Android app with the exact Package Name (from Step 1) and provide the **`google-services.json`** file.
-- [ ] **For iOS (if applicable):** Create an iOS app with the exact Bundle Identifier and provide the **`GoogleService-Info.plist`** file.
+**Step 2A: Upgrade to Blaze Plan (Required for OTP)**
+The client must upgrade their Firebase project to the **Blaze (Pay-as-you-go) Plan** and add a valid billing account in the Firebase console. This is strictly required by Google to allow sending SMS OTPs, although the first 10k messages per month are free.
+
+**Step 2B: Enable Services**
+- In the Firebase Console, go to **Authentication** -> **Sign-in Method** -> Enable **Phone Number**.
+- Go to **Firestore Database** -> Create a database (Start in Production mode) -> Add a collection named `qr_codes` and another named `knoc_logs`.
+
+**Step 2C: App Configuration Files**
+- [ ] **Android App File:** In Firebase Project Settings, create an Android app with the exact Package Name (e.g., `com.knoc.app`) and download the **`google-services.json`** file. Place this in the root of the React Native app.
+- [ ] **iOS App File:** In Firebase Project Settings, create an iOS app with the exact Bundle Identifier and download the **`GoogleService-Info.plist`** file. Place this in the root of the React Native app.
+
+**Step 2D: Python Script Service Account (For the QR Generator)**
+- [ ] **Service Account Key:** In Firebase Project Settings, go to the **Service accounts** tab. Click **Generate new private key**. It will download a JSON file. Rename this file to **`firebase-service-account.json`** and place it in the root of your `qr_generator` python folder.
 
 ## 4. App Publishing Accounts
 _Developer accounts required if the client wants the app published under their own company name._
@@ -88,14 +94,3 @@ Format: PNG
 Requirements:
 CRITICAL: It MUST be monochrome with transparency (only solid white on a transparent background).
 If you supply a regular colored logo, Android will display it as a solid white square or glitch it out.
-5. Web Favicon (Optional)
-This applies if you are hosting the Expo app on the web.
-
-Dimensions: 256 x 256 pixels (or standard 64x64 or 48x48)
-Format: PNG or ICO
-Requirements: Square, can be transparent.
-Summary Checklist for the Designer:
-icon.png (1024x1024, NO transparency)
-adaptive-icon-foreground.png (1080x1080, Transparent BG, graphic in center 778x778)
-splash.png (e.g., 1280x1280, Transparent BG)
-notification-icon.png (96x96, Transparent BG, Solid White Graphic ONLY)

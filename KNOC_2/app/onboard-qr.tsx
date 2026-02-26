@@ -15,7 +15,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import { supabase } from '../lib/supabase';
+import { firestore } from '../lib/firebase';
 import { registerForPushNotificationsAsync } from '../lib/notifications';
 
 const { width } = Dimensions.get('window');
@@ -58,13 +58,12 @@ export default function OnboardQRScreen() {
 
         try {
             // 1. Check if the QR code exists in the database
-            const { data: existingQr, error: fetchError } = await supabase
-                .from('qr_codes')
-                .select('*')
-                .eq('qr_id', qrCodeId.trim())
-                .single();
+            const qrDoc = await firestore()
+                .collection('qr_codes')
+                .doc(qrCodeId.trim())
+                .get();
 
-            if (fetchError || !existingQr) {
+            if (!qrDoc.exists) {
                 Alert.alert(
                     'QR Code Not Found',
                     'This QR Code ID does not exist in our system. Please check the ID and try again.'
@@ -73,8 +72,10 @@ export default function OnboardQRScreen() {
                 return;
             }
 
+            const existingQr = qrDoc.data();
+
             // 2. Check if it's already linked to someone
-            if (existingQr.phone_number) {
+            if (existingQr?.phone_number) {
                 Alert.alert(
                     'Already Linked',
                     'This QR Code is already linked to another user. Please use a different QR code.'
@@ -106,22 +107,15 @@ export default function OnboardQRScreen() {
             }
 
             // 5. Update the QR code record with user info, name and push token
-            const { error: updateError } = await supabase
-                .from('qr_codes')
+            await firestore()
+                .collection('qr_codes')
+                .doc(qrCodeId.trim())
                 .update({
                     phone_number: phoneToSave,
                     location: location.trim(),
                     name: name.trim(),
                     fcm_token: pushToken || null,
-                })
-                .eq('qr_id', qrCodeId.trim());
-
-            if (updateError) {
-                console.error('[Onboard] Supabase update error:', updateError);
-                Alert.alert('Error', `Failed to activate QR code: ${updateError.message}`);
-                setLoading(false);
-                return;
-            }
+                });
 
             console.log('[Onboard] QR code updated successfully. Token saved:', !!pushToken);
 
@@ -134,7 +128,7 @@ export default function OnboardQRScreen() {
 
             // 5. Success! Navigate to the home screen
             Alert.alert(
-                '✅ QR Code Activated!',
+                'QR Code Activated!',
                 `Your QR code "${qrCodeId}" has been successfully linked and is now active.`,
                 [
                     {

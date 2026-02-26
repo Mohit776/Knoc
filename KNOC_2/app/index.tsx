@@ -2,33 +2,30 @@ import { useEffect, useState } from 'react';
 import { Redirect } from 'expo-router';
 import { View, ActivityIndicator } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { supabase } from '../lib/supabase';
+import { auth } from '../lib/firebase';
 
 export default function Index() {
-  const [session, setSession] = useState<any>(null);
+  const [firebaseUser, setFirebaseUser] = useState<any>(null);
   const [isGuest, setIsGuest] = useState<boolean>(false);
   const [hasOnboarded, setHasOnboarded] = useState<boolean>(false);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const checkState = async () => {
-      const [sessionRes, guestRes, onboardRes] = await Promise.all([
-        supabase.auth.getSession(),
+    // Listen for Firebase auth state changes
+    const unsubscribe = auth().onAuthStateChanged(async (user) => {
+      setFirebaseUser(user);
+
+      const [guestRes, onboardRes] = await Promise.all([
         AsyncStorage.getItem('is_guest'),
         AsyncStorage.getItem('has_onboarded')
       ]);
 
-      setSession(sessionRes.data.session);
       setIsGuest(guestRes === 'true');
       setHasOnboarded(onboardRes === 'true');
       setLoading(false);
-    };
-
-    checkState();
-
-    supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
     });
+
+    return unsubscribe;
   }, []);
 
   if (loading) {
@@ -39,8 +36,8 @@ export default function Index() {
     );
   }
 
-  // If no session and not a guest, send to login
-  if (!session && !isGuest) {
+  // If no Firebase user and not a guest, send to login
+  if (!firebaseUser && !isGuest) {
     return <Redirect href="/login" />;
   }
 

@@ -1,21 +1,6 @@
 import { NextResponse } from 'next/server';
-import { supabase } from '../../../../lib/supabase';
-import admin from 'firebase-admin';
-
-// Initialize firebase-admin once (singleton pattern for Next.js hot reloads)
-if (!admin.apps.length) {
-    const serviceAccount = process.env.FIREBASE_SERVICE_ACCOUNT
-        ? JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT)
-        : null;
-
-    if (!serviceAccount) {
-        console.error('FIREBASE_SERVICE_ACCOUNT env var is missing!');
-    } else {
-        admin.initializeApp({
-            credential: admin.credential.cert(serviceAccount),
-        });
-    }
-}
+import { db, messaging } from '../../../../lib/firebase';
+import * as admin from 'firebase-admin';
 
 export async function POST(request: Request, { params }: { params: Promise<{ qr_id: string }> }) {
     const resolvedParams = await params;
@@ -26,17 +11,14 @@ export async function POST(request: Request, { params }: { params: Promise<{ qr_
         const action = body.action || 'Alarm';
 
         // 1. Fetch the QR code record to get the FCM token
-        const { data: qrData, error } = await supabase
-            .from('qr_codes')
-            .select('fcm_token, location')
-            .eq('qr_id', qrId)
-            .single();
+        const qrDoc = await db.collection('qr_codes').doc(qrId).get();
 
-        if (error || !qrData) {
+        if (!qrDoc.exists) {
             return NextResponse.json({ error: 'QR Code not found' }, { status: 404 });
         }
 
-        const fcmToken = qrData.fcm_token;
+        const qrData = qrDoc.data();
+        const fcmToken = qrData?.fcm_token;
 
         if (!fcmToken) {
             return NextResponse.json(
@@ -46,29 +28,28 @@ export async function POST(request: Request, { params }: { params: Promise<{ qr_
         }
 
         // 2. Insert a knoc_logs entry
-        const { data: logData, error: logError } = await supabase
-            .from('knoc_logs')
-            .insert({ qr_id: qrId, action })
-            .select('id')
-            .single();
+        const knocLogsCol = db.collection('knoc_logs');
+        const newLogRef = await knocLogsCol.add({
+            qr_id: qrId,
+            action: action,
+            response: null,
+            created_at: admin.firestore.FieldValue.serverTimestamp(),
+            responded_at: null,
+        });
 
-        if (logError) {
-            console.error('Failed to insert knoc_log:', logError);
-        }
-
-        const logId = logData?.id || null;
+        const logId = newLogRef.id;
 
         // 3. Build & send the FCM message via Firebase Admin
         const message = {
             token: fcmToken,
             notification: {
-                title: `Visitor at ${qrData.location || 'your door'}!`,
+                title: `Visitor at ${qrData?.location || 'your door'}!`,
                 body: `Someone pressed: ${action}`,
             },
             data: {
                 qrId,
                 action,
-                logId: logId || '',
+                logId: logId,
             },
             android: {
                 priority: 'high' as const,
@@ -79,7 +60,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ qr_
             },
         };
 
-        const messageId = await admin.messaging().send(message);
+        const messageId = await messaging.send(message);
         console.log('FCM notification sent, messageId:', messageId);
 
         return NextResponse.json({ success: true, messageId, logId });

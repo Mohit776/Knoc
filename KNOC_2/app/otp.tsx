@@ -12,7 +12,8 @@ import {
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { supabase } from '../lib/supabase';
+import { auth } from '../lib/firebase';
+import { firebaseConfirmation } from './login';
 
 const colors = {
     primary: '#431BB8',
@@ -26,7 +27,7 @@ const colors = {
 export default function OTPScreen() {
     const router = useRouter();
     const { phone } = useLocalSearchParams<{ phone: string }>();
-    const [otp, setOtp] = useState(['', '', '', '']);
+    const [otp, setOtp] = useState(['', '', '', '', '', '']);
     const [loading, setLoading] = useState(false);
     const inputs = useRef<Array<TextInput | null>>([]);
 
@@ -36,7 +37,7 @@ export default function OTPScreen() {
         setOtp(newOtp);
 
         // Auto-advance
-        if (value && index < 3) {
+        if (value && index < 5) {
             inputs.current[index + 1]?.focus();
         }
     };
@@ -50,16 +51,15 @@ export default function OTPScreen() {
 
     const handleVerify = async () => {
         const token = otp.join('');
-        if (token.length < 4) {
-            alert('Please enter a valid 4-digit OTP');
+        if (token.length < 6) {
+            alert('Please enter a valid 6-digit OTP');
             return;
         }
 
         setLoading(true);
         try {
-            // Test OTP bypass: "0000" skips Supabase verification
-            if (token === '0000') {
-                // Extract the raw 10-digit number from the full phone (e.g. +919205394233 -> 9205394233)
+            // Test OTP bypass: "000000" skips Firebase verification
+            if (token === '000000') {
                 const rawPhone = (phone || '').replace('+91', '');
                 await AsyncStorage.setItem('is_guest', 'true');
                 await AsyncStorage.setItem('guest_phone', rawPhone);
@@ -67,20 +67,26 @@ export default function OTPScreen() {
                 return;
             }
 
-            const { error: verifyError } = await supabase.auth.verifyOtp({
-                phone: phone || '',
-                token,
-                type: 'sms',
-            });
-
-            if (verifyError) {
-                alert(verifyError.message);
-            } else {
-                // Success! Head to the welcome screen for onboarding flow
-                router.replace('/welcome');
+            if (!firebaseConfirmation) {
+                alert('Session expired. Please go back and try again.');
+                return;
             }
+
+            // Verify OTP with Firebase
+            await firebaseConfirmation.confirm(token);
+
+            // Success! Firebase user is now signed in.
+            // Head to the welcome screen for onboarding flow
+            router.replace('/welcome');
         } catch (error: any) {
-            alert('Unexpected error during verification');
+            console.error('Firebase OTP verify error:', error);
+            if (error.code === 'auth/invalid-verification-code') {
+                alert('Invalid OTP. Please check and try again.');
+            } else if (error.code === 'auth/session-expired') {
+                alert('OTP expired. Please request a new one.');
+            } else {
+                alert('Unexpected error during verification.');
+            }
         } finally {
             setLoading(false);
         }
@@ -89,14 +95,16 @@ export default function OTPScreen() {
     const handleResend = async () => {
         if (!phone) return;
         try {
-            const { error } = await supabase.auth.signInWithOtp({ phone });
-            if (error) {
-                alert(error.message);
-            } else {
-                alert('OTP sent again successfully!');
-            }
+            // Re-send OTP via Firebase
+            await auth().signInWithPhoneNumber(phone, true);
+            alert('OTP sent again successfully!');
         } catch (err: any) {
-            alert('Error resending OTP');
+            console.error('Resend error:', err);
+            if (err.code === 'auth/too-many-requests') {
+                alert('Too many attempts. Please try again later.');
+            } else {
+                alert('Error resending OTP. Please try again.');
+            }
         }
     };
 
@@ -210,15 +218,15 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         justifyContent: 'space-between',
         marginBottom: 24,
-        width: '85%',
+        width: '100%',
     },
     otpBox: {
-        width: 60,
-        height: 60,
+        width: 46,
+        height: 52,
         borderWidth: 1,
         borderColor: colors.inputBorder,
         borderRadius: 8,
-        fontSize: 24,
+        fontSize: 22,
         fontFamily: 'Gilroy-Medium',
         color: colors.textMain,
         textAlign: 'center',

@@ -4,7 +4,7 @@
     "slug": "KNOC",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/logo/logo2.png",
+    "icon": "./assets/main_logo/icon_app.png",
     "scheme": "knoc",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
@@ -14,8 +14,8 @@
     "android": {
       "googleServicesFile": "./google-services.json",
       "adaptiveIcon": {
-        "backgroundColor": "#E6F4FE",
-        "foregroundImage": "./assets/logo/logo2.png"
+        "backgroundColor": "#FFFFFF",
+        "foregroundImage": "./assets/main_logo/adaptive_screen.png"
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
@@ -23,14 +23,14 @@
     },
     "web": {
       "output": "static",
-      "favicon": "./assets/logo/logo2.png"
+      "favicon": "./assets/main_logo/icon_app.png"
     },
     "plugins": [
       "expo-router",
       [
         "expo-splash-screen",
         {
-          "image": "./assets/logo/Group 1171275857.png",
+          "image": "./assets/main_logo/splase_logo.png",
           "imageWidth": 200,
           "resizeMode": "contain",
           "backgroundColor": "#ffffff",
@@ -42,10 +42,12 @@
       [
         "expo-notifications",
         {
-          "icon": "./assets/logo/logo2.png",
+          "icon": "./assets/main_logo/notification_logo.png",
           "color": "#431BB8"
         }
-      ]
+      ],
+      "@react-native-firebase/app",
+      "@react-native-firebase/auth"
     ],
     "experiments": {
       "typedRoutes": true,
