@@ -7,6 +7,7 @@ import {
     StyleSheet,
     KeyboardAvoidingView,
     Platform,
+    Image,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -69,9 +70,15 @@ export default function LoginScreen() {
                 behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
             >
                 {/* Skip Button Header */}
-               
+
 
                 <View style={styles.content}>
+                    {/* KNOC App Logo */}
+                    <Image
+                        source={require('../assets/logo/Group 1171275857.png')}
+                        style={styles.logo}
+                        resizeMode="contain"
+                    />
                     <Text style={styles.title}>Log in with phone number</Text>
 
                     {/* Phone Number Input */}
@@ -139,6 +146,12 @@ const styles = StyleSheet.create({
     content: {
         flex: 1,
         marginTop: 60, // To roughly match the position in the image
+    },
+    logo: {
+        width: 140,
+        height: 48,
+        marginBottom: 24,
+        alignSelf: 'flex-start',
     },
     title: {
         fontSize: 24,

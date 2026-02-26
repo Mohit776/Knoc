@@ -12,8 +12,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { firestore } from '../../lib/firebase';
-import { auth } from '../../lib/firebase';
+import { firestore , auth } from '../../lib/firebase';
+
 import Constants from 'expo-constants';
 
 const colors = {

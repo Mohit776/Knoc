@@ -8,11 +8,12 @@ import {
     SafeAreaView,
     KeyboardAvoidingView,
     Platform,
+    Image,
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { auth } from '../lib/firebase';
+import { auth, firestore } from '../lib/firebase';
 import { firebaseConfirmation } from './login';
 
 const colors = {
@@ -29,7 +30,7 @@ export default function OTPScreen() {
     const { phone } = useLocalSearchParams<{ phone: string }>();
     const [otp, setOtp] = useState(['', '', '', '', '', '']);
     const [loading, setLoading] = useState(false);
-    const inputs = useRef<Array<TextInput | null>>([]);
+    const inputs = useRef<(TextInput | null)[]>([]);
 
     const handleOtpChange = (value: string, index: number) => {
         const newOtp = [...otp];
@@ -58,15 +59,6 @@ export default function OTPScreen() {
 
         setLoading(true);
         try {
-            // Test OTP bypass: "000000" skips Firebase verification
-            if (token === '000000') {
-                const rawPhone = (phone || '').replace('+91', '');
-                await AsyncStorage.setItem('is_guest', 'true');
-                await AsyncStorage.setItem('guest_phone', rawPhone);
-                router.replace('/welcome');
-                return;
-            }
-
             if (!firebaseConfirmation) {
                 alert('Session expired. Please go back and try again.');
                 return;
@@ -75,8 +67,33 @@ export default function OTPScreen() {
             // Verify OTP with Firebase
             await firebaseConfirmation.confirm(token);
 
-            // Success! Firebase user is now signed in.
-            // Head to the welcome screen for onboarding flow
+            // Success! Firebase user is now signed in. Save the phone for onboarding.
+            const rawPhone = phone?.replace('+91', '').trim() || '';
+            await AsyncStorage.setItem('guest_phone', rawPhone);
+
+            // Check if user is already linked in the database
+            const fullPhoneFormatted = `+91${rawPhone}`;
+            const snapshot = await firestore()
+                .collection('qr_codes')
+                .where('phone_number', '==', fullPhoneFormatted)
+                .limit(1)
+                .get();
+
+            if (!snapshot.empty) {
+                // User exists! Restore their session and skip onboarding
+                const existingData = snapshot.docs[0].data();
+
+                await AsyncStorage.multiSet([
+                    ['has_onboarded', 'true'],
+                    ['user_name', existingData.name || ''],
+                    ['linked_qr_id', existingData.qr_id || '']
+                ]);
+
+                router.replace('/(Tabs)/home');
+                return;
+            }
+
+            // New user: Head to the welcome screen for onboarding flow
             router.replace('/welcome');
         } catch (error: any) {
             console.error('Firebase OTP verify error:', error);
@@ -125,6 +142,12 @@ export default function OTPScreen() {
                 behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
             >
                 <View style={styles.content}>
+                    {/* KNOC App Logo */}
+                    <Image
+                        source={require('../assets/logo/Group 1171275857.png')}
+                        style={styles.logo}
+                        resizeMode="contain"
+                    />
                     <Text style={styles.title}>Your OTP is on its way</Text>
 
                     <View style={styles.subtitleRow}>
@@ -192,6 +215,12 @@ const styles = StyleSheet.create({
     content: {
         flex: 1,
         paddingTop: 40,
+    },
+    logo: {
+        width: 140,
+        height: 48,
+        marginBottom: 24,
+        alignSelf: 'flex-start',
     },
     title: {
         fontSize: 22,

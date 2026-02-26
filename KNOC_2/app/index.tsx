@@ -6,7 +6,6 @@ import { auth } from '../lib/firebase';
 
 export default function Index() {
   const [firebaseUser, setFirebaseUser] = useState<any>(null);
-  const [isGuest, setIsGuest] = useState<boolean>(false);
   const [hasOnboarded, setHasOnboarded] = useState<boolean>(false);
   const [loading, setLoading] = useState(true);
 
@@ -15,12 +14,7 @@ export default function Index() {
     const unsubscribe = auth().onAuthStateChanged(async (user) => {
       setFirebaseUser(user);
 
-      const [guestRes, onboardRes] = await Promise.all([
-        AsyncStorage.getItem('is_guest'),
-        AsyncStorage.getItem('has_onboarded')
-      ]);
-
-      setIsGuest(guestRes === 'true');
+      const onboardRes = await AsyncStorage.getItem('has_onboarded');
       setHasOnboarded(onboardRes === 'true');
       setLoading(false);
     });
@@ -36,12 +30,12 @@ export default function Index() {
     );
   }
 
-  // If no Firebase user and not a guest, send to login
-  if (!firebaseUser && !isGuest) {
+  // If no Firebase user, send to login
+  if (!firebaseUser) {
     return <Redirect href="/login" />;
   }
 
-  // User is authenticated or guest. Check if they have onboarded:
+  // User is authenticated. Check if they have onboarded:
   if (!hasOnboarded) {
     return <Redirect href="/welcome" />;
   }

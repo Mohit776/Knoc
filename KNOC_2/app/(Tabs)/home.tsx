@@ -8,6 +8,7 @@ import {
     Image,
     Dimensions,
     Alert,
+    RefreshControl,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -56,6 +57,7 @@ export default function HomeScreen() {
     const [activeKnock, setActiveKnock] = useState<ActiveKnock | null>(null);
     const [recentLogs, setRecentLogs] = useState<KnocLog[]>([]);
     const [stats, setStats] = useState({ entry: 0, exit: 0, total: 0 });
+    const [refreshing, setRefreshing] = useState(false);
     const [linkedQrId, setLinkedQrId] = useState<string | null>(null);
     const [locationName, setLocationName] = useState<string>('Home');
     const [userName, setUserName] = useState<string>('');
@@ -193,6 +195,17 @@ export default function HomeScreen() {
         }
     };
 
+    const onRefresh = useCallback(async () => {
+        setRefreshing(true);
+        if (linkedQrId) {
+            await fetchRecentLogs(linkedQrId);
+        } else {
+            const qrId = await loadLinkedQr();
+            if (qrId) await fetchRecentLogs(qrId);
+        }
+        setRefreshing(false);
+    }, [linkedQrId]);
+
     // Initialize: load QR, fetch logs, set up notification listeners
     useEffect(() => {
         const init = async () => {
@@ -291,6 +304,14 @@ export default function HomeScreen() {
                 style={styles.scroll}
                 contentContainerStyle={styles.scrollContent}
                 showsVerticalScrollIndicator={false}
+                refreshControl={
+                    <RefreshControl
+                        refreshing={refreshing}
+                        onRefresh={onRefresh}
+                        colors={[colors.primary]}
+                        tintColor={colors.primary}
+                    />
+                }
             >
                 {/* Welcome */}
                 <Text style={styles.welcomeText}>Welcome, {userName || locationName}</Text>
@@ -299,7 +320,7 @@ export default function HomeScreen() {
                 <View style={styles.statsCard}>
                     {([
                         { label: 'Entry', value: stats.entry },
-                        { label: 'Exit', value: stats.exit },
+                        { label: 'Denied', value: stats.exit },
                         { label: 'Total', value: stats.total },
                     ] as const).map((item) => (
                         <View key={item.label} style={styles.statItem}>
