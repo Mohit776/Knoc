@@ -4,7 +4,7 @@
     "slug": "KNOC",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/main_logo/icon_app.png",
+    "icon": "./assets/main_logo/new_logo.png",
     "scheme": "knoc",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
