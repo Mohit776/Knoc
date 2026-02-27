@@ -9,7 +9,18 @@
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.knoc.app",
+      "googleServicesFile": "./GoogleService-Info.plist",
+      "infoPlist": {
+        "UIBackgroundModes": [
+          "remote-notification",
+          "fetch"
+        ]
+      },
+      "entitlements": {
+        "aps-environment": "production"
+      }
     },
     "android": {
       "googleServicesFile": "./google-services.json",

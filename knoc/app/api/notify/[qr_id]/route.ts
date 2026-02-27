@@ -58,6 +58,22 @@ export async function POST(request: Request, { params }: { params: Promise<{ qr_
                     channelId: 'default',
                 },
             },
+            apns: {
+                headers: {
+                    'apns-priority': '10',
+                    'apns-push-type': 'alert',
+                },
+                payload: {
+                    aps: {
+                        alert: {
+                            title: `Visitor at ${qrData?.location || 'your door'}!`,
+                            body: `Someone pressed: ${action}`,
+                        },
+                        sound: 'default',
+                        'content-available': 1,
+                    },
+                },
+            },
         };
 
         const messageId = await messaging.send(message);
