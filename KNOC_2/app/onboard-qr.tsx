@@ -107,9 +107,11 @@ export default function OnboardQRScreen() {
             }
 
             // 5. Update the QR code record with user info, name and push token
+            const docIdToUpdate = qrCodeId.trim();
+            console.log('[Onboard] Updating Firestore doc:', docIdToUpdate, 'with FCM token:', pushToken ? pushToken.substring(0, 20) + '...' : 'NULL');
             await firestore()
                 .collection('qr_codes')
-                .doc(qrCodeId.trim())
+                .doc(docIdToUpdate)
                 .update({
                     phone_number: phoneToSave,
                     location: location.trim(),
@@ -117,7 +119,7 @@ export default function OnboardQRScreen() {
                     fcm_token: pushToken || null,
                 });
 
-            console.log('[Onboard] QR code updated successfully. Token saved:', !!pushToken);
+            console.log('[Onboard] QR code updated successfully. Token saved:', !!pushToken, 'Doc ID:', docIdToUpdate);
 
             // Mark onboarding as complete and save name + qr_id to session
             await AsyncStorage.multiSet([

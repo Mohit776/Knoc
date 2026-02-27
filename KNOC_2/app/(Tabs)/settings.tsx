@@ -12,7 +12,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { firestore , auth } from '../../lib/firebase';
+import { firestore, auth } from '../../lib/firebase';
 
 import Constants from 'expo-constants';
 
@@ -119,6 +119,20 @@ export default function SettingsScreen() {
                     onPress: async () => {
                         setLoggingOut(true);
                         try {
+                            // Clear FCM token from Firestore to stop notifications
+                            const qrId = await AsyncStorage.getItem('linked_qr_id');
+                            if (qrId) {
+                                try {
+                                    await firestore()
+                                        .collection('qr_codes')
+                                        .doc(qrId)
+                                        .update({ fcm_token: null });
+                                    console.log('[Settings] FCM token cleared from Firestore for doc:', qrId);
+                                } catch (e) {
+                                    console.error('[Settings] Failed to clear FCM token:', e);
+                                }
+                            }
+
                             await auth().signOut();
                             await AsyncStorage.multiRemove([
                                 'is_guest',

@@ -39,15 +39,6 @@ export default function TabsLayout() {
                     ),
                 }}
             />
-            {/* Hide these from tab bar — they're reached via navigation */}
-            <Tabs.Screen
-                name="welcome"
-                options={{ href: null }}
-            />
-            <Tabs.Screen
-                name="login"
-                options={{ href: null }}
-            />
         </Tabs>
     );
 }

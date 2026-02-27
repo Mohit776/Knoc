@@ -17,6 +17,7 @@ import * as Notifications from 'expo-notifications';
 import type { EventSubscription } from 'expo-modules-core';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { firestore } from '../../lib/firebase';
+import { registerForPushNotificationsAsync } from '../../lib/notifications';
 
 const { width } = Dimensions.get('window');
 
@@ -93,10 +94,14 @@ export default function HomeScreen() {
 
                 if (!snapshot.empty) {
                     const data = snapshot.docs[0].data();
-                    qrId = data.qr_id;
+                    // IMPORTANT: Use the Firestore document ID, not the qr_id data field.
+                    // This ensures .doc(qrId).update() calls work correctly.
+                    const docId = snapshot.docs[0].id;
+                    qrId = docId;
                     setLocationName(data.location || 'Home');
                     if (data.name) { setUserName(data.name); await AsyncStorage.setItem('user_name', data.name); }
-                    await AsyncStorage.setItem('linked_qr_id', data.qr_id);
+                    await AsyncStorage.setItem('linked_qr_id', docId);
+                    console.log('[Home] Linked QR resolved from Firestore. Doc ID:', docId);
                 }
             }
 
@@ -114,14 +119,16 @@ export default function HomeScreen() {
         if (!id) return;
 
         try {
+            console.log('[Home] Fetching logs for qr_id:', id);
             const snapshot = await firestore()
                 .collection('knoc_logs')
                 .where('qr_id', '==', id)
-                .orderBy('created_at', 'desc')
                 .limit(20)
                 .get();
 
-            const logs: KnocLog[] = snapshot.docs.map(doc => {
+            console.log('[Home] Logs fetched, count:', snapshot.docs.length);
+
+            let logs: KnocLog[] = snapshot.docs.map(doc => {
                 const d = doc.data();
                 return {
                     id: doc.id,
@@ -133,6 +140,9 @@ export default function HomeScreen() {
                 };
             });
 
+            logs.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+
+            console.log('[Home] Parsed logs:', logs);
             setRecentLogs(logs);
 
             // Compute stats
@@ -148,8 +158,9 @@ export default function HomeScreen() {
                 exit: exitCount,
                 total: logs.length,
             });
-        } catch (e) {
-            console.error('Error fetching logs:', e);
+        } catch (e: any) {
+            console.error('[Home] Error fetching logs:', e);
+            Alert.alert('Fetching Error', e.message);
         }
     }, [linkedQrId]);
 
@@ -210,7 +221,26 @@ export default function HomeScreen() {
     useEffect(() => {
         const init = async () => {
             const qrId = await loadLinkedQr();
-            if (qrId) fetchRecentLogs(qrId);
+            if (qrId) {
+                fetchRecentLogs(qrId);
+
+                // Re-register FCM token on app load to ensure DB has the latest token
+                try {
+                    console.log('[Home] Requesting FCM token for doc:', qrId);
+                    const pushToken = await registerForPushNotificationsAsync();
+                    if (pushToken) {
+                        await firestore()
+                            .collection('qr_codes')
+                            .doc(qrId)
+                            .update({ fcm_token: pushToken });
+                        console.log('[Home] FCM token renewed successfully for doc:', qrId);
+                    } else {
+                        console.warn('[Home] No FCM token returned. Notifications may not work.');
+                    }
+                } catch (e) {
+                    console.error('[Home] Failed to renew FCM token:', e);
+                }
+            }
         };
         init();
 

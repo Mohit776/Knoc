@@ -62,6 +62,7 @@ def generate_blank_qr():
             "name": None,
             "location": None,
             "phone_number": None,
+            "fcm_token": None,
             "created_at": firestore.SERVER_TIMESTAMP,
         })
         db_status = f"✅ Successfully added `{qr_id}` to Firestore!"

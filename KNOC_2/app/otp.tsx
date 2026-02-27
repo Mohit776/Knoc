@@ -15,6 +15,7 @@ import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { auth, firestore } from '../lib/firebase';
 import { firebaseConfirmation } from './login';
+import { registerForPushNotificationsAsync } from '../lib/notifications';
 
 const colors = {
     primary: '#431BB8',
@@ -81,12 +82,39 @@ export default function OTPScreen() {
 
             if (!snapshot.empty) {
                 // User exists! Restore their session and skip onboarding
-                const existingData = snapshot.docs[0].data();
+                const existingDoc = snapshot.docs[0];
+                const existingData = existingDoc.data();
+                // IMPORTANT: Always use the Firestore document ID, NOT the qr_id data field.
+                // The document ID is what we use for .doc(id).update() calls later.
+                const docId = existingDoc.id;
 
+                // Request notification permissions and get FCM token
+                let pushToken: string | undefined;
+                try {
+                    pushToken = await registerForPushNotificationsAsync();
+                    console.log('[OTP] FCM token result:', pushToken ? pushToken.substring(0, 20) + '...' : 'NONE');
+                } catch (e) {
+                    console.error('[OTP] Failed to get push token during login', e);
+                }
+
+                // Update FCM token in database using document ID
+                if (pushToken) {
+                    try {
+                        await firestore()
+                            .collection('qr_codes')
+                            .doc(docId)
+                            .update({ fcm_token: pushToken });
+                        console.log('[OTP] FCM token saved to Firestore for doc:', docId);
+                    } catch (e) {
+                        console.error('[OTP] Failed to save FCM token to Firestore:', e);
+                    }
+                }
+
+                // Always store the document ID as linked_qr_id (not the qr_id field)
                 await AsyncStorage.multiSet([
                     ['has_onboarded', 'true'],
                     ['user_name', existingData.name || ''],
-                    ['linked_qr_id', existingData.qr_id || '']
+                    ['linked_qr_id', docId]
                 ]);
 
                 router.replace('/(Tabs)/home');

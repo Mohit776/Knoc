@@ -23,7 +23,9 @@ async function getQRData(qrId: string): Promise<QRData | null> {
 
 export default async function QRPage({ params }: { params: Promise<{ qr_id: string }> }) {
     const resolvedParams = await params;
-    const qrData = await getQRData(resolvedParams.qr_id);
+    // Use the URL param as the canonical document ID for all downstream operations
+    const docId = resolvedParams.qr_id;
+    const qrData = await getQRData(docId);
 
     if (!qrData) {
         notFound();
@@ -61,7 +63,7 @@ export default async function QRPage({ params }: { params: Promise<{ qr_id: stri
                     <div className="mb-4 px-4 py-3 bg-[#f4f3ff] rounded-xl border border-[#431BB8] border-opacity-20">
                         <p className="text-sm text-[#8E8E93] font-medium">Location</p>
                         <p className="text-base text-[#1A1A1A] font-semibold">{qrData.location || 'Unknown'}</p>
-                        <p className="text-xs text-[#926FF3] mt-1">QR ID: {qrData.qr_id}</p>
+                        <p className="text-xs text-[#926FF3] mt-1">QR ID: {docId}</p>
                     </div>
                 ) : (
                     <div className="mb-4 px-4 py-3 bg-amber-50 rounded-xl border border-amber-200">
@@ -72,8 +74,8 @@ export default async function QRPage({ params }: { params: Promise<{ qr_id: stri
                 {/* Spacer */}
                 <div className="flex-1" />
 
-                {/* Action Buttons Section */}
-                <ActionButtons qrId={qrData.qr_id} />
+                {/* Action Buttons — use document ID (URL param), NOT the qr_id data field */}
+                <ActionButtons qrId={docId} />
 
             </div>
         </div>
