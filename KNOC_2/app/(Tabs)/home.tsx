@@ -16,27 +16,12 @@ import { useRouter } from 'expo-router';
 import * as Notifications from 'expo-notifications';
 import type { EventSubscription } from 'expo-modules-core';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { LinearGradient } from 'expo-linear-gradient';
+import { useTheme } from '../../lib/themeContext';
 import { firestore } from '../../lib/firebase';
 import { registerForPushNotificationsAsync } from '../../lib/notifications';
 
 const { width } = Dimensions.get('window');
-
-const colors = {
-    primary: '#431BB8',
-    primaryLight: '#7B5CF0',
-    background: '#F2F2F7',
-    cardBg: '#FFFFFF',
-    statsBg: '#EDE9FF',
-    statsCard: '#DDDAFF',
-    textMain: '#1A1A1A',
-    textMuted: '#8E8E93',
-    textPrimary: '#431BB8',
-    ignore: '#E53935',
-    coming: '#43A047',
-    bannerGradientStart: '#431BB8',
-    bannerGradientEnd: '#8B5CF6',
-    separator: '#E5E5EA',
-};
 
 interface KnocLog {
     id: string;
@@ -51,10 +36,16 @@ interface ActiveKnock {
     logId: string;
     qrId: string;
     action: string;
+    visitorType: 'visitor' | 'delivery' | null;
+    visitorName?: string;
+    visitorMobile?: string;
+    deliveryApp?: string;
 }
 
 export default function HomeScreen() {
     const router = useRouter();
+    const { colors, isDark } = useTheme();
+    const styles = React.useMemo(() => getStyles(colors, isDark), [colors, isDark]);
     const [activeKnock, setActiveKnock] = useState<ActiveKnock | null>(null);
     const [recentLogs, setRecentLogs] = useState<KnocLog[]>([]);
     const [stats, setStats] = useState({ entry: 0, exit: 0, total: 0 });
@@ -253,8 +244,11 @@ export default function HomeScreen() {
                         logId: data.logId as string,
                         qrId: data.qrId as string,
                         action: (data.action as string) || 'Alarm',
+                        visitorType: (data.visitorType as 'visitor' | 'delivery') || null,
+                        visitorName: data.visitorName as string | undefined,
+                        visitorMobile: data.visitorMobile as string | undefined,
+                        deliveryApp: data.deliveryApp as string | undefined,
                     });
-                    // Refresh logs when a new notification comes in
                     if (linkedQrId) fetchRecentLogs(linkedQrId);
                 }
             }
@@ -269,6 +263,10 @@ export default function HomeScreen() {
                         logId: data.logId as string,
                         qrId: data.qrId as string,
                         action: (data.action as string) || 'Alarm',
+                        visitorType: (data.visitorType as 'visitor' | 'delivery') || null,
+                        visitorName: data.visitorName as string | undefined,
+                        visitorMobile: data.visitorMobile as string | undefined,
+                        deliveryApp: data.deliveryApp as string | undefined,
                     });
                     if (linkedQrId) fetchRecentLogs(linkedQrId);
                 }
@@ -347,7 +345,13 @@ export default function HomeScreen() {
                 <Text style={styles.welcomeText}>Welcome, {userName || locationName}</Text>
 
                 {/* Stats Card */}
-                <View style={styles.statsCard}>
+                <LinearGradient
+                    colors={['#C0AAFF', '#CDBCFF', '#F3EFFF']}
+                    locations={[0, 0.5, 1]}
+                    start={{ x: 0.5, y: 0 }}
+                    end={{ x: 0.5, y: 1 }}
+                    style={styles.statsCard}
+                >
                     {([
                         { label: 'Entry', value: stats.entry },
                         { label: 'Denied', value: stats.exit },
@@ -361,41 +365,101 @@ export default function HomeScreen() {
                             </View>
                         </View>
                     ))}
-                </View>
+                </LinearGradient>
 
                 {/* Knock Notification Banner */}
                 {activeKnock && (
-                    <View style={styles.banner}>
+                    <View style={styles.knockCard}>
 
-                        <Image
-                            source={require('../../assets/logo/Adobe Express - file1 2.png')}
-                            style={styles.bannerPerson}
-                            resizeMode="contain"
-                        />
-
-                        {/* Right — text + actions */}
-                        <View style={styles.bannerContent}>
-                            <Text style={styles.bannerTitle}>Someone is at your door</Text>
-                            <Text style={styles.bannerSubtitle}>
-                                Action: {activeKnock.action}
-                            </Text>
-                            <View style={styles.bannerActions}>
-                                <TouchableOpacity
-                                    style={styles.ignoreBtn}
-                                    activeOpacity={0.8}
-                                    onPress={handleIgnore}
-                                >
-                                    <Text style={styles.ignoreBtnText}>Ignore</Text>
-                                </TouchableOpacity>
-                                <TouchableOpacity
-                                    style={styles.comingBtn}
-                                    activeOpacity={0.8}
-                                    onPress={handleComing}
-                                >
-                                    <Text style={styles.comingBtnText}>Coming</Text>
-                                </TouchableOpacity>
-                            </View>
+                        {/* Card header — KNOC brand strip */}
+                        <View style={styles.knockCardHeader}>
+                            <Image
+                                source={require('../../assets/logo/Group 1171275857.png')}
+                                style={styles.knockCardLogo}
+                                resizeMode="contain"
+                            />
+                            <Text style={styles.knockCardNow}>now</Text>
                         </View>
+
+                        {/* Title */}
+                        <Text style={styles.knockCardTitle}>
+                            {activeKnock.visitorType === 'delivery'
+                                ? 'Request Delivery'
+                                : 'Request Entry Visiting'}
+                        </Text>
+
+                        {/* Circular avatar */}
+                        <View style={styles.knockAvatarWrap}>
+                            <Image
+                                source={
+                                    activeKnock.visitorType === 'delivery'
+                                        ? require('../../assets/logo/Ellipse 1174 (1).png')
+                                        : require('../../assets/logo/Ellipse 1174.png')
+                                }
+                                style={styles.knockAvatar}
+                                resizeMode="cover"
+                            />
+                        </View>
+
+                        {/* Divider */}
+                        <View style={styles.knockDivider} />
+
+                        {/* Info rows */}
+                        <View style={styles.knockInfoRows}>
+                            {activeKnock.visitorType === 'delivery' ? (
+                                <>
+                                    <View style={styles.knockInfoRow}>
+                                        <Text style={styles.knockInfoLabel}>Order:</Text>
+                                        <Text style={styles.knockInfoValue}>
+                                            {activeKnock.deliveryApp || 'Delivery'}
+                                        </Text>
+                                    </View>
+                                    <View style={styles.knockInfoRow}>
+                                        <Text style={styles.knockInfoLabel}>Access:</Text>
+                                        <Text style={styles.knockInfoAccess}>Scan Approved</Text>
+                                    </View>
+                                </>
+                            ) : (
+                                <>
+                                    <View style={styles.knockInfoRow}>
+                                        <Text style={styles.knockInfoLabel}>Name:</Text>
+                                        <Text style={styles.knockInfoValue}>
+                                            {activeKnock.visitorName || 'Visitor'}
+                                        </Text>
+                                    </View>
+                                    <View style={styles.knockInfoRow}>
+                                        <Text style={styles.knockInfoLabel}>Access:</Text>
+                                        <Text style={styles.knockInfoAccess}>Scan Approved</Text>
+                                    </View>
+                                </>
+                            )}
+                        </View>
+
+                        {/* Divider */}
+                        <View style={styles.knockDivider} />
+
+                        {/* Action buttons */}
+                        <View style={styles.knockBtnGroup}>
+                            <TouchableOpacity
+                                style={styles.knockPrimaryBtn}
+                                activeOpacity={0.85}
+                                onPress={handleComing}
+                            >
+                                <Text style={styles.knockPrimaryBtnText}>
+                                    {activeKnock.visitorType === 'delivery'
+                                        ? 'Leave Door'
+                                        : 'Open Door'}
+                                </Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity
+                                style={styles.knockDeclineBtn}
+                                activeOpacity={0.85}
+                                onPress={handleIgnore}
+                            >
+                                <Text style={styles.knockDeclineBtnText}>Decline</Text>
+                            </TouchableOpacity>
+                        </View>
+
                     </View>
                 )}
 
@@ -409,30 +473,18 @@ export default function HomeScreen() {
                         </View>
                     ) : (
                         recentLogs.map((log) => (
-                            <TouchableOpacity
+                            <View
                                 key={log.id}
                                 style={styles.visitRow}
-                                activeOpacity={0.75}
                             >
-                                <View style={styles.visitRowHighlight} />
-                                <View style={styles.visitLeft}>
-                                    <Text style={styles.visitIcon}>
-                                        {getActionIcon(log.action, log.response)}
-                                    </Text>
-                                    <View>
-                                        <Text style={styles.visitLabel}>
-                                            {log.action}
-                                            {log.response ? ` → ${log.response}` : ''}
-                                        </Text>
-                                        <Text style={styles.visitDate}>
-                                            {formatDate(log.created_at)}
-                                        </Text>
-                                    </View>
-                                </View>
-                                <Text style={styles.visitTime}>
-                                    {formatTime(log.created_at)}
+                                <Text style={styles.visitLabel}>
+                                    {log.action}
+                                    {log.response ? ` → ${log.response}` : ''}
                                 </Text>
-                            </TouchableOpacity>
+                                <Text style={styles.visitTime}>
+                                    Time {formatTime(log.created_at)}
+                                </Text>
+                            </View>
                         ))
                     )}
                 </View>
@@ -441,7 +493,7 @@ export default function HomeScreen() {
     );
 }
 
-const styles = StyleSheet.create({
+const getStyles = (colors: any, isDark: boolean) => StyleSheet.create({
     safeArea: {
         flex: 1,
         backgroundColor: colors.background,
@@ -479,7 +531,6 @@ const styles = StyleSheet.create({
 
     // Stats Card
     statsCard: {
-        backgroundColor: colors.statsBg,
         borderRadius: 16,
         flexDirection: 'row',
         justifyContent: 'space-around',
@@ -511,10 +562,10 @@ const styles = StyleSheet.create({
         borderLeftWidth: 2,
         borderBottomWidth: 3,
         borderRightWidth: 3,
-        borderTopColor: '#EDE8FF',
-        borderLeftColor: '#E4DEFF',
-        borderBottomColor: '#9B87D8',
-        borderRightColor: '#B0A0E0',
+        borderTopColor: isDark ? '#2C2C2E' : '#EDE8FF',
+        borderLeftColor: isDark ? '#3C3C3E' : '#E4DEFF',
+        borderBottomColor: isDark ? '#5C5C5E' : '#9B87D8',
+        borderRightColor: isDark ? '#4C4C4E' : '#B0A0E0',
         shadowColor: '#431BB8',
         shadowOffset: { width: 0, height: 5 },
         shadowOpacity: 0.18,
@@ -537,74 +588,134 @@ const styles = StyleSheet.create({
         color: colors.primary,
     },
 
-    // Banner
-    banner: {
-        backgroundColor: colors.bannerGradientStart,
-        borderRadius: 16,
+    // ── Knock notification card (visitor / delivery) ──
+    knockCard: {
+        backgroundColor: colors.cardBg,
+        borderRadius: 20,
+        marginBottom: 24,
+        overflow: 'hidden',
+        shadowColor: '#431BB8',
+        shadowOffset: { width: 0, height: 6 },
+        shadowOpacity: 0.12,
+        shadowRadius: 14,
+        elevation: 6,
+    },
+    knockCardHeader: {
+        backgroundColor: isDark ? '#2B2640' : '#EDE9FF',
         flexDirection: 'row',
         alignItems: 'center',
+        justifyContent: 'space-between',
         paddingHorizontal: 16,
-        paddingVertical: 18,
-        marginBottom: 28,
-        gap: 14,
-        overflow: 'hidden',
+        paddingTop: 14,
+        paddingBottom: 48,
+        borderTopLeftRadius: 20,
+        borderTopRightRadius: 20,
     },
-    bannerPerson: {
-        width: 85,
-        height: 125,
-        left: 5,
-        top: 3,
-        justifyContent: 'flex-end',
-        alignItems: 'center',
-        position: 'absolute',
+    knockCardLogo: {
+        width: 90,
+        height: 26,
     },
-    bannerContent: {
-        flex: 1,
-        gap: 8,
-        marginLeft: 75,
-    },
-    bannerTitle: {
-        fontSize: 15,
-        fontFamily: 'Gilroy-SemiBold',
-        color: '#FFFFFF',
-        textAlign: 'center',
-    },
-    bannerSubtitle: {
+    knockCardNow: {
         fontSize: 12,
         fontFamily: 'Gilroy-Regular',
-        color: 'rgba(255,255,255,0.7)',
+        color: colors.textMuted,
+    },
+    knockCardTitle: {
+        fontSize: 20,
+        fontFamily: 'Gilroy-Bold',
+        color: isDark ? '#FFFFFF' : '#1A1A1A',
         textAlign: 'center',
+        marginTop: -28,
+        marginBottom: 0,
+        paddingHorizontal: 16,
+        zIndex: 2,
     },
-    bannerActions: {
+    knockAvatarWrap: {
+        alignSelf: 'center',
+        width: 96,
+        height: 96,
+        borderRadius: 48,
+        backgroundColor: isDark ? '#433B6B' : '#D8D0F8',
+        overflow: 'hidden',
+        marginTop: 10,
+        marginBottom: 20,
+        borderWidth: 3,
+        borderColor: colors.cardBg,
+        shadowColor: '#431BB8',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.18,
+        shadowRadius: 8,
+        elevation: 5,
+    },
+    knockAvatar: {
+        width: '100%',
+        height: '100%',
+    },
+    knockDivider: {
+        height: 1,
+        backgroundColor: colors.separator,
+        marginHorizontal: 16,
+    },
+    knockInfoRows: {
+        paddingHorizontal: 20,
+        paddingVertical: 14,
+        gap: 8,
+    },
+    knockInfoRow: {
         flexDirection: 'row',
+        alignItems: 'center',
+        gap: 8,
+    },
+    knockInfoLabel: {
+        fontSize: 14,
+        fontFamily: 'Gilroy-Regular',
+        color: colors.textMuted,
+        width: 60,
+    },
+    knockInfoValue: {
+        fontSize: 14,
+        fontFamily: 'Gilroy-SemiBold',
+        color: colors.textMain,
+    },
+    knockInfoAccess: {
+        fontSize: 14,
+        fontFamily: 'Gilroy-SemiBold',
+        color: '#34C759',
+    },
+    knockBtnGroup: {
+        paddingHorizontal: 16,
+        paddingTop: 14,
+        paddingBottom: 18,
         gap: 10,
-        justifyContent: 'center',
     },
-    ignoreBtn: {
-        flex: 1,
-        backgroundColor: '#FFFFFF',
-        borderRadius: 8,
-        paddingVertical: 8,
+    knockPrimaryBtn: {
+        backgroundColor: '#431BB8',
+        borderRadius: 14,
+        paddingVertical: 15,
         alignItems: 'center',
+        shadowColor: '#431BB8',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.3,
+        shadowRadius: 8,
+        elevation: 4,
     },
-    ignoreBtnText: {
-        fontSize: 14,
-        fontFamily: 'Gilroy-SemiBold',
-        color: colors.ignore,
+    knockPrimaryBtnText: {
+        fontSize: 16,
+        fontFamily: 'Gilroy-Bold',
+        color: '#FFFFFF',
     },
-    comingBtn: {
-        flex: 1,
-        backgroundColor: 'transparent',
-        borderRadius: 8,
+    knockDeclineBtn: {
+        backgroundColor: colors.cardBg,
+        borderRadius: 14,
+        paddingVertical: 14,
+        alignItems: 'center',
         borderWidth: 1.5,
-        borderColor: colors.coming,
-        paddingVertical: 8,
-        alignItems: 'center',
+        borderColor: colors.separator,
     },
-    comingBtnText: {
-        fontSize: 14,
+    knockDeclineBtnText: {
+        fontSize: 16,
         fontFamily: 'Gilroy-SemiBold',
-        color: colors.coming,
+        color: '#E53935',
     },
 
     // Recently KNOC
@@ -615,59 +726,21 @@ const styles = StyleSheet.create({
         marginBottom: 12,
     },
     visitList: {
-        gap: 10,
+        gap: 0,
     },
     visitRow: {
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
-        paddingHorizontal: 16,
-        paddingVertical: 18,
-        borderRadius: 14,
-        backgroundColor: '#FFFFFF',
-        overflow: 'hidden',
-        borderTopWidth: 1.5,
-        borderLeftWidth: 1.5,
-        borderBottomWidth: 2.5,
-        borderRightWidth: 2.5,
-        borderTopColor: '#FFFFFF',
-        borderLeftColor: '#F0EEFF',
-        borderBottomColor: '#C8C0E8',
-        borderRightColor: '#D4CCF0',
-        shadowColor: '#431BB8',
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.10,
-        shadowRadius: 6,
-        elevation: 4,
-    },
-    visitRowHighlight: {
-        position: 'absolute',
-        top: 0,
-        left: 0,
-        right: 0,
-        height: 3,
-        backgroundColor: 'rgba(255,255,255,0.9)',
-        borderTopLeftRadius: 14,
-        borderTopRightRadius: 14,
-    },
-    visitLeft: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 12,
-    },
-    visitIcon: {
-        fontSize: 20,
+        paddingHorizontal: 4,
+        paddingVertical: 16,
+        borderBottomWidth: 1,
+        borderBottomColor: colors.separator,
     },
     visitLabel: {
         fontSize: 15,
         fontFamily: 'Gilroy-Medium',
         color: colors.textMain,
-    },
-    visitDate: {
-        fontSize: 12,
-        fontFamily: 'Gilroy-Regular',
-        color: colors.textMuted,
-        marginTop: 2,
     },
     visitTime: {
         fontSize: 14,

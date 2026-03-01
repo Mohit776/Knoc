@@ -9,6 +9,10 @@ export async function POST(request: Request, { params }: { params: Promise<{ qr_
     try {
         const body = await request.json();
         const action = body.action || 'Alarm';
+        const visitorType: string = body.visitorType || 'visitor'; // 'visitor' | 'delivery'
+        const deliveryApp: string | null = body.deliveryApp || null;
+        const visitorName: string | null = body.visitorName || null;
+        const visitorMobile: string | null = body.visitorMobile || null;
 
         // 1. Fetch the QR code record to get the FCM token
         const qrDoc = await db.collection('qr_codes').doc(qrId).get();
@@ -32,6 +36,10 @@ export async function POST(request: Request, { params }: { params: Promise<{ qr_
         const newLogRef = await knocLogsCol.add({
             qr_id: qrId,
             action: action,
+            visitor_type: visitorType,
+            ...(deliveryApp && { delivery_app: deliveryApp }),
+            ...(visitorName && { visitor_name: visitorName }),
+            ...(visitorMobile && { visitor_mobile: visitorMobile }),
             response: null,
             created_at: admin.firestore.FieldValue.serverTimestamp(),
             responded_at: null,
@@ -43,13 +51,19 @@ export async function POST(request: Request, { params }: { params: Promise<{ qr_
         const message = {
             token: fcmToken,
             notification: {
-                title: `Visitor at ${qrData?.location || 'your door'}!`,
-                body: `Someone pressed: ${action}`,
+                title: `${visitorType === 'delivery' ? '📦 Delivery Boy' : '👤 Visitor'} at ${qrData?.location || 'your door'}!`,
+                body: visitorType === 'delivery'
+                    ? `Via ${deliveryApp || 'a delivery service'} — ${action}`
+                    : `${visitorName || 'Someone'} (${visitorMobile || 'unknown'}) — ${action}`,
             },
             data: {
                 qrId,
                 action,
                 logId: logId,
+                visitorType,
+                ...(visitorName && { visitorName }),
+                ...(visitorMobile && { visitorMobile }),
+                ...(deliveryApp && { deliveryApp }),
             },
             android: {
                 priority: 'high' as const,
@@ -66,8 +80,10 @@ export async function POST(request: Request, { params }: { params: Promise<{ qr_
                 payload: {
                     aps: {
                         alert: {
-                            title: `Visitor at ${qrData?.location || 'your door'}!`,
-                            body: `Someone pressed: ${action}`,
+                            title: `${visitorType === 'delivery' ? '📦 Delivery Boy' : '👤 Visitor'} at ${qrData?.location || 'your door'}!`,
+                            body: visitorType === 'delivery'
+                                ? `Via ${deliveryApp || 'a delivery service'} — ${action}`
+                                : `${visitorName || 'Someone'} (${visitorMobile || 'unknown'}) — ${action}`,
                         },
                         sound: 'default',
                         'content-available': 1,

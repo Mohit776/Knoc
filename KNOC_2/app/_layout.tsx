@@ -3,6 +3,7 @@ import { useFonts } from 'expo-font';
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect } from 'react';
 import { View, Image, StyleSheet, Dimensions } from 'react-native';
+import { ThemeProvider } from '../lib/themeContext';
 
 const { width, height } = Dimensions.get('window');
 
@@ -40,12 +41,14 @@ export default function RootLayout() {
   }
 
   return (
-    <Stack screenOptions={{ headerShown: false }}>
-      <Stack.Screen name="index" />
-      <Stack.Screen name="(Tabs)" />
-      <Stack.Screen name="otp" />
-      <Stack.Screen name="onboard-qr" />
-    </Stack>
+    <ThemeProvider>
+      <Stack screenOptions={{ headerShown: false }}>
+        <Stack.Screen name="index" />
+        <Stack.Screen name="(Tabs)" />
+        <Stack.Screen name="otp" />
+        <Stack.Screen name="onboard-qr" />
+      </Stack>
+    </ThemeProvider>
   );
 }
 

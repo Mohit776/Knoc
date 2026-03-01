@@ -15,21 +15,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { firestore, auth } from '../../lib/firebase';
 
 import Constants from 'expo-constants';
-
-const colors = {
-    primary: '#431BB8',
-    background: '#F2F2F7',
-    cardBg: '#FFFFFF',
-    textMain: '#1A1A1A',
-    textMuted: '#8E8E93',
-    headerBorder: '#E5E5EA',
-    separator: '#E5E5EA',
-    avatarBg: '#EDE7FF',
-    avatarIcon: '#7B5CF0',
-    danger: '#FF3B30',
-    noteText: '#6B6B6B',
-    green: '#34C759',
-};
+import { useTheme } from '../../lib/themeContext';
 
 interface UserInfo {
     name: string;
@@ -40,6 +26,9 @@ interface UserInfo {
 
 export default function SettingsScreen() {
     const router = useRouter();
+    const { colors, themeMode: theme, setThemeMode: setTheme, isDark } = useTheme();
+    const styles = React.useMemo(() => getStyles(colors, isDark), [colors, isDark]);
+
     const [userInfo, setUserInfo] = useState<UserInfo>({
         name: '',
         phone: '',
@@ -154,20 +143,6 @@ export default function SettingsScreen() {
         );
     };
 
-    const InfoRow = ({ icon, label, value }: { icon: string; label: string; value: string }) => (
-        <View style={styles.infoRow}>
-            <View style={styles.infoIconWrap}>
-                <Ionicons name={icon as any} size={18} color={colors.primary} />
-            </View>
-            <View style={styles.infoText}>
-                <Text style={styles.infoLabel}>{label}</Text>
-                <Text style={styles.infoValue} numberOfLines={1}>
-                    {value || '—'}
-                </Text>
-            </View>
-        </View>
-    );
-
     return (
         <SafeAreaView style={styles.safeArea} edges={['top', 'bottom']}>
             {/* Header */}
@@ -191,71 +166,47 @@ export default function SettingsScreen() {
                     <ActivityIndicator color={colors.primary} style={{ marginTop: 40 }} />
                 ) : (
                     <>
-                        {/* Profile Card */}
-                        <View style={styles.profileCard}>
+                        {/* Profile Row */}
+                        <View style={styles.profileRow}>
                             <View style={styles.avatarCircle}>
-                                <Text style={styles.avatarInitial}>
-                                    {userInfo.name ? userInfo.name.charAt(0).toUpperCase() : '?'}
-                                </Text>
+                                <Ionicons name="person-outline" size={24} color={colors.avatarIcon} />
                             </View>
-                            <View style={{ flex: 1 }}>
-                                <Text style={styles.profileName} numberOfLines={1}>
-                                    {userInfo.name || 'Unknown User'}
-                                </Text>
-                                <Text style={styles.profilePhone} numberOfLines={1}>
-                                    {userInfo.phone || 'No phone'}
-                                </Text>
-                            </View>
+                            <Text style={styles.profileName} numberOfLines={1}>
+                                {userInfo.name || 'Your Name'}
+                            </Text>
                         </View>
 
-                        {/* Account Info */}
-                        <Text style={styles.sectionLabel}>Account</Text>
-                        <View style={styles.infoCard}>
-                            <InfoRow
-                                icon="call-outline"
-                                label="Phone Number"
-                                value={userInfo.phone}
-                            />
-                            <View style={styles.separator} />
-                            <InfoRow
-                                icon="person-outline"
-                                label="Name"
-                                value={userInfo.name}
-                            />
+                        {/* Theme Section */}
+                        <Text style={styles.sectionLabel}>Theme</Text>
+                        <View style={styles.themeCard}>
+                            {['Automatic', 'Light', 'Dark'].map((item, index, arr) => {
+                                const isSelected = theme === item;
+                                const isLast = index === arr.length - 1;
+                                return (
+                                    <TouchableOpacity
+                                        key={item}
+                                        style={[
+                                            styles.themeRow,
+                                            !isLast && styles.themeRowBorder,
+                                        ]}
+                                        onPress={() => setTheme(item as any)}
+                                        activeOpacity={0.7}
+                                    >
+                                        <Text style={styles.themeRowText}>{item}</Text>
+                                        <Ionicons
+                                            name={isSelected ? 'checkmark-circle-outline' : 'ellipse-outline'}
+                                            size={22}
+                                            color={isSelected ? colors.primary : '#C7C7CC'}
+                                        />
+                                    </TouchableOpacity>
+                                );
+                            })}
                         </View>
+                        <Text style={styles.themeNote}>
+                            Automatic is only supported on operating systems that allow you to control the system-wide color scheme
+                        </Text>
 
-                        {/* QR Info */}
-                        <Text style={styles.sectionLabel}>Linked QR Code</Text>
-                        <View style={styles.infoCard}>
-                            <InfoRow
-                                icon="qr-code-outline"
-                                label="QR ID"
-                                value={userInfo.qrId}
-                            />
-                            <View style={styles.separator} />
-                            <InfoRow
-                                icon="location-outline"
-                                label="Location"
-                                value={userInfo.location}
-                            />
-                        </View>
-
-                        {/* QR Status Badge */}
-                        {userInfo.qrId ? (
-                            <View style={styles.statusBadge}>
-                                <View style={styles.statusDot} />
-                                <Text style={styles.statusText}>QR code is active and linked</Text>
-                            </View>
-                        ) : (
-                            <View style={[styles.statusBadge, styles.statusBadgeWarn]}>
-                                <Ionicons name="warning-outline" size={14} color="#B45309" />
-                                <Text style={[styles.statusText, { color: '#B45309' }]}>
-                                    No QR code linked yet
-                                </Text>
-                            </View>
-                        )}
-
-                        {/* Logout */}
+                        {/* Logout Button */}
                         <TouchableOpacity
                             onPress={handleLogout}
                             style={styles.logoutButton}
@@ -263,18 +214,16 @@ export default function SettingsScreen() {
                             disabled={loggingOut}
                         >
                             {loggingOut ? (
-                                <ActivityIndicator color={colors.danger} />
+                                <ActivityIndicator color={colors.primary} />
                             ) : (
-                                <>
-                                    <Ionicons name="log-out-outline" size={18} color={colors.danger} />
-                                    <Text style={styles.logoutText}>Logout</Text>
-                                </>
+                                <Text style={styles.logoutText}>Logout</Text>
                             )}
                         </TouchableOpacity>
 
                         {/* App Version */}
                         <View style={styles.versionContainer}>
-                            <Text style={styles.versionLabel}>KNOC · v{appVersion}</Text>
+                            <Text style={styles.versionLabel}>App version</Text>
+                            <Text style={styles.versionLabel}>{appVersion}</Text>
                         </View>
                     </>
                 )}
@@ -283,7 +232,7 @@ export default function SettingsScreen() {
     );
 }
 
-const styles = StyleSheet.create({
+const getStyles = (colors: any, isDark: boolean) => StyleSheet.create({
     safeArea: {
         flex: 1,
         backgroundColor: colors.background,
@@ -294,16 +243,15 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         paddingHorizontal: 16,
-        height: 56,
-        backgroundColor: colors.background,
-        borderBottomWidth: 1,
-        borderBottomColor: colors.headerBorder,
-        gap: 10,
+        paddingTop: 12,
+        paddingBottom: 20,
+        backgroundColor: colors.cardBg,
+        gap: 16,
     },
     backButton: { padding: 2 },
     headerTitle: {
-        fontSize: 18,
-        fontFamily: 'Gilroy-Bold',
+        fontSize: 16,
+        fontFamily: 'Gilroy-SemiBold',
         color: colors.textMain,
     },
 
@@ -311,150 +259,100 @@ const styles = StyleSheet.create({
     scroll: { flex: 1 },
     scrollContent: {
         paddingHorizontal: 16,
-        paddingTop: 20,
+        paddingTop: 24,
         paddingBottom: 48,
     },
 
-    // Profile card
-    profileCard: {
+    // Profile Row
+    profileRow: {
         flexDirection: 'row',
         alignItems: 'center',
-        gap: 14,
-        backgroundColor: colors.cardBg,
-        borderRadius: 16,
-        paddingHorizontal: 16,
-        paddingVertical: 16,
-        marginBottom: 28,
+        gap: 16,
+        marginBottom: 32,
     },
     avatarCircle: {
-        width: 52,
-        height: 52,
-        borderRadius: 26,
-        backgroundColor: colors.avatarBg,
+        width: 36,
+        height: 36,
+        borderRadius: 18,
+        backgroundColor: colors.avatarProfileCircle,
         justifyContent: 'center',
         alignItems: 'center',
-    },
-    avatarInitial: {
-        fontSize: 22,
-        fontFamily: 'Gilroy-Bold',
-        color: colors.avatarIcon,
     },
     profileName: {
-        fontSize: 16,
-        fontFamily: 'Gilroy-SemiBold',
-        color: colors.textMain,
-    },
-    profilePhone: {
-        fontSize: 13,
-        fontFamily: 'Gilroy-Regular',
-        color: colors.textMuted,
-        marginTop: 2,
-    },
-
-    // Section label
-    sectionLabel: {
-        fontSize: 12,
-        fontFamily: 'Gilroy-Medium',
-        color: colors.textMuted,
-        marginBottom: 8,
-        marginLeft: 4,
-        textTransform: 'uppercase',
-        letterSpacing: 0.6,
-    },
-
-    // Info card
-    infoCard: {
-        backgroundColor: colors.cardBg,
-        borderRadius: 14,
-        overflow: 'hidden',
-        marginBottom: 20,
-    },
-    infoRow: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        paddingHorizontal: 16,
-        paddingVertical: 14,
-        gap: 12,
-    },
-    infoIconWrap: {
-        width: 32,
-        height: 32,
-        borderRadius: 8,
-        backgroundColor: '#F0ECFF',
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    infoText: { flex: 1 },
-    infoLabel: {
-        fontSize: 12,
-        fontFamily: 'Gilroy-Regular',
-        color: colors.textMuted,
-        marginBottom: 2,
-    },
-    infoValue: {
         fontSize: 15,
         fontFamily: 'Gilroy-SemiBold',
         color: colors.textMain,
     },
 
-    // Separator
-    separator: {
-        height: 1,
-        backgroundColor: colors.separator,
-        marginLeft: 60,
+    // Section label
+    sectionLabel: {
+        fontSize: 15,
+        fontFamily: 'Gilroy-Bold',
+        color: isDark ? '#FFFFFF' : '#4A4A4A',
+        marginBottom: 12,
     },
 
-    // Status badge
-    statusBadge: {
+    // Theme card
+    themeCard: {
+        backgroundColor: colors.cardBg,
+        borderRadius: 8,
+        borderWidth: 1,
+        borderColor: colors.borderMedium,
+        overflow: 'hidden',
+        marginBottom: 16,
+    },
+    themeRow: {
         flexDirection: 'row',
         alignItems: 'center',
-        gap: 6,
-        backgroundColor: '#E6F9EE',
-        borderRadius: 8,
-        paddingHorizontal: 12,
-        paddingVertical: 8,
-        marginBottom: 28,
+        justifyContent: 'space-between',
+        paddingHorizontal: 16,
+        paddingVertical: 14,
     },
-    statusBadgeWarn: {
-        backgroundColor: '#FFFBEB',
+    themeRowBorder: {
+        borderBottomWidth: 1,
+        borderBottomColor: colors.borderLight,
     },
-    statusDot: {
-        width: 8,
-        height: 8,
-        borderRadius: 4,
-        backgroundColor: colors.green,
-    },
-    statusText: {
-        fontSize: 13,
+    themeRowText: {
+        fontSize: 14,
         fontFamily: 'Gilroy-Medium',
-        color: '#1A7A3A',
+        color: colors.textMain,
+    },
+
+    // Theme note
+    themeNote: {
+        fontSize: 12,
+        fontFamily: 'Gilroy-Medium',
+        color: isDark ? '#98989E' : '#1A1A1A',
+        lineHeight: 16,
+        marginBottom: 48,
+        paddingRight: 20,
     },
 
     // Logout
     logoutButton: {
-        flexDirection: 'row',
-        alignItems: 'center',
         justifyContent: 'center',
-        gap: 8,
-        backgroundColor: '#FFF0F0',
-        borderRadius: 14,
-        height: 54,
-        marginBottom: 16,
+        alignItems: 'center',
+        backgroundColor: colors.cardBg,
+        borderRadius: 8,
+        borderWidth: 1,
+        borderColor: colors.borderMedium,
+        height: 48,
+        marginBottom: 24,
     },
     logoutText: {
-        fontSize: 16,
+        fontSize: 14,
         fontFamily: 'Gilroy-SemiBold',
-        color: colors.danger,
+        color: colors.primary,
     },
 
     // Version
     versionContainer: {
         alignItems: 'center',
-        paddingTop: 4,
+        gap: 4,
     },
     versionLabel: {
-        fontSize: 13,
-        fontFamily: 'Gilroy-Regular',
-        color: colors.textMuted,
+        fontSize: 14,
+        fontFamily: 'Gilroy-Medium',
+        color: isDark ? '#98989E' : '#4A4A4A',
     },
 });

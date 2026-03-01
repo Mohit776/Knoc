@@ -20,11 +20,20 @@ load_dotenv()
 BASE_URL = os.getenv("BASE_URL")
 
 # ── Firebase Initialization ──────────────────────────────────────────────────
+import json as _json
+
 FIREBASE_SERVICE_ACCOUNT = os.getenv("FIREBASE_SERVICE_ACCOUNT", "firebase-service-account.json")
 
 if not firebase_admin._apps:
     try:
-        cred = credentials.Certificate(FIREBASE_SERVICE_ACCOUNT)
+        # If the env var looks like JSON (starts with '{'), parse it directly.
+        # This is what Render sets when you paste the JSON into the env var field.
+        # Locally, this falls back to reading from the firebase-service-account.json file.
+        if FIREBASE_SERVICE_ACCOUNT.strip().startswith("{"):
+            service_account_info = _json.loads(FIREBASE_SERVICE_ACCOUNT)
+            cred = credentials.Certificate(service_account_info)
+        else:
+            cred = credentials.Certificate(FIREBASE_SERVICE_ACCOUNT)
         firebase_admin.initialize_app(cred)
     except Exception as e:
         st.error(f"❌ Could not initialize Firebase: {e}")
