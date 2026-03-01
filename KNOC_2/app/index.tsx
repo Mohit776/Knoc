@@ -3,6 +3,7 @@ import { Redirect } from 'expo-router';
 import { View, ActivityIndicator } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { auth } from '../lib/firebase';
+import { onAuthStateChanged } from '@react-native-firebase/auth';
 
 export default function Index() {
   const [firebaseUser, setFirebaseUser] = useState<any>(null);
@@ -10,8 +11,8 @@ export default function Index() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Listen for Firebase auth state changes
-    const unsubscribe = auth().onAuthStateChanged(async (user) => {
+    // Listen for Firebase auth state changes (modular API)
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
       setFirebaseUser(user);
 
       const onboardRes = await AsyncStorage.getItem('has_onboarded');
@@ -43,4 +44,3 @@ export default function Index() {
   // Already onboarded -> jump to home
   return <Redirect href="/(Tabs)/home" />;
 }
-

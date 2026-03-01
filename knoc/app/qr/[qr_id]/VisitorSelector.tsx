@@ -42,6 +42,7 @@ export default function VisitorSelector({ qrId, location }: Props) {
     const [selectedApp, setSelectedApp] = useState<string | null>(null);
     const [fullName, setFullName] = useState('');
     const [mobile, setMobile] = useState('');
+    const [purpose, setPurpose] = useState('');
 
     const locationLabel = location || 'Main Entrance';
 
@@ -307,10 +308,10 @@ export default function VisitorSelector({ qrId, location }: Props) {
                         }}
                     />
                     <input
-                        type="tel"
-                        placeholder="Mobile Number"
-                        value={mobile}
-                        onChange={(e) => setMobile(e.target.value)}
+                        type="text"
+                        placeholder="purpose of visit"
+                        value={purpose}
+                        onChange={(e) => setPurpose(e.target.value)}
                         style={{
                             width: '100%',
                             height: 56,
@@ -343,7 +344,7 @@ export default function VisitorSelector({ qrId, location }: Props) {
                     qrId={qrId}
                     visitorType="visitor"
                     visitorName={fullName}
-                    visitorMobile={mobile}
+                    visitorPurpose={purpose}
                     visitorMode
                 />
 

@@ -5,17 +5,19 @@ import {
     TextInput,
     TouchableOpacity,
     StyleSheet,
-    SafeAreaView,
     KeyboardAvoidingView,
     Platform,
     Image,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { auth, firestore } from '../lib/firebase';
+import { auth, db } from '../lib/firebase';
+import { signInWithPhoneNumber } from '@react-native-firebase/auth';
+import { collection, query, where, getDocs, doc, limit } from '@react-native-firebase/firestore';
 import { firebaseConfirmation } from './login';
-import { registerForPushNotificationsAsync } from '../lib/notifications';
+import { useNotification } from '../lib/NotificationProvider';
 
 const colors = {
     primary: '#431BB8',
@@ -28,6 +30,7 @@ const colors = {
 
 export default function OTPScreen() {
     const router = useRouter();
+    const { triggerSync } = useNotification();
     const { phone } = useLocalSearchParams<{ phone: string }>();
     const [otp, setOtp] = useState(['', '', '', '', '', '']);
     const [loading, setLoading] = useState(false);
@@ -74,41 +77,20 @@ export default function OTPScreen() {
 
             // Check if user is already linked in the database
             const fullPhoneFormatted = `+91${rawPhone}`;
-            const snapshot = await firestore()
-                .collection('qr_codes')
-                .where('phone_number', '==', fullPhoneFormatted)
-                .limit(1)
-                .get();
+            const q = query(
+                collection(db, 'qr_codes'),
+                where('phone_number', '==', fullPhoneFormatted),
+                limit(1)
+            );
+            const snapshot = await getDocs(q);
 
             if (!snapshot.empty) {
                 // User exists! Restore their session and skip onboarding
                 const existingDoc = snapshot.docs[0];
                 const existingData = existingDoc.data();
                 // IMPORTANT: Always use the Firestore document ID, NOT the qr_id data field.
-                // The document ID is what we use for .doc(id).update() calls later.
+                // The document ID is what we use for updateDoc(doc(db, ...)) calls later.
                 const docId = existingDoc.id;
-
-                // Request notification permissions and get FCM token
-                let pushToken: string | undefined;
-                try {
-                    pushToken = await registerForPushNotificationsAsync();
-                    console.log('[OTP] FCM token result:', pushToken ? pushToken.substring(0, 20) + '...' : 'NONE');
-                } catch (e) {
-                    console.error('[OTP] Failed to get push token during login', e);
-                }
-
-                // Update FCM token in database using document ID
-                if (pushToken) {
-                    try {
-                        await firestore()
-                            .collection('qr_codes')
-                            .doc(docId)
-                            .update({ fcm_token: pushToken });
-                        console.log('[OTP] FCM token saved to Firestore for doc:', docId);
-                    } catch (e) {
-                        console.error('[OTP] Failed to save FCM token to Firestore:', e);
-                    }
-                }
 
                 // Always store the document ID as linked_qr_id (not the qr_id field)
                 await AsyncStorage.multiSet([
@@ -116,6 +98,9 @@ export default function OTPScreen() {
                     ['user_name', existingData.name || ''],
                     ['linked_qr_id', docId]
                 ]);
+
+                // Sync FCM token to Firestore (centralized — NotificationProvider)
+                await triggerSync();
 
                 router.replace('/(Tabs)/home');
                 return;
@@ -141,7 +126,7 @@ export default function OTPScreen() {
         if (!phone) return;
         try {
             // Re-send OTP via Firebase
-            await auth().signInWithPhoneNumber(phone, true);
+            await signInWithPhoneNumber(auth, phone, undefined, true);
             alert('OTP sent again successfully!');
         } catch (err: any) {
             console.error('Resend error:', err);

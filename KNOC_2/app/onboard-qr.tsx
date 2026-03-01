@@ -15,8 +15,9 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import { firestore } from '../lib/firebase';
-import { registerForPushNotificationsAsync } from '../lib/notifications';
+import { db } from '../lib/firebase';
+import { doc, getDoc, updateDoc } from '@react-native-firebase/firestore';
+import { useNotification } from '../lib/NotificationProvider';
 
 const { width } = Dimensions.get('window');
 
@@ -34,6 +35,7 @@ const colors = {
 
 export default function OnboardQRScreen() {
     const router = useRouter();
+    const { triggerSync } = useNotification();
     const [qrCodeId, setQrCodeId] = useState('');
     const [name, setName] = useState('');
     const [location, setLocation] = useState('');
@@ -58,12 +60,9 @@ export default function OnboardQRScreen() {
 
         try {
             // 1. Check if the QR code exists in the database
-            const qrDoc = await firestore()
-                .collection('qr_codes')
-                .doc(qrCodeId.trim())
-                .get();
+            const qrDoc = await getDoc(doc(db, 'qr_codes', qrCodeId.trim()));
 
-            if (!qrDoc.exists) {
+            if (!qrDoc.exists()) {
                 Alert.alert(
                     'QR Code Not Found',
                     'This QR Code ID does not exist in our system. Please check the ID and try again.'
@@ -88,38 +87,16 @@ export default function OnboardQRScreen() {
             const guestPhone = await AsyncStorage.getItem('guest_phone');
             const phoneToSave = guestPhone ? `+91${guestPhone}` : null;
 
-            // 4. Request notification permissions and get FCM token
-            console.log('[Onboard] Requesting notification permissions...');
-            let pushToken: string | undefined;
-            try {
-                pushToken = await registerForPushNotificationsAsync();
-                console.log('[Onboard] FCM token result:', pushToken ? pushToken.substring(0, 20) + '...' : 'NONE');
-            } catch (tokenError) {
-                console.error('[Onboard] Error getting push token:', tokenError);
-            }
-
-            if (!pushToken) {
-                // Warn user but don't block onboarding
-                Alert.alert(
-                    'Notifications Disabled',
-                    'We could not enable push notifications. You may miss important knoc alerts. You can enable notifications later from your phone\'s Settings > Apps > KNOC > Notifications.',
-                );
-            }
-
-            // 5. Update the QR code record with user info, name and push token
+            // 4. Update the QR code record with user info and name
             const docIdToUpdate = qrCodeId.trim();
-            console.log('[Onboard] Updating Firestore doc:', docIdToUpdate, 'with FCM token:', pushToken ? pushToken.substring(0, 20) + '...' : 'NULL');
-            await firestore()
-                .collection('qr_codes')
-                .doc(docIdToUpdate)
-                .update({
-                    phone_number: phoneToSave,
-                    location: location.trim(),
-                    name: name.trim(),
-                    fcm_token: pushToken || null,
-                });
+            console.log('[Onboard] Updating Firestore doc:', docIdToUpdate);
+            await updateDoc(doc(db, 'qr_codes', docIdToUpdate), {
+                phone_number: phoneToSave,
+                location: location.trim(),
+                name: name.trim(),
+            });
 
-            console.log('[Onboard] QR code updated successfully. Token saved:', !!pushToken, 'Doc ID:', docIdToUpdate);
+            console.log('[Onboard] QR code updated successfully. Doc ID:', docIdToUpdate);
 
             // Mark onboarding as complete and save name + qr_id to session
             await AsyncStorage.multiSet([
@@ -127,6 +104,9 @@ export default function OnboardQRScreen() {
                 ['user_name', name.trim()],
                 ['linked_qr_id', qrCodeId.trim()],
             ]);
+
+            // Sync FCM token to Firestore (centralized — NotificationProvider)
+            await triggerSync();
 
             // 5. Success! Navigate to the home screen
             Alert.alert(

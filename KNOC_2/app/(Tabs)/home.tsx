@@ -18,10 +18,11 @@ import type { EventSubscription } from 'expo-modules-core';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useTheme } from '../../lib/themeContext';
-import { firestore } from '../../lib/firebase';
-import { registerForPushNotificationsAsync } from '../../lib/notifications';
+import { db } from '../../lib/firebase';
+import { collection, query, where, getDocs, doc, updateDoc, serverTimestamp, limit } from '@react-native-firebase/firestore';
 
 const { width } = Dimensions.get('window');
+const LOGS_PER_PAGE = 10;
 
 interface KnocLog {
     id: string;
@@ -38,7 +39,7 @@ interface ActiveKnock {
     action: string;
     visitorType: 'visitor' | 'delivery' | null;
     visitorName?: string;
-    visitorMobile?: string;
+    visitorPurpose?: string;
     deliveryApp?: string;
 }
 
@@ -48,13 +49,23 @@ export default function HomeScreen() {
     const styles = React.useMemo(() => getStyles(colors, isDark), [colors, isDark]);
     const [activeKnock, setActiveKnock] = useState<ActiveKnock | null>(null);
     const [recentLogs, setRecentLogs] = useState<KnocLog[]>([]);
-    const [stats, setStats] = useState({ entry: 0, exit: 0, total: 0 });
     const [refreshing, setRefreshing] = useState(false);
+    const [visibleLogCount, setVisibleLogCount] = useState(LOGS_PER_PAGE);
     const [linkedQrId, setLinkedQrId] = useState<string | null>(null);
     const [locationName, setLocationName] = useState<string>('Home');
     const [userName, setUserName] = useState<string>('');
     const notificationListener = useRef<EventSubscription | undefined>(undefined);
     const responseListener = useRef<EventSubscription | undefined>(undefined);
+
+    // Refs to avoid stale closures in notification listeners
+    const routerRef = useRef(router);
+    const linkedQrIdRef = useRef(linkedQrId);
+    // Track the last notification response we handled to avoid double-navigation
+    const lastHandledNotificationId = useRef<string | null>(null);
+    // Guard against concurrent/duplicate fetches
+    const fetchInProgressRef = useRef(false);
+    useEffect(() => { routerRef.current = router; }, [router]);
+    useEffect(() => { linkedQrIdRef.current = linkedQrId; }, [linkedQrId]);
 
     // Load name + QR ID from AsyncStorage (set during onboarding) and sync from DB if needed
     const loadLinkedQr = useCallback(async () => {
@@ -77,16 +88,17 @@ export default function HomeScreen() {
             let qrId: string | null = null;
 
             if (!qrId && guestPhone) {
-                const snapshot = await firestore()
-                    .collection('qr_codes')
-                    .where('phone_number', '==', `+91${guestPhone}`)
-                    .limit(1)
-                    .get();
+                const q = query(
+                    collection(db, 'qr_codes'),
+                    where('phone_number', '==', `+91${guestPhone}`),
+                    limit(1)
+                );
+                const snapshot = await getDocs(q);
 
                 if (!snapshot.empty) {
                     const data = snapshot.docs[0].data();
                     // IMPORTANT: Use the Firestore document ID, not the qr_id data field.
-                    // This ensures .doc(qrId).update() calls work correctly.
+                    // This ensures updateDoc(doc(db, ...)) calls work correctly.
                     const docId = snapshot.docs[0].id;
                     qrId = docId;
                     setLocationName(data.location || 'Home');
@@ -105,24 +117,32 @@ export default function HomeScreen() {
     }, []);
 
     // Fetch recent knoc logs from Firestore
+    // NOTE: qrId is passed as a parameter, so no state deps needed
     const fetchRecentLogs = useCallback(async (qrId: string) => {
         const id = qrId;
         if (!id) return;
+        // Prevent concurrent duplicate fetches
+        if (fetchInProgressRef.current) {
+            console.log('[Home] Fetch already in progress, skipping duplicate for qr_id:', id);
+            return;
+        }
+        fetchInProgressRef.current = true;
 
         try {
             console.log('[Home] Fetching logs for qr_id:', id);
-            const snapshot = await firestore()
-                .collection('knoc_logs')
-                .where('qr_id', '==', id)
-                .limit(20)
-                .get();
+            const q = query(
+                collection(db, 'knoc_logs'),
+                where('qr_id', '==', id),
+                limit(20)
+            );
+            const snapshot = await getDocs(q);
 
             console.log('[Home] Logs fetched, count:', snapshot.docs.length);
 
-            let logs: KnocLog[] = snapshot.docs.map(doc => {
-                const d = doc.data();
+            let logs: KnocLog[] = snapshot.docs.map((docSnap: any) => {
+                const d = docSnap.data();
                 return {
-                    id: doc.id,
+                    id: docSnap.id,
                     qr_id: d.qr_id,
                     action: d.action,
                     response: d.response || null,
@@ -135,38 +155,23 @@ export default function HomeScreen() {
 
             console.log('[Home] Parsed logs:', logs);
             setRecentLogs(logs);
-
-            // Compute stats
-            const entryCount = logs.filter(
-                (l: KnocLog) => l.action === 'Entry' || l.response === 'coming'
-            ).length;
-            const exitCount = logs.filter(
-                (l: KnocLog) => l.action === 'No Entry' || l.response === 'ignored'
-            ).length;
-
-            setStats({
-                entry: entryCount,
-                exit: exitCount,
-                total: logs.length,
-            });
         } catch (e: any) {
             console.error('[Home] Error fetching logs:', e);
             Alert.alert('Fetching Error', e.message);
+        } finally {
+            fetchInProgressRef.current = false;
         }
-    }, [linkedQrId]);
+    }, []);
 
     // Handle Coming button press
     const handleComing = async () => {
         if (!activeKnock) return;
 
         try {
-            await firestore()
-                .collection('knoc_logs')
-                .doc(activeKnock.logId)
-                .update({
-                    response: 'coming',
-                    responded_at: firestore.FieldValue.serverTimestamp(),
-                });
+            await updateDoc(doc(db, 'knoc_logs', activeKnock.logId), {
+                response: 'coming',
+                responded_at: serverTimestamp(),
+            });
 
             setActiveKnock(null);
             // Refresh the logs and stats
@@ -182,13 +187,10 @@ export default function HomeScreen() {
         if (!activeKnock) return;
 
         try {
-            await firestore()
-                .collection('knoc_logs')
-                .doc(activeKnock.logId)
-                .update({
-                    response: 'ignored',
-                    responded_at: firestore.FieldValue.serverTimestamp(),
-                });
+            await updateDoc(doc(db, 'knoc_logs', activeKnock.logId), {
+                response: 'ignored',
+                responded_at: serverTimestamp(),
+            });
 
             setActiveKnock(null);
             if (linkedQrId) fetchRecentLogs(linkedQrId);
@@ -199,14 +201,16 @@ export default function HomeScreen() {
 
     const onRefresh = useCallback(async () => {
         setRefreshing(true);
-        if (linkedQrId) {
-            await fetchRecentLogs(linkedQrId);
+        setVisibleLogCount(LOGS_PER_PAGE);
+        const currentQrId = linkedQrIdRef.current;
+        if (currentQrId) {
+            await fetchRecentLogs(currentQrId);
         } else {
             const qrId = await loadLinkedQr();
             if (qrId) await fetchRecentLogs(qrId);
         }
         setRefreshing(false);
-    }, [linkedQrId]);
+    }, [fetchRecentLogs, loadLinkedQr]);
 
     // Initialize: load QR, fetch logs, set up notification listeners
     useEffect(() => {
@@ -214,23 +218,6 @@ export default function HomeScreen() {
             const qrId = await loadLinkedQr();
             if (qrId) {
                 fetchRecentLogs(qrId);
-
-                // Re-register FCM token on app load to ensure DB has the latest token
-                try {
-                    console.log('[Home] Requesting FCM token for doc:', qrId);
-                    const pushToken = await registerForPushNotificationsAsync();
-                    if (pushToken) {
-                        await firestore()
-                            .collection('qr_codes')
-                            .doc(qrId)
-                            .update({ fcm_token: pushToken });
-                        console.log('[Home] FCM token renewed successfully for doc:', qrId);
-                    } else {
-                        console.warn('[Home] No FCM token returned. Notifications may not work.');
-                    }
-                } catch (e) {
-                    console.error('[Home] Failed to renew FCM token:', e);
-                }
             }
         };
         init();
@@ -240,16 +227,30 @@ export default function HomeScreen() {
             (notification) => {
                 const data = notification.request.content.data;
                 if (data?.logId && data?.qrId) {
-                    setActiveKnock({
+                    const knockData = {
                         logId: data.logId as string,
                         qrId: data.qrId as string,
                         action: (data.action as string) || 'Alarm',
-                        visitorType: (data.visitorType as 'visitor' | 'delivery') || null,
-                        visitorName: data.visitorName as string | undefined,
-                        visitorMobile: data.visitorMobile as string | undefined,
-                        deliveryApp: data.deliveryApp as string | undefined,
+                        visitorType: (data.visitorType as string) || '',
+                        visitorName: (data.visitorName as string) || '',
+                        visitorPurpose: (data.visitorPurpose as string) || '',
+                        deliveryApp: (data.deliveryApp as string) || '',
+                    };
+                    setActiveKnock({
+                        logId: knockData.logId,
+                        qrId: knockData.qrId,
+                        action: knockData.action,
+                        visitorType: (knockData.visitorType as 'visitor' | 'delivery') || null,
+                        visitorName: knockData.visitorName,
+                        visitorPurpose: knockData.visitorPurpose,
+                        deliveryApp: knockData.deliveryApp,
                     });
-                    if (linkedQrId) fetchRecentLogs(linkedQrId);
+                    // Auto-navigate to full-screen knock detail
+                    routerRef.current.push({
+                        pathname: '/knock-detail' as any,
+                        params: knockData,
+                    });
+                    if (linkedQrIdRef.current) fetchRecentLogs(linkedQrIdRef.current);
                 }
             }
         );
@@ -257,18 +258,39 @@ export default function HomeScreen() {
         // Listen for when user taps a notification (app was in background/killed)
         responseListener.current = Notifications.addNotificationResponseReceivedListener(
             (response) => {
+                const notificationId = response.notification.request.identifier;
+                // Skip if this notification was already handled (e.g. by cold-start handler in _layout.tsx)
+                if (lastHandledNotificationId.current === notificationId) {
+                    console.log('[Home] Notification already handled, skipping:', notificationId);
+                    return;
+                }
+                lastHandledNotificationId.current = notificationId;
+
                 const data = response.notification.request.content.data;
                 if (data?.logId && data?.qrId) {
-                    setActiveKnock({
+                    const knockData = {
                         logId: data.logId as string,
                         qrId: data.qrId as string,
                         action: (data.action as string) || 'Alarm',
-                        visitorType: (data.visitorType as 'visitor' | 'delivery') || null,
-                        visitorName: data.visitorName as string | undefined,
-                        visitorMobile: data.visitorMobile as string | undefined,
-                        deliveryApp: data.deliveryApp as string | undefined,
+                        visitorType: (data.visitorType as string) || '',
+                        visitorName: (data.visitorName as string) || '',
+                        visitorPurpose: (data.visitorPurpose as string) || '',
+                        deliveryApp: (data.deliveryApp as string) || '',
+                    };
+                    setActiveKnock({
+                        logId: knockData.logId,
+                        qrId: knockData.qrId,
+                        action: knockData.action,
+                        visitorType: (knockData.visitorType as 'visitor' | 'delivery') || null,
+                        visitorName: knockData.visitorName,
+                        visitorPurpose: knockData.visitorPurpose,
+                        deliveryApp: knockData.deliveryApp,
                     });
-                    if (linkedQrId) fetchRecentLogs(linkedQrId);
+                    routerRef.current.push({
+                        pathname: '/knock-detail' as any,
+                        params: knockData,
+                    });
+                    if (linkedQrIdRef.current) fetchRecentLogs(linkedQrIdRef.current);
                 }
             }
         );
@@ -314,6 +336,26 @@ export default function HomeScreen() {
     // Pad number like "01", "12"
     const padNumber = (n: number) => n.toString().padStart(2, '0');
 
+    // Filter logs to only show today's entries
+    const todayLogs = React.useMemo(() => {
+        const today = new Date().toDateString();
+        return recentLogs.filter(log => {
+            if (!log.created_at) return false;
+            return new Date(log.created_at).toDateString() === today;
+        });
+    }, [recentLogs]);
+
+    // Derive stats from today's logs only
+    const todayStats = React.useMemo(() => {
+        const entry = todayLogs.filter(
+            (l) => l.action === 'Entry' || l.response === 'coming'
+        ).length;
+        const exit = todayLogs.filter(
+            (l) => l.action === 'No Entry' || l.response === 'ignored'
+        ).length;
+        return { entry, exit, total: todayLogs.length };
+    }, [todayLogs]);
+
     return (
         <SafeAreaView style={styles.safeArea} edges={['top']}>
             {/* Header */}
@@ -353,9 +395,9 @@ export default function HomeScreen() {
                     style={styles.statsCard}
                 >
                     {([
-                        { label: 'Entry', value: stats.entry },
-                        { label: 'Denied', value: stats.exit },
-                        { label: 'Total', value: stats.total },
+                        { label: 'Entry', value: todayStats.entry },
+                        { label: 'Denied', value: todayStats.exit },
+                        { label: 'Total', value: todayStats.total },
                     ] as const).map((item) => (
                         <View key={item.label} style={styles.statItem}>
                             <Text style={styles.statLabel}>{item.label}</Text>
@@ -367,125 +409,43 @@ export default function HomeScreen() {
                     ))}
                 </LinearGradient>
 
-                {/* Knock Notification Banner */}
-                {activeKnock && (
-                    <View style={styles.knockCard}>
 
-                        {/* Card header — KNOC brand strip */}
-                        <View style={styles.knockCardHeader}>
-                            <Image
-                                source={require('../../assets/logo/Group 1171275857.png')}
-                                style={styles.knockCardLogo}
-                                resizeMode="contain"
-                            />
-                            <Text style={styles.knockCardNow}>now</Text>
-                        </View>
 
-                        {/* Title */}
-                        <Text style={styles.knockCardTitle}>
-                            {activeKnock.visitorType === 'delivery'
-                                ? 'Request Delivery'
-                                : 'Request Entry Visiting'}
-                        </Text>
-
-                        {/* Circular avatar */}
-                        <View style={styles.knockAvatarWrap}>
-                            <Image
-                                source={
-                                    activeKnock.visitorType === 'delivery'
-                                        ? require('../../assets/logo/Ellipse 1174 (1).png')
-                                        : require('../../assets/logo/Ellipse 1174.png')
-                                }
-                                style={styles.knockAvatar}
-                                resizeMode="cover"
-                            />
-                        </View>
-
-                        {/* Divider */}
-                        <View style={styles.knockDivider} />
-
-                        {/* Info rows */}
-                        <View style={styles.knockInfoRows}>
-                            {activeKnock.visitorType === 'delivery' ? (
-                                <>
-                                    <View style={styles.knockInfoRow}>
-                                        <Text style={styles.knockInfoLabel}>Order:</Text>
-                                        <Text style={styles.knockInfoValue}>
-                                            {activeKnock.deliveryApp || 'Delivery'}
-                                        </Text>
-                                    </View>
-                                    <View style={styles.knockInfoRow}>
-                                        <Text style={styles.knockInfoLabel}>Access:</Text>
-                                        <Text style={styles.knockInfoAccess}>Scan Approved</Text>
-                                    </View>
-                                </>
-                            ) : (
-                                <>
-                                    <View style={styles.knockInfoRow}>
-                                        <Text style={styles.knockInfoLabel}>Name:</Text>
-                                        <Text style={styles.knockInfoValue}>
-                                            {activeKnock.visitorName || 'Visitor'}
-                                        </Text>
-                                    </View>
-                                    <View style={styles.knockInfoRow}>
-                                        <Text style={styles.knockInfoLabel}>Access:</Text>
-                                        <Text style={styles.knockInfoAccess}>Scan Approved</Text>
-                                    </View>
-                                </>
-                            )}
-                        </View>
-
-                        {/* Divider */}
-                        <View style={styles.knockDivider} />
-
-                        {/* Action buttons */}
-                        <View style={styles.knockBtnGroup}>
-                            <TouchableOpacity
-                                style={styles.knockPrimaryBtn}
-                                activeOpacity={0.85}
-                                onPress={handleComing}
-                            >
-                                <Text style={styles.knockPrimaryBtnText}>
-                                    {activeKnock.visitorType === 'delivery'
-                                        ? 'Leave Door'
-                                        : 'Open Door'}
-                                </Text>
-                            </TouchableOpacity>
-                            <TouchableOpacity
-                                style={styles.knockDeclineBtn}
-                                activeOpacity={0.85}
-                                onPress={handleIgnore}
-                            >
-                                <Text style={styles.knockDeclineBtnText}>Decline</Text>
-                            </TouchableOpacity>
-                        </View>
-
-                    </View>
-                )}
-
-                {/* Recently KNOC */}
-                <Text style={styles.sectionTitle}>Recently KNOC</Text>
+                {/* Today's KNOC */}
+                <Text style={styles.sectionTitle}>Today's KNOC</Text>
                 <View style={styles.visitList}>
-                    {recentLogs.length === 0 ? (
+                    {todayLogs.length === 0 ? (
                         <View style={styles.emptyState}>
                             <Ionicons name="notifications-off-outline" size={32} color={colors.textMuted} />
-                            <Text style={styles.emptyText}>No knoc activity yet</Text>
+                            <Text style={styles.emptyText}>No knoc activity today</Text>
                         </View>
                     ) : (
-                        recentLogs.map((log) => (
-                            <View
-                                key={log.id}
-                                style={styles.visitRow}
-                            >
-                                <Text style={styles.visitLabel}>
-                                    {log.action}
-                                    {log.response ? ` → ${log.response}` : ''}
-                                </Text>
-                                <Text style={styles.visitTime}>
-                                    Time {formatTime(log.created_at)}
-                                </Text>
-                            </View>
-                        ))
+                        <>
+                            {todayLogs.slice(0, visibleLogCount).map((log) => (
+                                <View
+                                    key={log.id}
+                                    style={styles.visitRow}
+                                >
+                                    <Text style={styles.visitLabel}>
+                                        {log.action}
+                                        {log.response ? ` → ${log.response}` : ''}
+                                    </Text>
+                                    <Text style={styles.visitTime}>
+                                        Time {formatTime(log.created_at)}
+                                    </Text>
+                                </View>
+                            ))}
+                            {visibleLogCount < todayLogs.length && (
+                                <TouchableOpacity
+                                    style={styles.showMoreBtn}
+                                    activeOpacity={0.7}
+                                    onPress={() => setVisibleLogCount(prev => prev + LOGS_PER_PAGE)}
+                                >
+                                    <Text style={styles.showMoreText}>Show More</Text>
+                                    <Ionicons name="chevron-down" size={16} color={colors.primary} />
+                                </TouchableOpacity>
+                            )}
+                        </>
                     )}
                 </View>
             </ScrollView>
@@ -506,7 +466,7 @@ const getStyles = (colors: any, isDark: boolean) => StyleSheet.create({
         justifyContent: 'space-between',
         paddingHorizontal: 20,
         paddingVertical: 12,
-        backgroundColor: colors.background,
+        backgroundColor: colors.cardBg,
     },
     logo: {
         width: 110,
@@ -588,135 +548,6 @@ const getStyles = (colors: any, isDark: boolean) => StyleSheet.create({
         color: colors.primary,
     },
 
-    // ── Knock notification card (visitor / delivery) ──
-    knockCard: {
-        backgroundColor: colors.cardBg,
-        borderRadius: 20,
-        marginBottom: 24,
-        overflow: 'hidden',
-        shadowColor: '#431BB8',
-        shadowOffset: { width: 0, height: 6 },
-        shadowOpacity: 0.12,
-        shadowRadius: 14,
-        elevation: 6,
-    },
-    knockCardHeader: {
-        backgroundColor: isDark ? '#2B2640' : '#EDE9FF',
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        paddingHorizontal: 16,
-        paddingTop: 14,
-        paddingBottom: 48,
-        borderTopLeftRadius: 20,
-        borderTopRightRadius: 20,
-    },
-    knockCardLogo: {
-        width: 90,
-        height: 26,
-    },
-    knockCardNow: {
-        fontSize: 12,
-        fontFamily: 'Gilroy-Regular',
-        color: colors.textMuted,
-    },
-    knockCardTitle: {
-        fontSize: 20,
-        fontFamily: 'Gilroy-Bold',
-        color: isDark ? '#FFFFFF' : '#1A1A1A',
-        textAlign: 'center',
-        marginTop: -28,
-        marginBottom: 0,
-        paddingHorizontal: 16,
-        zIndex: 2,
-    },
-    knockAvatarWrap: {
-        alignSelf: 'center',
-        width: 96,
-        height: 96,
-        borderRadius: 48,
-        backgroundColor: isDark ? '#433B6B' : '#D8D0F8',
-        overflow: 'hidden',
-        marginTop: 10,
-        marginBottom: 20,
-        borderWidth: 3,
-        borderColor: colors.cardBg,
-        shadowColor: '#431BB8',
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.18,
-        shadowRadius: 8,
-        elevation: 5,
-    },
-    knockAvatar: {
-        width: '100%',
-        height: '100%',
-    },
-    knockDivider: {
-        height: 1,
-        backgroundColor: colors.separator,
-        marginHorizontal: 16,
-    },
-    knockInfoRows: {
-        paddingHorizontal: 20,
-        paddingVertical: 14,
-        gap: 8,
-    },
-    knockInfoRow: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 8,
-    },
-    knockInfoLabel: {
-        fontSize: 14,
-        fontFamily: 'Gilroy-Regular',
-        color: colors.textMuted,
-        width: 60,
-    },
-    knockInfoValue: {
-        fontSize: 14,
-        fontFamily: 'Gilroy-SemiBold',
-        color: colors.textMain,
-    },
-    knockInfoAccess: {
-        fontSize: 14,
-        fontFamily: 'Gilroy-SemiBold',
-        color: '#34C759',
-    },
-    knockBtnGroup: {
-        paddingHorizontal: 16,
-        paddingTop: 14,
-        paddingBottom: 18,
-        gap: 10,
-    },
-    knockPrimaryBtn: {
-        backgroundColor: '#431BB8',
-        borderRadius: 14,
-        paddingVertical: 15,
-        alignItems: 'center',
-        shadowColor: '#431BB8',
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.3,
-        shadowRadius: 8,
-        elevation: 4,
-    },
-    knockPrimaryBtnText: {
-        fontSize: 16,
-        fontFamily: 'Gilroy-Bold',
-        color: '#FFFFFF',
-    },
-    knockDeclineBtn: {
-        backgroundColor: colors.cardBg,
-        borderRadius: 14,
-        paddingVertical: 14,
-        alignItems: 'center',
-        borderWidth: 1.5,
-        borderColor: colors.separator,
-    },
-    knockDeclineBtnText: {
-        fontSize: 16,
-        fontFamily: 'Gilroy-SemiBold',
-        color: '#E53935',
-    },
 
     // Recently KNOC
     sectionTitle: {
@@ -758,5 +589,19 @@ const getStyles = (colors: any, isDark: boolean) => StyleSheet.create({
         fontSize: 14,
         fontFamily: 'Gilroy-Regular',
         color: colors.textMuted,
+    },
+
+    // Show More
+    showMoreBtn: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        paddingVertical: 14,
+        gap: 6,
+    },
+    showMoreText: {
+        fontSize: 14,
+        fontFamily: 'Gilroy-SemiBold',
+        color: colors.primary,
     },
 });

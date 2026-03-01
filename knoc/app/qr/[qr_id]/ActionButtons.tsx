@@ -18,7 +18,7 @@ interface Props {
     // Visitor mode props
     visitorMode?: boolean;
     visitorName?: string;
-    visitorMobile?: string;
+    visitorPurpose?: string;
 }
 
 export default function ActionButtons({
@@ -29,7 +29,7 @@ export default function ActionButtons({
     deliveryApp = null,
     visitorMode = false,
     visitorName = '',
-    visitorMobile = '',
+    visitorPurpose = '',
 }: Props) {
     const [status, setStatus] = useState<Status>('idle');
     const [logId, setLogId] = useState<string | null>(null);
@@ -95,7 +95,7 @@ export default function ActionButtons({
                     action,
                     visitorType: visitorType ?? 'visitor',
                     ...(deliveryMode && { deliveryApp }),
-                    ...(visitorMode && { visitorName, visitorMobile }),
+                    ...(visitorMode && { visitorName, visitorPurpose }),
                 }),
             });
             const data = await res.json();
@@ -215,7 +215,7 @@ export default function ActionButtons({
 
     /* ────── VISITOR MODE — "Request Entry" ────── */
     if (visitorMode) {
-        const disabled = !visitorName.trim() || !visitorMobile.trim();
+        const disabled = !visitorName.trim() || !visitorPurpose.trim();
         return (
             <button
                 onClick={() => handleAction('Request Entry')}

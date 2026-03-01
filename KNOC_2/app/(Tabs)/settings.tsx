@@ -12,7 +12,10 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { firestore, auth } from '../../lib/firebase';
+import { db, auth } from '../../lib/firebase';
+import { doc, getDoc, updateDoc } from '@react-native-firebase/firestore';
+import { signOut } from '@react-native-firebase/auth';
+import { clearCachedFcmToken } from '../../lib/NotificationProvider';
 
 import Constants from 'expo-constants';
 import { useTheme } from '../../lib/themeContext';
@@ -63,12 +66,9 @@ export default function SettingsScreen() {
 
             // Fetch more details from Firestore if we have a QR ID
             if (storedQrId) {
-                const doc = await firestore()
-                    .collection('qr_codes')
-                    .doc(storedQrId)
-                    .get();
+                const docSnap = await getDoc(doc(db, 'qr_codes', storedQrId));
 
-                const data = doc.data();
+                const data = docSnap.data();
                 if (data) {
                     setUserInfo({
                         name: data?.name || storedName || 'Unknown',
@@ -112,17 +112,15 @@ export default function SettingsScreen() {
                             const qrId = await AsyncStorage.getItem('linked_qr_id');
                             if (qrId) {
                                 try {
-                                    await firestore()
-                                        .collection('qr_codes')
-                                        .doc(qrId)
-                                        .update({ fcm_token: null });
+                                    await updateDoc(doc(db, 'qr_codes', qrId), { fcm_token: null });
                                     console.log('[Settings] FCM token cleared from Firestore for doc:', qrId);
                                 } catch (e) {
                                     console.error('[Settings] Failed to clear FCM token:', e);
                                 }
                             }
 
-                            await auth().signOut();
+                            await signOut(auth);
+                            await clearCachedFcmToken();
                             await AsyncStorage.multiRemove([
                                 'is_guest',
                                 'guest_phone',

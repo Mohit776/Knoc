@@ -1,8 +1,11 @@
-// Firebase is auto-initialized by @react-native-firebase/app
-// using the google-services.json (Android) and GoogleService-Info.plist (iOS).
-// No manual initializeApp() call is needed with React Native Firebase.
+// Firebase modular API setup
+// @react-native-firebase/app auto-initializes using google-services.json / GoogleService-Info.plist.
+// We use getFirestore() and getAuth() to obtain singleton instances.
 
-import auth from '@react-native-firebase/auth';
-import firestore from '@react-native-firebase/firestore';
+import { getFirestore } from '@react-native-firebase/firestore';
+import { getAuth } from '@react-native-firebase/auth';
 
-export { auth, firestore };
+const db = getFirestore();
+const auth = getAuth();
+
+export { db, auth };
