@@ -1,6 +1,5 @@
 import io
 import uuid
-import datetime
 import qrcode
 import streamlit as st
 from PIL import Image
@@ -25,11 +24,11 @@ import json as _json
 
 FIREBASE_SERVICE_ACCOUNT = os.getenv("FIREBASE_SERVICE_ACCOUNT", "firebase-service-account.json")
 
+# Store error here — st.error()/st.stop() cannot be called before set_page_config()
+_firebase_init_error: str | None = None
+
 if not firebase_admin._apps:
     try:
-        # If the env var looks like JSON (starts with '{'), parse it directly.
-        # This is what Render sets when you paste the JSON into the env var field.
-        # Locally, this falls back to reading from the firebase-service-account.json file.
         if FIREBASE_SERVICE_ACCOUNT.strip().startswith("{"):
             service_account_info = _json.loads(FIREBASE_SERVICE_ACCOUNT)
             cred = credentials.Certificate(service_account_info)
@@ -37,10 +36,10 @@ if not firebase_admin._apps:
             cred = credentials.Certificate(FIREBASE_SERVICE_ACCOUNT)
         firebase_admin.initialize_app(cred)
     except Exception as e:
-        st.error(f"❌ Could not initialize Firebase: {e}")
-        st.stop()
+        _firebase_init_error = str(e)
 
-db = firestore.client()
+# Only create db client if Firebase initialized successfully
+db = firestore.client() if not _firebase_init_error else None  # type: ignore
 
 
 def generate_blank_qr():
@@ -131,44 +130,12 @@ def build_pdf(qr_items: list) -> bytes:
 
 st.set_page_config(page_title="KNOC QR Generator", page_icon="🔲", layout="centered")
 
-# ── Session State Initialization ─────────────────────────────────────────────
-if "session_start" not in st.session_state:
-    st.session_state.session_start = datetime.datetime.now()
-if "total_generated" not in st.session_state:
-    st.session_state.total_generated = 0
-if "session_log" not in st.session_state:
-    st.session_state.session_log = []  # list of {qr_id, timestamp, status}
+# ── Show deferred Firebase error now that set_page_config() has run ───────────
+if _firebase_init_error:
+    st.error(f"❌ Could not initialize Firebase: {_firebase_init_error}")
+    st.stop()
 
-# ── Sidebar — Session Info ────────────────────────────────────────────────────
-with st.sidebar:
-    st.markdown("## 📅 Session Info")
-    st.divider()
 
-    elapsed = datetime.datetime.now() - st.session_state.session_start
-    elapsed_str = str(elapsed).split(".")[0]  # trim microseconds
-
-    col1, col2 = st.columns(2)
-    col1.metric("QR Generated", st.session_state.total_generated)
-    col2.metric("Session Time", elapsed_str)
-
-    st.caption(f"🕒 Started: {st.session_state.session_start.strftime('%I:%M %p')}")
-    st.divider()
-
-    if st.session_state.session_log:
-        st.markdown("**Generated this session:**")
-        for entry in reversed(st.session_state.session_log):
-            icon = "✅" if entry["status"] == "ok" else "❌"
-            st.markdown(f"{icon} `{entry['qr_id']}`")
-            st.caption(f"🕒 {entry['timestamp']}")
-    else:
-        st.info("No QR codes generated yet.")
-
-    if st.session_state.total_generated > 0:
-        if st.button("🗑️ Clear session log", use_container_width=True):
-            st.session_state.total_generated = 0
-            st.session_state.session_log = []
-            st.session_state.session_start = datetime.datetime.now()
-            st.rerun()
 
 st.title("KNOC QR Code Generator")
 
@@ -192,14 +159,7 @@ if st.button(f"Generate {qr_count} QR Code{'s' if qr_count > 1 else ''}", type="
         for i in range(qr_count):
             qr_id, qr_img, db_status = generate_blank_qr()
             qr_items.append((qr_id, qr_img))
-            status = "ok" if "❌" not in db_status else "error"
-            st.session_state.session_log.append({
-                "qr_id": qr_id,
-                "timestamp": datetime.datetime.now().strftime("%I:%M:%S %p"),
-                "status": status,
-            })
-            st.session_state.total_generated += 1
-            if status == "error":
+            if "❌" in db_status:
                 errors.append(f"`{qr_id}`: {db_status}")
 
     # ── Results banner ────────────────────────────────────────────────────────
