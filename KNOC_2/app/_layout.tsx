@@ -27,6 +27,7 @@ function extractKnockData(response: Notifications.NotificationResponse | null | 
     visitorName: (data.visitorName as string) || '',
     visitorPurpose: (data.visitorPurpose as string) || '',
     deliveryApp: (data.deliveryApp as string) || '',
+    sentAt: new Date().toISOString(),
   };
 }
 

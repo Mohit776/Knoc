@@ -176,13 +176,15 @@ export default function KnockDetailScreen() {
                                 {isDelivery ? 'Leave Door' : 'Open Door'}
                             </Text>
                         </TouchableOpacity>
-                        <TouchableOpacity
-                            style={styles.knockDeclineBtn}
-                            activeOpacity={0.85}
-                            onPress={handleIgnore}
-                        >
-                            {!isDelivery && <Text style={styles.knockDeclineBtnText}>Decline</Text>}
-                        </TouchableOpacity>
+                        {!isDelivery && (
+                            <TouchableOpacity
+                                style={styles.knockDeclineBtn}
+                                activeOpacity={0.85}
+                                onPress={handleIgnore}
+                            >
+                                <Text style={styles.knockDeclineBtnText}>Decline</Text>
+                            </TouchableOpacity>
+                        )}
                     </View>
 
                 </View>

@@ -137,7 +137,6 @@ export default function ActionButtons({
 
                     {/* Animated purple circle */}
                     <div className="relative flex items-center justify-center mb-10">
-                        <span className="absolute inline-flex h-40 w-40 rounded-full bg-[#431BB8]/20 animate-ping" style={{ animationDuration: '2s' }} />
                         <div className="relative flex items-center justify-center w-36 h-36 rounded-full bg-[#431BB8] shadow-lg">
                             <svg className="w-16 h-16 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
                                 <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
@@ -160,7 +159,7 @@ export default function ActionButtons({
             <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-white px-8 animate-fade-in">
                 {/* Animated green circle */}
                 <div className="relative flex items-center justify-center mb-10">
-                    <span className="absolute inline-flex h-40 w-40 rounded-full bg-[#3A8C55]/20 animate-ping" style={{ animationDuration: '2s' }} />
+
                     <div className="relative flex items-center justify-center w-36 h-36 rounded-full bg-[#3A8C55] shadow-lg">
                         <svg className="w-16 h-16 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
                             <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
@@ -191,7 +190,7 @@ export default function ActionButtons({
             <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-white px-8 animate-fade-in">
                 {/* Animated red circle */}
                 <div className="relative flex items-center justify-center mb-10">
-                    <span className="absolute inline-flex h-40 w-40 rounded-full bg-[#E53935]/20 animate-ping" style={{ animationDuration: '2s' }} />
+                  
                     <div className="relative flex items-center justify-center w-36 h-36 rounded-full bg-[#E53935] shadow-lg">
                         <svg className="w-16 h-16 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
                             <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />

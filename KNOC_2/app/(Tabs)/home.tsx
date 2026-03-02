@@ -414,7 +414,7 @@ export default function HomeScreen() {
 
 
                 {/* Today's KNOC */}
-                <Text style={styles.sectionTitle}>Today's KNOC</Text>
+                <Text style={styles.sectionTitle}>Recently KNOC</Text>
                 <View style={styles.visitList}>
                     {todayLogs.length === 0 ? (
                         <View style={styles.emptyState}>
@@ -423,17 +423,16 @@ export default function HomeScreen() {
                         </View>
                     ) : (
                         <>
-                            {todayLogs.slice(0, visibleLogCount).map((log) => (
+                            {todayLogs.slice(0, visibleLogCount).map((log, index) => (
                                 <View
                                     key={log.id}
                                     style={styles.visitRow}
                                 >
                                     <Text style={styles.visitLabel}>
-                                        {log.action}
-                                        {log.response ? ` → ${log.response}` : ''}
+                                        Visit {index + 1}
                                     </Text>
                                     <Text style={styles.visitTime}>
-                                        Time {formatTime(log.created_at)}
+                                        {formatTime(log.created_at)}
                                     </Text>
                                 </View>
                             ))}
@@ -508,8 +507,8 @@ const getStyles = (colors: any, isDark: boolean) => StyleSheet.create({
         gap: 10,
     },
     statLabel: {
-        fontSize: 15,
-        fontFamily: 'Gilroy-SemiBold',
+        fontSize: 16,
+        fontFamily: 'Gilroy-ExtraBold',
         color: colors.textPrimary,
     },
     statValueBox: {
@@ -546,7 +545,7 @@ const getStyles = (colors: any, isDark: boolean) => StyleSheet.create({
     },
     statValue: {
         fontSize: 36,
-        fontFamily: 'Gilroy-Bold',
+        fontFamily: 'Gilroy-Heavy',
         color: colors.primary,
     },
 
@@ -554,9 +553,10 @@ const getStyles = (colors: any, isDark: boolean) => StyleSheet.create({
     // Recently KNOC
     sectionTitle: {
         fontSize: 18,
-        fontFamily: 'Gilroy-Bold',
+        fontFamily: 'Gilroy-ExtraBold',
         color: colors.textMain,
         marginBottom: 12,
+        marginLeft: 8,
     },
     visitList: {
         gap: 0,
@@ -565,10 +565,14 @@ const getStyles = (colors: any, isDark: boolean) => StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
-        paddingHorizontal: 4,
+        paddingHorizontal: 10,
         paddingVertical: 16,
         borderBottomWidth: 1,
         borderBottomColor: colors.separator,
+        backgroundColor: '#ffffff',
+        borderRadius: 12,
+        marginHorizontal: 4,
+        marginVertical: 3,
     },
     visitLabel: {
         fontSize: 15,
@@ -578,7 +582,7 @@ const getStyles = (colors: any, isDark: boolean) => StyleSheet.create({
     visitTime: {
         fontSize: 14,
         fontFamily: 'Gilroy-Regular',
-        color: colors.textMuted,
+        color: colors.textMain,
     },
 
     // Empty state

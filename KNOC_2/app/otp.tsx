@@ -156,11 +156,7 @@ export default function OTPScreen() {
             >
                 <View style={styles.content}>
                     {/* KNOC App Logo */}
-                    <Image
-                        source={require('../assets/logo/Group 1171275857.png')}
-                        style={styles.logo}
-                        resizeMode="contain"
-                    />
+                   
                     <Text style={styles.title}>Your OTP is on its way</Text>
 
                     <View style={styles.subtitleRow}>

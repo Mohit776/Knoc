@@ -75,11 +75,7 @@ export default function LoginScreen() {
 
                 <View style={styles.content}>
                     {/* KNOC App Logo */}
-                    <Image
-                        source={require('../assets/logo/Group 1171275857.png')}
-                        style={styles.logo}
-                        resizeMode="contain"
-                    />
+                   
                     <Text style={styles.title}>Log in with phone number</Text>
 
                     {/* Phone Number Input */}
