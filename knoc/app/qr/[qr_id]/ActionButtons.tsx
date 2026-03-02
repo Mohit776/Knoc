@@ -2,6 +2,17 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 
+function formatTimestamp(date: Date): string {
+    return date.toLocaleString('en-US', {
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric',
+        hour: 'numeric',
+        minute: '2-digit',
+        hour12: true,
+    });
+}
+
 const MAX_ALARMS = 3;
 const COOLDOWN_MS = 30_000;
 
@@ -109,20 +120,63 @@ export default function ActionButtons({
         }
     };
 
-    /* ────── COMING ────── */
+    /* ────── COMING (Approved) ────── */
     if (status === 'coming') {
-        return (
-            <div className="flex flex-col items-center gap-4 pb-4 animate-fade-in">
-                <div className="w-full rounded-2xl bg-[#E6F9EE] border-2 border-[#34C759] px-6 py-7 flex flex-col items-center gap-3 shadow-md">
-                    <div className="text-5xl">✅</div>
-                    <p className="text-[#1A7A3A] font-bold text-xl text-center">Owner is Coming!</p>
-                    <p className="text-[#2D9F54] text-sm text-center font-medium">
-                        Please wait at the door. They will be there shortly.
-                    </p>
+        const ts = formatTimestamp(new Date());
+
+        /* ── Delivery: "Leave Order at Door" ── */
+        if (deliveryMode) {
+            return (
+                <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-white px-8 animate-fade-in">
+                    {/* KNOC Logo */}
+                    <img
+                        src="/Group 1171275857.png"
+                        alt="KNOC"
+                        className="h-9 object-contain mb-14"
+                    />
+
+                    {/* Animated purple circle */}
+                    <div className="relative flex items-center justify-center mb-10">
+                        <span className="absolute inline-flex h-40 w-40 rounded-full bg-[#431BB8]/20 animate-ping" style={{ animationDuration: '2s' }} />
+                        <div className="relative flex items-center justify-center w-36 h-36 rounded-full bg-[#431BB8] shadow-lg">
+                            <svg className="w-16 h-16 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                            </svg>
+                        </div>
+                    </div>
+
+                    {/* Text */}
+                    <h1 className="text-[28px] font-bold text-[#1A1A1A] mb-2 text-center leading-tight">
+                        Leave Order<br />at Door
+                    </h1>
+                    <p className="text-[15px] text-[#8E8E93] text-center mb-1">Place parcel near entrance</p>
+                    <p className="text-[14px] text-[#AEAEB2] text-center font-medium">{ts}</p>
                 </div>
+            );
+        }
+
+        /* ── Visitor: "Entry Approved" ── */
+        return (
+            <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-white px-8 animate-fade-in">
+                {/* Animated green circle */}
+                <div className="relative flex items-center justify-center mb-10">
+                    <span className="absolute inline-flex h-40 w-40 rounded-full bg-[#3A8C55]/20 animate-ping" style={{ animationDuration: '2s' }} />
+                    <div className="relative flex items-center justify-center w-36 h-36 rounded-full bg-[#3A8C55] shadow-lg">
+                        <svg className="w-16 h-16 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                        </svg>
+                    </div>
+                </div>
+
+                {/* Text */}
+                <h1 className="text-[28px] font-bold text-[#1A1A1A] mb-2 text-center">Entry Approved</h1>
+                <p className="text-[15px] text-[#8E8E93] text-center mb-1">You may proceed...</p>
+                <p className="text-[14px] text-[#AEAEB2] text-center font-medium">{ts}</p>
+
+                {/* Go back */}
                 <button
                     onClick={() => { setStatus('idle'); setLogId(null); setSelectedAction(null); }}
-                    className="text-sm text-[#8E8E93] underline"
+                    className="mt-12 text-sm text-[#AEAEB2] underline"
                 >
                     Go back
                 </button>
@@ -130,58 +184,52 @@ export default function ActionButtons({
         );
     }
 
-    /* ────── IGNORED ────── */
+    /* ────── IGNORED (Denied) ────── */
     if (status === 'ignored') {
+        const ts = formatTimestamp(new Date());
         return (
-            <div className="flex flex-col items-center gap-4 pb-4 animate-fade-in">
-                <div className="w-full rounded-2xl bg-[#FFF0F0] border-2 border-[#E53935] px-6 py-7 flex flex-col items-center gap-3 shadow-md">
-                    <div className="text-5xl">🚫</div>
-                    <p className="text-[#C62828] font-bold text-lg text-center">Owner is not available</p>
-                    <p className="text-[#E57373] text-sm text-center">
-                        The owner has declined your request. Please try again later.
-                    </p>
+            <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-white px-8 animate-fade-in">
+                {/* Animated red circle */}
+                <div className="relative flex items-center justify-center mb-10">
+                    <span className="absolute inline-flex h-40 w-40 rounded-full bg-[#E53935]/20 animate-ping" style={{ animationDuration: '2s' }} />
+                    <div className="relative flex items-center justify-center w-36 h-36 rounded-full bg-[#E53935] shadow-lg">
+                        <svg className="w-16 h-16 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </div>
                 </div>
+
+                {/* Text */}
+                <h1 className="text-[28px] font-bold text-[#1A1A1A] mb-2 text-center">Entry Not Approved</h1>
+                <p className="text-[15px] text-[#8E8E93] text-center mb-1">You may not proceed...</p>
+                <p className="text-[14px] text-[#AEAEB2] text-center font-medium">{ts}</p>
             </div>
         );
     }
 
-    /* ────── WAITING ────── */
-    if (status === 'waiting') {
-        return (
-            <div className="w-full rounded-2xl bg-[#f4f3ff] border border-[#431BB8]/30 px-6 py-7 flex flex-col items-center gap-4">
-                <div className="relative flex items-center justify-center">
-                    <span className="absolute inline-flex h-14 w-14 rounded-full bg-[#431BB8] opacity-20 animate-ping" />
-                    <span className="relative inline-flex h-10 w-10 items-center justify-center rounded-full bg-[#431BB8]">
-                        <svg className="w-5 h-5 text-white animate-spin" fill="none" viewBox="0 0 24 24">
-                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
-                        </svg>
-                    </span>
-                </div>
-                <p className="text-[#431BB8] font-semibold text-base text-center">Notified the owner!</p>
-                <p className="text-[#8E8E93] text-sm text-center">
-                    Waiting for their response<span className="animate-pulse">...</span>
-                </p>
-                <p className="text-xs text-[#C7C7CC] text-center">
-                    Action: <span className="font-medium text-[#926FF3]">{selectedAction}</span>
-                </p>
-            </div>
-        );
-    }
 
     /* ────── ALARM ONLY (selection screen) ────── */
     if (alarmOnly) {
+        const isWaiting = status === 'waiting';
         return (
             <div className="relative">
                 <button
                     onClick={() => handleAction('Alarm')}
                     disabled={alarmDisabled}
-                    className={`w-full h-[56px] rounded-[14px] font-bold text-[16px] tracking-wide transition-all shadow-lg ${alarmDisabled
+                    className={`w-full h-[56px] rounded-[14px] font-bold text-[16px] tracking-wide transition-all shadow-lg flex items-center justify-center gap-2 ${alarmDisabled
                         ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
                         : 'bg-[#431BB8] text-white hover:bg-[#32138A] active:scale-[0.98]'
                         }`}
                 >
-                    {cooldown > 0
+                    {isWaiting ? (
+                        <>
+                            <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
+                            </svg>
+                            Sending...
+                        </>
+                    ) : cooldown > 0
                         ? `Alarm (wait ${cooldown}s)`
                         : alarmCount >= MAX_ALARMS
                             ? 'Alarm limit reached'
@@ -198,46 +246,77 @@ export default function ActionButtons({
 
     /* ────── DELIVERY MODE — "Notify Homeowner" ────── */
     if (deliveryMode) {
-        const disabled = !deliveryApp;
+        const isWaiting = status === 'waiting';
+        const disabled = !deliveryApp || isWaiting;
         return (
             <button
                 onClick={() => handleAction('Notify Homeowner')}
                 disabled={disabled}
-                className={`w-full h-[56px] rounded-[14px] font-bold text-[16px] transition-all shadow-lg ${disabled
-                        ? 'bg-[#431BB8]/40 text-white/70 cursor-not-allowed'
-                        : 'bg-[#431BB8] text-white hover:bg-[#32138A] active:scale-[0.98]'
+                className={`w-full h-[56px] rounded-[14px] font-bold text-[16px] transition-all shadow-lg flex items-center justify-center gap-2 ${disabled
+                    ? 'bg-[#431BB8]/40 text-white/70 cursor-not-allowed'
+                    : 'bg-[#431BB8] text-white hover:bg-[#32138A] active:scale-[0.98]'
                     }`}
             >
-                {disabled ? 'Select a delivery app first' : 'Notify Homeowner'}
+                {isWaiting ? (
+                    <>
+                        <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
+                        </svg>
+                        Sending...
+                    </>
+                ) : !deliveryApp ? 'Select a delivery app first' : 'Notify Homeowner'}
             </button>
         );
     }
 
     /* ────── VISITOR MODE — "Request Entry" ────── */
     if (visitorMode) {
-        const disabled = !visitorName.trim() || !visitorPurpose.trim();
+        const isWaiting = status === 'waiting';
+        const disabled = !visitorName.trim() || !visitorPurpose.trim() || isWaiting;
         return (
             <button
                 onClick={() => handleAction('Request Entry')}
                 disabled={disabled}
-                className={`w-full h-[56px] rounded-[14px] font-bold text-[16px] transition-all shadow-lg ${disabled
-                        ? 'bg-[#431BB8]/40 text-white/70 cursor-not-allowed'
-                        : 'bg-[#431BB8] text-white hover:bg-[#32138A] active:scale-[0.98]'
+                className={`w-full h-[56px] rounded-[14px] font-bold text-[16px] transition-all shadow-lg flex items-center justify-center gap-2 ${disabled
+                    ? 'bg-[#431BB8]/40 text-white/70 cursor-not-allowed'
+                    : 'bg-[#431BB8] text-white hover:bg-[#32138A] active:scale-[0.98]'
                     }`}
             >
-                Request Entry
+                {isWaiting ? (
+                    <>
+                        <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
+                        </svg>
+                        Sending...
+                    </>
+                ) : 'Request Entry'}
             </button>
         );
     }
 
     /* ────── FALLBACK IDLE ────── */
+    const isWaiting = status === 'waiting';
     return (
         <div className="flex flex-col gap-3 pb-4">
             <button
                 onClick={() => handleAction('Request Entry')}
-                className="w-full h-[56px] rounded-[14px] font-bold text-[16px] bg-[#431BB8] text-white shadow-lg hover:bg-[#32138A] active:scale-[0.98] transition-all"
+                disabled={isWaiting}
+                className={`w-full h-[56px] rounded-[14px] font-bold text-[16px] shadow-lg transition-all flex items-center justify-center gap-2 ${isWaiting
+                        ? 'bg-[#431BB8]/60 text-white/80 cursor-not-allowed'
+                        : 'bg-[#431BB8] text-white hover:bg-[#32138A] active:scale-[0.98]'
+                    }`}
             >
-                Request Entry →
+                {isWaiting ? (
+                    <>
+                        <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
+                        </svg>
+                        Sending...
+                    </>
+                ) : 'Request Entry →'}
             </button>
         </div>
     );

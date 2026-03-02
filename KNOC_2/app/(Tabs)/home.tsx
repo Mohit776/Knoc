@@ -235,6 +235,7 @@ export default function HomeScreen() {
                         visitorName: (data.visitorName as string) || '',
                         visitorPurpose: (data.visitorPurpose as string) || '',
                         deliveryApp: (data.deliveryApp as string) || '',
+                        sentAt: new Date().toISOString(),
                     };
                     setActiveKnock({
                         logId: knockData.logId,
@@ -276,6 +277,7 @@ export default function HomeScreen() {
                         visitorName: (data.visitorName as string) || '',
                         visitorPurpose: (data.visitorPurpose as string) || '',
                         deliveryApp: (data.deliveryApp as string) || '',
+                        sentAt: new Date().toISOString(),
                     };
                     setActiveKnock({
                         logId: knockData.logId,

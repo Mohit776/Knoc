@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import {
     View,
     Text,
@@ -27,10 +27,29 @@ export default function KnockDetailScreen() {
         visitorName: string;
         visitorPurpose: string;
         deliveryApp: string;
+        sentAt: string;
     }>();
 
     const visitorType = params.visitorType as 'visitor' | 'delivery' | null;
     const isDelivery = visitorType === 'delivery';
+
+    // Live "X min ago" label
+    const getElapsed = () => {
+        if (!params.sentAt) return 'just now';
+        const diffMs = Date.now() - new Date(params.sentAt).getTime();
+        const diffMin = Math.floor(diffMs / 60_000);
+        if (diffMin < 1) return 'just now';
+        if (diffMin === 1) return '1 min ago';
+        return `${diffMin} min ago`;
+    };
+
+    const [elapsed, setElapsed] = useState(getElapsed);
+
+    useEffect(() => {
+        // tick every 60 s so label stays accurate
+        const interval = setInterval(() => setElapsed(getElapsed()), 60_000);
+        return () => clearInterval(interval);
+    }, [params.sentAt]);
 
     const handleComing = async () => {
         try {
@@ -82,7 +101,7 @@ export default function KnockDetailScreen() {
                             style={styles.knockCardLogo}
                             resizeMode="contain"
                         />
-                        <Text style={styles.knockCardNow}>now</Text>
+                        <Text style={styles.knockCardNow}>{elapsed}</Text>
                     </View>
 
                     {/* Title */}
@@ -162,7 +181,7 @@ export default function KnockDetailScreen() {
                             activeOpacity={0.85}
                             onPress={handleIgnore}
                         >
-                            <Text style={styles.knockDeclineBtnText}>Decline</Text>
+                            {!isDelivery && <Text style={styles.knockDeclineBtnText}>Decline</Text>}
                         </TouchableOpacity>
                     </View>
 
