@@ -1,5 +1,6 @@
 import io
 import uuid
+import datetime
 import qrcode
 import streamlit as st
 from PIL import Image
@@ -130,6 +131,45 @@ def build_pdf(qr_items: list) -> bytes:
 
 st.set_page_config(page_title="KNOC QR Generator", page_icon="🔲", layout="centered")
 
+# ── Session State Initialization ─────────────────────────────────────────────
+if "session_start" not in st.session_state:
+    st.session_state.session_start = datetime.datetime.now()
+if "total_generated" not in st.session_state:
+    st.session_state.total_generated = 0
+if "session_log" not in st.session_state:
+    st.session_state.session_log = []  # list of {qr_id, timestamp, status}
+
+# ── Sidebar — Session Info ────────────────────────────────────────────────────
+with st.sidebar:
+    st.markdown("## 📅 Session Info")
+    st.divider()
+
+    elapsed = datetime.datetime.now() - st.session_state.session_start
+    elapsed_str = str(elapsed).split(".")[0]  # trim microseconds
+
+    col1, col2 = st.columns(2)
+    col1.metric("QR Generated", st.session_state.total_generated)
+    col2.metric("Session Time", elapsed_str)
+
+    st.caption(f"🕒 Started: {st.session_state.session_start.strftime('%I:%M %p')}")
+    st.divider()
+
+    if st.session_state.session_log:
+        st.markdown("**Generated this session:**")
+        for entry in reversed(st.session_state.session_log):
+            icon = "✅" if entry["status"] == "ok" else "❌"
+            st.markdown(f"{icon} `{entry['qr_id']}`")
+            st.caption(f"🕒 {entry['timestamp']}")
+    else:
+        st.info("No QR codes generated yet.")
+
+    if st.session_state.total_generated > 0:
+        if st.button("🗑️ Clear session log", use_container_width=True):
+            st.session_state.total_generated = 0
+            st.session_state.session_log = []
+            st.session_state.session_start = datetime.datetime.now()
+            st.rerun()
+
 st.title("KNOC QR Code Generator")
 
 st.divider()
@@ -152,7 +192,14 @@ if st.button(f"Generate {qr_count} QR Code{'s' if qr_count > 1 else ''}", type="
         for i in range(qr_count):
             qr_id, qr_img, db_status = generate_blank_qr()
             qr_items.append((qr_id, qr_img))
-            if "❌" in db_status:
+            status = "ok" if "❌" not in db_status else "error"
+            st.session_state.session_log.append({
+                "qr_id": qr_id,
+                "timestamp": datetime.datetime.now().strftime("%I:%M:%S %p"),
+                "status": status,
+            })
+            st.session_state.total_generated += 1
+            if status == "error":
                 errors.append(f"`{qr_id}`: {db_status}")
 
     # ── Results banner ────────────────────────────────────────────────────────
