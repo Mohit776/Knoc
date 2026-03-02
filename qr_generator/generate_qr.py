@@ -151,8 +151,16 @@ qr_count = st.number_input(
     help="Each QR code will get its own page in the downloaded PDF."
 )
 
+# Initialize session state for persisting QR data across reruns
+if "qr_items" not in st.session_state:
+    st.session_state.qr_items = []      # list of (qr_id, qr_img)
+if "qr_errors" not in st.session_state:
+    st.session_state.qr_errors = []
+if "qr_count_generated" not in st.session_state:
+    st.session_state.qr_count_generated = 0
+
 if st.button(f"Generate {qr_count} QR Code{'s' if qr_count > 1 else ''}", type="primary", use_container_width=True):
-    qr_items = []   # list of (qr_id, qr_img)
+    qr_items = []
     errors = []
 
     with st.spinner(f"Generating {qr_count} QR code(s) and syncing with Firestore..."):
@@ -162,15 +170,26 @@ if st.button(f"Generate {qr_count} QR Code{'s' if qr_count > 1 else ''}", type="
             if "❌" in db_status:
                 errors.append(f"`{qr_id}`: {db_status}")
 
-    # ── Results banner ────────────────────────────────────────────────────────
+    # Save to session state so data survives reruns
+    st.session_state.qr_items = qr_items
+    st.session_state.qr_errors = errors
+    st.session_state.qr_count_generated = qr_count
+
+# ── Show results (persists across reruns) ─────────────────────────────────────
+if st.session_state.qr_items:
+    qr_items = st.session_state.qr_items
+    errors = st.session_state.qr_errors
+    count = st.session_state.qr_count_generated
+
+    # Results banner
     if errors:
         st.warning(f"{len(errors)} QR(s) had Firestore issues:")
         for e in errors:
             st.error(e)
     else:
-        st.success(f"✅ {qr_count} QR code(s) registered in Firestore!")
+        st.success(f"✅ {count} QR code(s) registered in Firestore!")
 
-    # ── Preview grid (max 3 per row) ──────────────────────────────────────────
+    # Preview grid (max 3 per row)
     st.markdown("### Preview")
     cols_per_row = 3
     for row_start in range(0, len(qr_items), cols_per_row):
@@ -180,13 +199,14 @@ if st.button(f"Generate {qr_count} QR Code{'s' if qr_count > 1 else ''}", type="
             with col:
                 st.image(qr_img, caption=qr_id, use_column_width=True)
 
-    # ── Download button — single PDF with all QR codes ────────────────────────
+    # Download button — single PDF with all QR codes
     pdf_bytes = build_pdf(qr_items)
-    file_label = f"KNOC_{qr_count}_QR_codes" if qr_count > 1 else qr_items[0][0]
+    file_label = f"KNOC_{count}_QR_codes" if count > 1 else qr_items[0][0]
     st.download_button(
-        label=f"⬇️ Download PDF ({qr_count} page{'s' if qr_count > 1 else ''})",
+        label=f"⬇️ Download PDF ({count} page{'s' if count > 1 else ''})",
         data=pdf_bytes,
         file_name=f"{file_label}.pdf",
         mime="application/pdf",
         use_container_width=True,
     )
+
