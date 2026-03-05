@@ -326,14 +326,7 @@ export default function HomeScreen() {
         return date.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
     };
 
-    // Get action icon
-    const getActionIcon = (action: string, response: string | null) => {
-        if (response === 'coming') return '✅';
-        if (response === 'ignored') return '❌';
-        if (action === 'Entry') return '🚪';
-        if (action === 'No Entry') return '🚫';
-        return '🔔';
-    };
+
 
     // Pad number like "01", "12"
     const padNumber = (n: number) => n.toString().padStart(2, '0');
@@ -363,7 +356,7 @@ export default function HomeScreen() {
             {/* Header */}
             <View style={styles.header}>
                 <Image
-                    source={require('../../assets/logo/Group 1171275857.png')}
+                    source={require('../../assets/new_knoc/logo_text.png')}
                     style={styles.logo}
                     resizeMode="contain"
                 />
@@ -403,10 +396,15 @@ export default function HomeScreen() {
                     ] as const).map((item) => (
                         <View key={item.label} style={styles.statItem}>
                             <Text style={styles.statLabel}>{item.label}</Text>
-                            <View style={styles.statValueBox}>
-                                <View style={styles.statValueHighlight} />
-                                <Text style={styles.statValue}>{padNumber(item.value)}</Text>
-                            </View>
+                            <LinearGradient colors={['#F9F8FF', '#C3B5FD', '#8060F1']}
+                                locations={[0, 0.5, 1]}
+                                start={{ x: 0.5, y: 0 }}
+                                end={{ x: 0.5, y: 1 }}
+                                style={styles.statValueBox}>
+                                <View style={styles.statValueHighlight} >
+                                    <Text style={styles.statValue}>{padNumber(item.value)}</Text>
+                                </View>
+                            </LinearGradient>
                         </View>
                     ))}
                 </LinearGradient>
@@ -514,41 +512,29 @@ const getStyles = (colors: any, isDark: boolean) => StyleSheet.create({
     statValueBox: {
         width: '100%',
         aspectRatio: 1,
-        backgroundColor: colors.statsCard,
-        borderRadius: 14,
+        borderRadius: 12,
         justifyContent: 'center',
         alignItems: 'center',
-        overflow: 'hidden',
-        borderTopWidth: 2,
-        borderLeftWidth: 2,
-        borderBottomWidth: 3,
-        borderRightWidth: 3,
-        borderTopColor: isDark ? '#2C2C2E' : '#EDE8FF',
-        borderLeftColor: isDark ? '#3C3C3E' : '#E4DEFF',
-        borderBottomColor: isDark ? '#5C5C5E' : '#9B87D8',
-        borderRightColor: isDark ? '#4C4C4E' : '#B0A0E0',
-        shadowColor: '#431BB8',
-        shadowOffset: { width: 0, height: 5 },
-        shadowOpacity: 0.18,
-        shadowRadius: 8,
-        elevation: 5,
+        backgroundColor: '#D9CFFF',
+
     },
     statValueHighlight: {
+        width: '95%',
+        height: '95%',
+        borderRadius: 12,
         position: 'absolute',
-        top: 0,
-        left: 0,
-        right: 0,
-        height: 4,
-        backgroundColor: 'rgba(255,255,255,0.55)',
-        borderTopLeftRadius: 14,
-        borderTopRightRadius: 14,
+        top: 2.5,
+        left: 2.5,
+        backgroundColor: '#D9CFFF',
+        justifyContent: 'center',
+        alignItems: 'center',
     },
+   
     statValue: {
         fontSize: 36,
         fontFamily: 'Gilroy-Heavy',
         color: colors.primary,
     },
-
 
     // Recently KNOC
     sectionTitle: {

@@ -82,7 +82,7 @@ export default function KnocWelcomeScreen() {
                     ]}
                 >
                     <Image
-                        source={require('../assets/logo/Group 1171275857 (1).png')}
+                        source={require('../assets/new_knoc/wordlogo.png')}
                         style={{ width: width * 0.45, height: 45, marginTop: 0 }}
                         contentFit="contain"
                     />

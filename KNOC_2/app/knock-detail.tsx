@@ -97,7 +97,7 @@ export default function KnockDetailScreen() {
                     {/* Card header — KNOC brand strip */}
                     <View style={styles.knockCardHeader}>
                         <Image
-                            source={require('../assets/logo/Group 1171275857.png')}
+                            source={require('../assets/new_knoc/logo_text.png')}
                             style={styles.knockCardLogo}
                             resizeMode="contain"
                         />

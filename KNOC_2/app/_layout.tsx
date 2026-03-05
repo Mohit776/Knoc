@@ -109,7 +109,7 @@ export default function RootLayout() {
     return (
       <View style={styles.splashContainer}>
         <Image
-          source={require('../assets/main_logo/splase_logo.png')}
+          source={require('../assets/new_knoc/Splace_Logo.png')}
           style={styles.splashLogo}
           resizeMode="contain"
         />

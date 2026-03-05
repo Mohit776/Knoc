@@ -18,6 +18,8 @@ import { useRouter } from 'expo-router';
 import { db } from '../lib/firebase';
 import { doc, getDoc, updateDoc } from '@react-native-firebase/firestore';
 import { useNotification } from '../lib/NotificationProvider';
+import * as Print from 'expo-print';
+import * as Sharing from 'expo-sharing';
 
 const { width } = Dimensions.get('window');
 
@@ -40,6 +42,107 @@ export default function OnboardQRScreen() {
     const [name, setName] = useState('');
     const [location, setLocation] = useState('');
     const [loading, setLoading] = useState(false);
+    const [downloadingPdf, setDownloadingPdf] = useState(false);
+
+    const handleDownloadQR = async () => {
+        const id = qrCodeId.trim();
+        if (!id) {
+            Alert.alert('Missing QR ID', 'Please enter the QR Code ID first.');
+            return;
+        }
+
+        setDownloadingPdf(true);
+        try {
+            // Verify QR code exists in the database
+            const qrDoc = await getDoc(doc(db, 'qr_codes', id));
+            if (!qrDoc.exists()) {
+                Alert.alert('QR Code Not Found', 'This QR Code ID does not exist in our system.');
+                setDownloadingPdf(false);
+                return;
+            }
+
+            const qrUrl = `https://knoc.vercel.app/qr/${id}`;
+
+            // HTML page with inline QR generation via a lightweight SVG approach
+            const html = `
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            font-family: Helvetica, Arial, sans-serif;
+            background: #fff;
+        }
+        .qr-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+        }
+        .qr-img {
+            width: 280px;
+            height: 280px;
+        }
+        .qr-id {
+            font-size: 18px;
+            font-weight: bold;
+            color: #431BB8;
+            letter-spacing: 1px;
+        }
+        .qr-subtitle {
+            font-size: 13px;
+            color: #8E8E93;
+        }
+        .qr-url {
+            font-size: 10px;
+            color: #C7C7CC;
+            margin-top: 8px;
+            word-break: break-all;
+        }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js"></script>
+</head>
+<body>
+    <div class="qr-container">
+        <div id="qr"></div>
+        <div class="qr-id">${id}</div>
+        <div class="qr-subtitle">Scan to KNOC</div>
+        <div class="qr-url">${qrUrl}</div>
+    </div>
+    <script>
+        var qr = qrcode(0, 'H');
+        qr.addData('${qrUrl}');
+        qr.make();
+        document.getElementById('qr').innerHTML = qr.createSvgTag(8, 0);
+    </script>
+</body>
+</html>`;
+
+            const { uri } = await Print.printToFileAsync({ html });
+
+            if (await Sharing.isAvailableAsync()) {
+                await Sharing.shareAsync(uri, {
+                    mimeType: 'application/pdf',
+                    dialogTitle: `QR Code - ${id}`,
+                    UTI: 'com.adobe.pdf',
+                });
+            } else {
+                Alert.alert('PDF Saved', `QR Code PDF saved at:\n${uri}`);
+            }
+        } catch (e: any) {
+            console.error('[Onboard] PDF generation error:', e);
+            Alert.alert('Error', 'Could not generate the QR Code PDF.');
+        } finally {
+            setDownloadingPdf(false);
+        }
+    };
 
     const handleActivate = async () => {
         // Validate inputs
@@ -191,9 +294,28 @@ export default function OnboardQRScreen() {
                     )}
                 </TouchableOpacity>
 
+                {/* Download QR Code PDF */}
+                {qrCodeId.trim().length > 0 && (
+                    <TouchableOpacity
+                        style={[styles.downloadButton, downloadingPdf && styles.activateButtonDisabled]}
+                        activeOpacity={0.85}
+                        onPress={handleDownloadQR}
+                        disabled={downloadingPdf}
+                    >
+                        {downloadingPdf ? (
+                            <ActivityIndicator color={colors.primary} />
+                        ) : (
+                            <View style={styles.downloadBtnInner}>
+                                <Ionicons name="download-outline" size={20} color={colors.primary} />
+                                <Text style={styles.downloadButtonText}>Download QR Code PDF</Text>
+                            </View>
+                        )}
+                    </TouchableOpacity>
+                )}
+
                 {/* Background decorative image */}
                 <Image
-                    source={require('../assets/logo/Background.png')}
+                    source={require('../assets/new_knoc/qr_code_backgeound.jpeg')}
                     style={styles.backgroundImage}
                     resizeMode="contain"
                 />
@@ -271,6 +393,28 @@ const styles = StyleSheet.create({
     activateButtonText: {
         color: '#FFFFFF',
         fontSize: 16,
+        fontFamily: 'Gilroy-SemiBold',
+    },
+
+    // Download QR Button
+    downloadButton: {
+        marginTop: 14,
+        borderWidth: 1.5,
+        borderColor: colors.primary,
+        borderRadius: 10,
+        height: 56,
+        justifyContent: 'center',
+        alignItems: 'center',
+        backgroundColor: '#F4F3FF',
+    },
+    downloadBtnInner: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 8,
+    },
+    downloadButtonText: {
+        color: colors.primary,
+        fontSize: 15,
         fontFamily: 'Gilroy-SemiBold',
     },
 

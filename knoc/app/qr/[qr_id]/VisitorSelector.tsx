@@ -28,7 +28,7 @@ function KnocLogo() {
     return (
         <div className="flex justify-center mb-5">
             <img
-                src="/Group 1171275857.png"
+                src="/knoclogocolor.png"
                 alt="KNOC"
                 className="h-9 object-contain"
             />
@@ -98,7 +98,7 @@ export default function VisitorSelector({ qrId, location }: Props) {
                             {/* Character image */}
                             <div className="absolute left-0 bottom-0 h-full" style={{ width: 148 }}>
                                 <img
-                                    src="/Untitled (1) 1.png"
+                                    src="/dilvery.png"
                                     alt="Delivery Boy"
                                     style={{
                                         position: 'absolute',
@@ -124,7 +124,7 @@ export default function VisitorSelector({ qrId, location }: Props) {
                             {/* Character image (left) */}
                             <div className="absolute right-0 bottom-0 h-full" style={{ width: 148 }}>
                                 <img
-                                    src="/Untitled 1.png"
+                                    src="/visitor2.png"
                                     alt="Visitor"
                                     style={{
                                         position: 'absolute',

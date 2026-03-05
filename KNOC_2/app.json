@@ -4,7 +4,7 @@
     "slug": "KNOC",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/main_logo/new_logo.png",
+    "icon": "./assets/new_knoc/Bsee_icon_app.png",
     "scheme": "knoc",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
@@ -26,7 +26,7 @@
       "googleServicesFile": "./google-services.json",
       "adaptiveIcon": {
         "backgroundColor": "#FFFFFF",
-        "foregroundImage": "./assets/main_logo/adaptive_screen.png"
+        "foregroundImage": "./assets/new_knoc/Adaptive forground.png"
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
@@ -34,27 +34,27 @@
     },
     "web": {
       "output": "static",
-      "favicon": "./assets/main_logo/icon_app.png"
+      "favicon": "./assets/new_knoc/Bsee_icon_app.png"
     },
     "plugins": [
       "expo-router",
       [
         "expo-splash-screen",
         {
-          "image": "./assets/main_logo/splase_logo.png",
+          "image": "./assets/new_knoc/Splace_Logo.png",
           "imageWidth": 200,
           "resizeMode": "contain",
-          "backgroundColor": "#ffffff",
+          "backgroundColor": "#341dab",
           "dark": {
-            "backgroundColor": "#000000"
+            "backgroundColor": "#341dab"
           }
         }
       ],
       [
         "expo-notifications",
         {
-          "icon": "./assets/main_logo/notification_logo.png",
-          "color": "#431BB8"
+          "icon": "./assets/new_knoc/Notification.png",
+          "color": "#341dab"
         }
       ],
       "@react-native-firebase/app",

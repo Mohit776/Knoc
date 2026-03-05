@@ -130,7 +130,7 @@ export default function ActionButtons({
                 <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-white px-8 animate-fade-in">
                     {/* KNOC Logo */}
                     <img
-                        src="/Group 1171275857.png"
+                        src="/knoclogocolor.png"
                         alt="KNOC"
                         className="h-9 object-contain mb-14"
                     />

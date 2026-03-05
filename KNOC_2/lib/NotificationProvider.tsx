@@ -113,9 +113,10 @@ async function ensureTokenReady(): Promise<string | null> {
 async function syncTokenToFirestore(currentToken: string): Promise<void> {
     const qrId = await AsyncStorage.getItem('linked_qr_id');
     if (!qrId) {
-        // No QR linked yet — just cache the token locally.
-        await AsyncStorage.setItem(LAST_TOKEN_KEY, currentToken);
-        console.log('[Notifications] No linked QR — token cached locally.');
+        // No QR linked yet — do NOT cache the token locally.
+        // When triggerSync() is called later (after onboarding), it needs
+        // to detect the token as "new" so it actually writes to Firestore.
+        console.log('[Notifications] No linked QR — skipping token sync (will retry after onboarding).');
         return;
     }
 
@@ -176,7 +177,7 @@ interface NotificationContextValue {
 }
 
 const NotificationContext = createContext<NotificationContextValue>({
-    triggerSync: async () => {},
+    triggerSync: async () => { },
 });
 
 export const useNotification = () => useContext(NotificationContext);
