@@ -64,7 +64,7 @@ export const ThemeContext = createContext<{
     isDark: boolean;
     colors: typeof lightColors;
 }>({
-    themeMode: 'Automatic',
+    themeMode: 'Light',
     setThemeMode: () => { },
     isDark: false,
     colors: lightColors,
@@ -72,12 +72,12 @@ export const ThemeContext = createContext<{
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
     const systemPref = useColorScheme();
-    const [themeMode, setThemeModeState] = useState<ThemeMode>('Automatic');
+    const [themeMode, setThemeModeState] = useState<ThemeMode>('Light');
     const [isReady, setIsReady] = useState(false);
 
     useEffect(() => {
         AsyncStorage.getItem('theme_preference').then((val) => {
-            if (val === 'Light' || val === 'Dark') {
+            if (val === 'Light' || val === 'Dark' || val === 'Automatic') {
                 setThemeModeState(val as ThemeMode);
             }
             setIsReady(true);

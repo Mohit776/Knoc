@@ -4,9 +4,9 @@
     "slug": "KNOC",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/new_knoc/Bsee_icon_app.png",
+    "icon": "./assets/new_knoc/Bsee_icon_app_11zon.png",
     "scheme": "knoc",
-    "userInterfaceStyle": "automatic",
+    "userInterfaceStyle": "light",
     "newArchEnabled": true,
     "ios": {
       "supportsTablet": true,
@@ -26,7 +26,7 @@
       "googleServicesFile": "./google-services.json",
       "adaptiveIcon": {
         "backgroundColor": "#FFFFFF",
-        "foregroundImage": "./assets/new_knoc/Adaptive forground.png"
+        "foregroundImage": "./assets/new_knoc/Adaptive_forground_11zon.png"
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
@@ -34,7 +34,7 @@
     },
     "web": {
       "output": "static",
-      "favicon": "./assets/new_knoc/Bsee_icon_app.png"
+      "favicon": "./assets/new_knoc/Bsee_icon_app_11zon.png"
     },
     "plugins": [
       "expo-router",
@@ -67,7 +67,7 @@
     "extra": {
       "router": {},
       "eas": {
-        "projectId": "8fc41524-ec08-4732-a91f-43aa808af971"
+        "projectId": "7a54e5f2-0c2c-4ff8-baed-3d961d34b2ea"
       }
     }
   }

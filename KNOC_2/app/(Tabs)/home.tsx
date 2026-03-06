@@ -31,6 +31,7 @@ interface KnocLog {
     response: string | null;
     responded_at: string | null;
     created_at: string;
+    visitorType: 'visitor' | 'delivery' | null;
 }
 
 interface ActiveKnock {
@@ -148,6 +149,7 @@ export default function HomeScreen() {
                     response: d.response || null,
                     responded_at: d.responded_at?.toDate?.()?.toISOString() || d.responded_at || null,
                     created_at: d.created_at?.toDate?.()?.toISOString() || d.created_at || '',
+                    visitorType: d.visitor_type || null,
                 };
             });
 
@@ -383,7 +385,7 @@ export default function HomeScreen() {
 
                 {/* Stats Card */}
                 <LinearGradient
-                    colors={['#C0AAFF', '#CDBCFF', '#F3EFFF']}
+                    colors={isDark ? ['#4A3F7A', '#3B3666', '#2C2A40'] : ['#C0AAFF', '#CDBCFF', '#F3EFFF']}
                     locations={[0, 0.5, 1]}
                     start={{ x: 0.5, y: 0 }}
                     end={{ x: 0.5, y: 1 }}
@@ -396,7 +398,7 @@ export default function HomeScreen() {
                     ] as const).map((item) => (
                         <View key={item.label} style={styles.statItem}>
                             <Text style={styles.statLabel}>{item.label}</Text>
-                            <LinearGradient colors={['#F9F8FF', '#C3B5FD', '#8060F1']}
+                            <LinearGradient colors={isDark ? ['#3B3666', '#5A3F9E', '#7B5CF0'] : ['#F9F8FF', '#C3B5FD', '#8060F1']}
                                 locations={[0, 0.5, 1]}
                                 start={{ x: 0.5, y: 0 }}
                                 end={{ x: 0.5, y: 1 }}
@@ -427,7 +429,7 @@ export default function HomeScreen() {
                                     style={styles.visitRow}
                                 >
                                     <Text style={styles.visitLabel}>
-                                        Visit {index + 1}
+                                        {log.visitorType === 'delivery' ? 'Delivery Parcel' : 'Visitor'}
                                     </Text>
                                     <Text style={styles.visitTime}>
                                         {formatTime(log.created_at)}
@@ -515,8 +517,7 @@ const getStyles = (colors: any, isDark: boolean) => StyleSheet.create({
         borderRadius: 12,
         justifyContent: 'center',
         alignItems: 'center',
-        backgroundColor: '#D9CFFF',
-
+        backgroundColor: isDark ? '#3B3666' : '#D9CFFF',
     },
     statValueHighlight: {
         width: '95%',
@@ -525,11 +526,11 @@ const getStyles = (colors: any, isDark: boolean) => StyleSheet.create({
         position: 'absolute',
         top: 2.5,
         left: 2.5,
-        backgroundColor: '#D9CFFF',
+        backgroundColor: isDark ? '#2C2A40' : '#D9CFFF',
         justifyContent: 'center',
         alignItems: 'center',
     },
-   
+
     statValue: {
         fontSize: 36,
         fontFamily: 'Gilroy-Heavy',
@@ -555,7 +556,7 @@ const getStyles = (colors: any, isDark: boolean) => StyleSheet.create({
         paddingVertical: 16,
         borderBottomWidth: 1,
         borderBottomColor: colors.separator,
-        backgroundColor: '#ffffff',
+        backgroundColor: colors.cardBg,
         borderRadius: 12,
         marginHorizontal: 4,
         marginVertical: 3,

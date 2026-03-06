@@ -157,6 +157,13 @@ export default function ActionButtons({
         /* ── Visitor: "Entry Approved" ── */
         return (
             <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-white px-8 animate-fade-in">
+
+
+                <img
+                        src="/knoclogocolor.png"
+                        alt="KNOC"
+                        className="h-9 object-contain mb-14"
+                    />
                 {/* Animated green circle */}
                 <div className="relative flex items-center justify-center mb-10">
 
@@ -188,6 +195,14 @@ export default function ActionButtons({
         const ts = formatTimestamp(new Date());
         return (
             <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-white px-8 animate-fade-in">
+
+
+                <img
+                        src="/knoclogocolor.png"
+                        alt="KNOC"
+                        className="h-9 object-contain mb-14"
+                    />
+
                 {/* Animated red circle */}
                 <div className="relative flex items-center justify-center mb-10">
                   

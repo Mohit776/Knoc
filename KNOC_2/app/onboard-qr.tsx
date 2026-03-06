@@ -20,7 +20,7 @@ import { doc, getDoc, updateDoc } from '@react-native-firebase/firestore';
 import { useNotification } from '../lib/NotificationProvider';
 import * as Print from 'expo-print';
 import * as Sharing from 'expo-sharing';
-
+import { LinearGradient } from 'expo-linear-gradient';
 const { width } = Dimensions.get('window');
 
 const colors = {
@@ -42,28 +42,81 @@ export default function OnboardQRScreen() {
     const [name, setName] = useState('');
     const [location, setLocation] = useState('');
     const [loading, setLoading] = useState(false);
-    const [downloadingPdf, setDownloadingPdf] = useState(false);
+    const [focusedInput, setFocusedInput] = useState<string | null>(null);
 
-    const handleDownloadQR = async () => {
-        const id = qrCodeId.trim();
-        if (!id) {
-            Alert.alert('Missing QR ID', 'Please enter the QR Code ID first.');
+    const handleActivateAndDownload = async () => {
+        // Validate inputs
+        if (!qrCodeId.trim()) {
+            Alert.alert('Missing QR ID', 'Please enter the QR Unique ID Number printed on your QR code.');
+            return;
+        }
+        if (!name.trim()) {
+            Alert.alert('Missing Name', 'Please enter your name.');
+            return;
+        }
+        if (!location.trim()) {
+            Alert.alert('Missing Location', 'Please enter your location name.');
             return;
         }
 
-        setDownloadingPdf(true);
+        setLoading(true);
+
         try {
-            // Verify QR code exists in the database
+            const id = qrCodeId.trim();
+
+            // 1. Check if the QR code exists in the database
             const qrDoc = await getDoc(doc(db, 'qr_codes', id));
+
             if (!qrDoc.exists()) {
-                Alert.alert('QR Code Not Found', 'This QR Code ID does not exist in our system.');
-                setDownloadingPdf(false);
+                Alert.alert(
+                    'QR Code Not Found',
+                    'This QR Code ID does not exist in our system. Please check the ID and try again.'
+                );
+                setLoading(false);
                 return;
             }
 
-            const qrUrl = `https://knoc.vercel.app/qr/${id}`;
+            const existingQr = qrDoc.data();
 
-            // HTML page with inline QR generation via a lightweight SVG approach
+            // 2. Check if it's already linked to someone
+            if (existingQr?.phone_number) {
+                Alert.alert(
+                    'Already Linked',
+                    'This QR Code is already linked to another user. Please use a different QR code.'
+                );
+                setLoading(false);
+                return;
+            }
+
+            // Fetch phone from AsyncStorage (set during login/OTP flow)
+            const guestPhone = await AsyncStorage.getItem('guest_phone');
+            const phoneToSave = guestPhone ? `+91${guestPhone}` : null;
+
+            // 3. Update the QR code record with user info and name
+            console.log('[Onboard] Updating Firestore doc:', id);
+            await updateDoc(doc(db, 'qr_codes', id), {
+                phone_number: phoneToSave,
+                location: location.trim(),
+                name: name.trim(),
+            });
+
+            console.log('[Onboard] QR code updated successfully. Doc ID:', id);
+
+            // Mark onboarding as complete and save name + qr_id to session
+            await AsyncStorage.multiSet([
+                ['has_onboarded', 'true'],
+                ['user_name', name.trim()],
+                ['linked_qr_id', id],
+            ]);
+
+            // Sync FCM token to Firestore (centralized — NotificationProvider)
+            await triggerSync();
+
+            // 4. Generate QR Code PDF
+            const qrUrl = `https://knoc.vercel.app/qr/${id}`;
+            const encodedQrUrl = encodeURIComponent(qrUrl);
+            const qrImageUrl = `https://api.qrserver.com/v1/create-qr-code/?size=280x280&data=${encodedQrUrl}&format=png&margin=0`;
+
             const html = `
 <!DOCTYPE html>
 <html>
@@ -100,28 +153,14 @@ export default function OnboardQRScreen() {
             font-size: 13px;
             color: #8E8E93;
         }
-        .qr-url {
-            font-size: 10px;
-            color: #C7C7CC;
-            margin-top: 8px;
-            word-break: break-all;
-        }
     </style>
-    <script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js"></script>
 </head>
 <body>
     <div class="qr-container">
-        <div id="qr"></div>
+        <img class="qr-img" src="${qrImageUrl}" alt="QR Code" />
         <div class="qr-id">${id}</div>
         <div class="qr-subtitle">Scan to KNOC</div>
-        <div class="qr-url">${qrUrl}</div>
     </div>
-    <script>
-        var qr = qrcode(0, 'H');
-        qr.addData('${qrUrl}');
-        qr.make();
-        document.getElementById('qr').innerHTML = qr.createSvgTag(8, 0);
-    </script>
 </body>
 </html>`;
 
@@ -136,85 +175,11 @@ export default function OnboardQRScreen() {
             } else {
                 Alert.alert('PDF Saved', `QR Code PDF saved at:\n${uri}`);
             }
-        } catch (e: any) {
-            console.error('[Onboard] PDF generation error:', e);
-            Alert.alert('Error', 'Could not generate the QR Code PDF.');
-        } finally {
-            setDownloadingPdf(false);
-        }
-    };
-
-    const handleActivate = async () => {
-        // Validate inputs
-        if (!qrCodeId.trim()) {
-            Alert.alert('Missing QR ID', 'Please enter the QR Unique ID Number printed on your QR code.');
-            return;
-        }
-        if (!name.trim()) {
-            Alert.alert('Missing Name', 'Please enter your name.');
-            return;
-        }
-        if (!location.trim()) {
-            Alert.alert('Missing Location', 'Please enter your location name.');
-            return;
-        }
-
-        setLoading(true);
-
-        try {
-            // 1. Check if the QR code exists in the database
-            const qrDoc = await getDoc(doc(db, 'qr_codes', qrCodeId.trim()));
-
-            if (!qrDoc.exists()) {
-                Alert.alert(
-                    'QR Code Not Found',
-                    'This QR Code ID does not exist in our system. Please check the ID and try again.'
-                );
-                setLoading(false);
-                return;
-            }
-
-            const existingQr = qrDoc.data();
-
-            // 2. Check if it's already linked to someone
-            if (existingQr?.phone_number) {
-                Alert.alert(
-                    'Already Linked',
-                    'This QR Code is already linked to another user. Please use a different QR code.'
-                );
-                setLoading(false);
-                return;
-            }
-
-            // Fetch phone from AsyncStorage (set during login/OTP flow)
-            const guestPhone = await AsyncStorage.getItem('guest_phone');
-            const phoneToSave = guestPhone ? `+91${guestPhone}` : null;
-
-            // 4. Update the QR code record with user info and name
-            const docIdToUpdate = qrCodeId.trim();
-            console.log('[Onboard] Updating Firestore doc:', docIdToUpdate);
-            await updateDoc(doc(db, 'qr_codes', docIdToUpdate), {
-                phone_number: phoneToSave,
-                location: location.trim(),
-                name: name.trim(),
-            });
-
-            console.log('[Onboard] QR code updated successfully. Doc ID:', docIdToUpdate);
-
-            // Mark onboarding as complete and save name + qr_id to session
-            await AsyncStorage.multiSet([
-                ['has_onboarded', 'true'],
-                ['user_name', name.trim()],
-                ['linked_qr_id', qrCodeId.trim()],
-            ]);
-
-            // Sync FCM token to Firestore (centralized — NotificationProvider)
-            await triggerSync();
 
             // 5. Success! Navigate to the home screen
             Alert.alert(
-                'QR Code Activated!',
-                `Your QR code "${qrCodeId}" has been successfully linked and is now active.`,
+                'QR Code Activated',
+                `Your QR code "${id}" has been successfully linked and is now active.`,
                 [
                     {
                         text: 'Go to Home',
@@ -251,67 +216,62 @@ export default function OnboardQRScreen() {
                 {/* QR Unique ID - Now editable */}
                 <Text style={styles.label}>QR Unique ID Number*</Text>
                 <TextInput
-                    style={styles.input}
-                    placeholder="Enter QR Code ID (e.g. KNO8A2C3F1B2D)"
+                    style={[styles.input, focusedInput === 'qrCodeId' && styles.inputActive]}
+                    placeholder="KNO8A2C3F1B2D"
                     placeholderTextColor={colors.textMuted}
                     value={qrCodeId}
                     onChangeText={setQrCodeId}
                     autoCapitalize="characters"
+                    onFocus={() => setFocusedInput('qrCodeId')}
+                    onBlur={() => setFocusedInput(null)}
                 />
 
                 {/* Name */}
                 <Text style={styles.label}>Name*</Text>
                 <TextInput
-                    style={styles.input}
+                    style={[styles.input, focusedInput === 'name' && styles.inputActive]}
                     placeholder="Enter your name"
                     placeholderTextColor={colors.textMuted}
                     value={name}
                     onChangeText={setName}
+                    onFocus={() => setFocusedInput('name')}
+                    onBlur={() => setFocusedInput(null)}
                 />
 
                 {/* Location Name */}
                 <Text style={styles.label}>Location Name*</Text>
                 <TextInput
-                    style={[styles.input, styles.inputTaller]}
-                    placeholder="Eg. Home, Office, Villas, Builder Floors & Apartments"
+                    style={[styles.input, styles.inputTaller, focusedInput === 'location' && styles.inputActive]}
+                    placeholder="Eg. Home, Office, Builder Floors & Apartments"
                     placeholderTextColor={colors.textMuted}
                     value={location}
                     onChangeText={setLocation}
                     multiline
+                    onFocus={() => setFocusedInput('location')}
+                    onBlur={() => setFocusedInput(null)}
                 />
 
-                {/* Activate Button */}
+                {/* Activate & Download Button */}
                 <TouchableOpacity
-                    style={[styles.activateButton, loading && styles.activateButtonDisabled]}
                     activeOpacity={0.85}
-                    onPress={handleActivate}
+                    onPress={handleActivateAndDownload}
                     disabled={loading}
+                    style={{ marginTop: 28 }}
                 >
-                    {loading ? (
-                        <ActivityIndicator color="#FFFFFF" />
-                    ) : (
-                        <Text style={styles.activateButtonText}>Active QR Code</Text>
-                    )}
-                </TouchableOpacity>
-
-                {/* Download QR Code PDF */}
-                {qrCodeId.trim().length > 0 && (
-                    <TouchableOpacity
-                        style={[styles.downloadButton, downloadingPdf && styles.activateButtonDisabled]}
-                        activeOpacity={0.85}
-                        onPress={handleDownloadQR}
-                        disabled={downloadingPdf}
+                    <LinearGradient
+                        colors={['#431BB8', '#6B45D5', '#926FF3']}
+                        locations={[0.16, 0.51, 0.94]}
+                        start={{ x: 0, y: 0.5 }}
+                        end={{ x: 1, y: 0.5 }}
+                        style={[styles.activateButton, { marginTop: 0 }, loading && styles.activateButtonDisabled]}
                     >
-                        {downloadingPdf ? (
-                            <ActivityIndicator color={colors.primary} />
+                        {loading ? (
+                            <ActivityIndicator color="#FFFFFF" />
                         ) : (
-                            <View style={styles.downloadBtnInner}>
-                                <Ionicons name="download-outline" size={20} color={colors.primary} />
-                                <Text style={styles.downloadButtonText}>Download QR Code PDF</Text>
-                            </View>
+                            <Text style={styles.activateButtonText}>Active QR Code & Download</Text>
                         )}
-                    </TouchableOpacity>
-                )}
+                    </LinearGradient>
+                </TouchableOpacity>
 
                 {/* Background decorative image */}
                 <Image
@@ -364,21 +324,24 @@ const styles = StyleSheet.create({
     },
     input: {
         borderWidth: 1,
-        borderColor: colors.inputActiveBorder,
+        borderColor: 'transparent',
         borderRadius: 10,
         paddingHorizontal: 16,
         paddingVertical: 14,
         fontSize: 15,
         fontFamily: 'Gilroy-Regular',
         color: colors.textMain,
-        backgroundColor: colors.background,
+        backgroundColor: '#926FF31A',
+    },
+    inputActive: {
+        borderColor: '#431BB880',
     },
     inputTaller: {
         minHeight: 60,
         textAlignVertical: 'top',
     },
 
-    // Activate Button
+    // Activate & Download Button
     activateButton: {
         marginTop: 28,
         backgroundColor: colors.primary,
@@ -393,28 +356,6 @@ const styles = StyleSheet.create({
     activateButtonText: {
         color: '#FFFFFF',
         fontSize: 16,
-        fontFamily: 'Gilroy-SemiBold',
-    },
-
-    // Download QR Button
-    downloadButton: {
-        marginTop: 14,
-        borderWidth: 1.5,
-        borderColor: colors.primary,
-        borderRadius: 10,
-        height: 56,
-        justifyContent: 'center',
-        alignItems: 'center',
-        backgroundColor: '#F4F3FF',
-    },
-    downloadBtnInner: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 8,
-    },
-    downloadButtonText: {
-        color: colors.primary,
-        fontSize: 15,
         fontFamily: 'Gilroy-SemiBold',
     },
 
