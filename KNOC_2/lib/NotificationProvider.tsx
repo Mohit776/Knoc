@@ -17,7 +17,6 @@ import React, {
     createContext,
     useContext,
     useEffect,
-    useRef,
     useCallback,
 } from 'react';
 import * as Device from 'expo-device';
@@ -26,6 +25,7 @@ import { Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { db } from './firebase';
 import { doc, getDoc, updateDoc } from '@react-native-firebase/firestore';
+import messaging from '@react-native-firebase/messaging';
 
 // ── Constants ──────────────────────────────────────────────────────────
 const LAST_TOKEN_KEY = 'fcm_token_cached';
@@ -41,8 +41,9 @@ Notifications.setNotificationHandler({
 });
 
 // ── Module-level state ─────────────────────────────────────────────────
-/** Prevents concurrent runs of the setup / sync pipeline. */
-let syncInProgress = false;
+/** Prevents concurrent runs of the setup / sync pipeline, but queues the next run if requested. */
+let isSyncing = false;
+let syncQueued = false;
 
 /** Cached in memory so we never request the token twice per session. */
 let inMemoryToken: string | null = null;
@@ -60,7 +61,7 @@ async function ensureTokenReady(): Promise<string | null> {
     // Fast path — already resolved this session
     if (inMemoryToken) return inMemoryToken;
 
-    // 1. Android channel
+    // 1. Android channel (still needed for expo-notifications foreground display)
     if (Platform.OS === 'android') {
         await Notifications.setNotificationChannelAsync('default', {
             name: 'default',
@@ -77,23 +78,20 @@ async function ensureTokenReady(): Promise<string | null> {
         return null;
     }
 
-    // 3. Permissions (ask only when not yet granted)
-    const { status: existing } = await Notifications.getPermissionsAsync();
-    let finalStatus = existing;
-    if (existing !== 'granted') {
-        console.log('[Notifications] Requesting permission…');
-        const { status } = await Notifications.requestPermissionsAsync();
-        finalStatus = status;
-    }
-    if (finalStatus !== 'granted') {
-        console.log('[Notifications] Permission denied.');
+    // 3. Request permission via Firebase Messaging (handles iOS + Android 13+)
+    const authStatus = await messaging().requestPermission();
+    const permissionGranted =
+        authStatus === messaging.AuthorizationStatus.AUTHORIZED ||
+        authStatus === messaging.AuthorizationStatus.PROVISIONAL;
+
+    if (!permissionGranted) {
+        console.log('[Notifications] Permission denied (status:', authStatus, ')');
         return null;
     }
 
-    // 4. FCM device token
+    // 4. Get FCM token via native Firebase SDK — works reliably in production APKs
     try {
-        const response = await Notifications.getDevicePushTokenAsync();
-        const token = response.data as string;
+        const token = await messaging().getToken();
         console.log(
             '[Notifications] FCM token obtained:',
             token?.substring(0, 20) + '…',
@@ -101,7 +99,7 @@ async function ensureTokenReady(): Promise<string | null> {
         inMemoryToken = token;
         return token;
     } catch (e) {
-        console.error('[Notifications] Error getting device token:', e);
+        console.error('[Notifications] Error getting FCM token:', e);
         return null;
     }
 }
@@ -145,14 +143,16 @@ async function syncTokenToFirestore(currentToken: string): Promise<void> {
 
 /**
  * Full pipeline: ensure the token is ready, then sync to Firestore.
- * Safe to call many times — concurrent / duplicate calls are no-ops.
+ * If called while already syncing, it queues exactly one additional sync to run
+ * after the current one finishes, ensuring no state changes are missed.
  */
 async function setupAndSync(): Promise<void> {
-    if (syncInProgress) {
-        console.log('[Notifications] Sync already in progress — skipping.');
+    if (isSyncing) {
+        console.log('[Notifications] Sync already in progress — queueing another run.');
+        syncQueued = true;
         return;
     }
-    syncInProgress = true;
+    isSyncing = true;
 
     try {
         const token = await ensureTokenReady();
@@ -162,7 +162,13 @@ async function setupAndSync(): Promise<void> {
     } catch (e) {
         console.error('[Notifications] setupAndSync error:', e);
     } finally {
-        syncInProgress = false;
+        isSyncing = false;
+        if (syncQueued) {
+            syncQueued = false;
+            console.log('[Notifications] Running queued sync...');
+            // Launch the next sync without awaiting it here
+            setupAndSync().catch(console.error);
+        }
     }
 }
 
@@ -185,8 +191,6 @@ export const useNotification = () => useContext(NotificationContext);
 // ── Provider Component ─────────────────────────────────────────────────
 
 export function NotificationProvider({ children }: { children: React.ReactNode }) {
-    const tokenListenerRef = useRef<Notifications.Subscription | null>(null);
-
     const triggerSync = useCallback(async () => {
         await setupAndSync();
     }, []);
@@ -195,15 +199,13 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
         // Run the full pipeline once on app startup
         setupAndSync();
 
-        // Listen for token refreshes (equivalent of messaging().onTokenRefresh())
-        tokenListenerRef.current = Notifications.addPushTokenListener(
-            ({ data }) => {
-                const newToken = data as string;
+        // Listen for FCM token refreshes via native Firebase Messaging
+        const unsubscribeTokenRefresh = messaging().onTokenRefresh(
+            (newToken: string) => {
                 console.log(
                     '[Notifications] Token refreshed:',
                     newToken?.substring(0, 20) + '…',
                 );
-                // Update in-memory cache and sync
                 inMemoryToken = newToken;
                 syncTokenToFirestore(newToken).catch((e) =>
                     console.error('[Notifications] Token-refresh sync error:', e),
@@ -212,7 +214,7 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
         );
 
         return () => {
-            tokenListenerRef.current?.remove();
+            unsubscribeTokenRefresh();
         };
     }, []);
 
