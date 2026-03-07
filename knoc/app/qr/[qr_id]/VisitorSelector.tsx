@@ -37,7 +37,7 @@ function KnocLogo() {
 }
 
 /* ─────────── Main Component ─────────── */
-export default function VisitorSelector({ qrId, location }: Props) {
+export default function VisitorSelector({ qrId, location, isLinked }: Props) {
     const [screen, setScreen] = useState<Screen>('select');
     const [selectedApp, setSelectedApp] = useState<string | null>(null);
     const [fullName, setFullName] = useState('');
@@ -45,6 +45,109 @@ export default function VisitorSelector({ qrId, location }: Props) {
     const [purpose, setPurpose] = useState('');
 
     const locationLabel = location || 'Main Entrance';
+
+    /* ══════════════════════════════════════════
+       NOT LINKED — show friendly message
+    ══════════════════════════════════════════ */
+    if (!isLinked) {
+        return (
+            <div
+                className="flex flex-col min-h-screen bg-white items-center justify-center px-8"
+                style={{ fontFamily: 'Inter, system-ui, sans-serif' }}
+            >
+                <div className="flex flex-col items-center w-full max-w-xs text-center">
+                    {/* Logo */}
+                    <img
+                        src="/knoclogocolor.png"
+                        alt="KNOC"
+                        className="h-9 object-contain mb-12"
+                    />
+
+                    {/* Icon */}
+                    <div
+                        className="flex items-center justify-center mb-8 rounded-full"
+                        style={{
+                            width: 96,
+                            height: 96,
+                            background: 'linear-gradient(135deg, #f0effe 0%, #e4ddff 100%)',
+                        }}
+                    >
+                        <svg
+                            width="44"
+                            height="44"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="#431BB8"
+                            strokeWidth="1.8"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                        >
+                            <rect x="3" y="3" width="7" height="7" rx="1" />
+                            <rect x="14" y="3" width="7" height="7" rx="1" />
+                            <rect x="3" y="14" width="7" height="7" rx="1" />
+                            <path d="M14 14h.01M14 17h.01M17 14h.01M17 17h4M21 14v.01" />
+                        </svg>
+                    </div>
+
+                    {/* Heading */}
+                    <h1
+                        style={{
+                            color: '#1A1A1A',
+                            fontWeight: 700,
+                            fontSize: 24,
+                            marginBottom: 10,
+                            lineHeight: 1.3,
+                        }}
+                    >
+                        QR Not Linked Yet
+                    </h1>
+
+                    {/* Body */}
+                    <p
+                        style={{
+                            color: '#8E8E93',
+                            fontSize: 14,
+                            lineHeight: 1.6,
+                            marginBottom: 6,
+                        }}
+                    >
+                        This QR code hasn&apos;t been linked to any account yet.
+                    </p>
+                    <p
+                        style={{
+                            color: '#8E8E93',
+                            fontSize: 14,
+                            lineHeight: 1.6,
+                            marginBottom: 32,
+                        }}
+                    >
+                        The homeowner needs to download the{' '}
+                        <strong style={{ color: '#431BB8' }}>KNOC</strong> app
+                        and register this QR code before it can be used.
+                    </p>
+
+                    {/* QR ID badge */}
+                    <div
+                        style={{
+                            backgroundColor: '#f5f5f7',
+                            borderRadius: 12,
+                            padding: '10px 20px',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: 8,
+                        }}
+                    >
+                        <span style={{ color: '#AEAEB2', fontSize: 12 }}>ID</span>
+                        <span style={{ color: '#431BB8', fontWeight: 700, fontSize: 13, letterSpacing: 1 }}>
+                            {qrId}
+                        </span>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
+
 
     /* ══════════════════════════════════════════
        SCREEN 1 — Select type
@@ -67,7 +170,7 @@ export default function VisitorSelector({ qrId, location }: Props) {
                             className="relative w-full rounded-[28px] "
                             style={{ minHeight: 125, backgroundColor: '#f0effe', marginTop: 16 }}
                         >
-                            
+
                             {/* Text */}
                             <div className="absolute inset-0 flex flex-col justify-center pl-[155px] pr-5 z-10">
                                 <p style={{ color: '#1A1A1A', fontWeight: 700, fontSize: 17, lineHeight: 1.3, marginBottom: 14 }}>
@@ -113,7 +216,7 @@ export default function VisitorSelector({ qrId, location }: Props) {
                                     onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
                                 />
                             </div>
-                           
+
                         </div>
 
                         {/* Visitor Card */}
@@ -229,7 +332,7 @@ export default function VisitorSelector({ qrId, location }: Props) {
                         })}
                     </div>
 
-                 
+
 
                     {/* Notify Homeowner button */}
                     <ActionButtons

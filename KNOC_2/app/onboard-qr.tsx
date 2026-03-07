@@ -15,8 +15,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import { db } from '../lib/firebase';
-import { doc, getDoc, updateDoc } from '@react-native-firebase/firestore';
+import firestore from '@react-native-firebase/firestore';
 import { useNotification } from '../lib/NotificationProvider';
 import * as Print from 'expo-print';
 import * as Sharing from 'expo-sharing';
@@ -65,7 +64,7 @@ export default function OnboardQRScreen() {
             const id = qrCodeId.trim();
 
             // 1. Check if the QR code exists in the database
-            const qrDoc = await getDoc(doc(db, 'qr_codes', id));
+            const qrDoc = await firestore().collection('qr_codes').doc(id).get();
 
             if (!qrDoc.exists()) {
                 Alert.alert(
@@ -94,7 +93,7 @@ export default function OnboardQRScreen() {
 
             // 3. Update the QR code record with user info and name
             console.log('[Onboard] Updating Firestore doc:', id);
-            await updateDoc(doc(db, 'qr_codes', id), {
+            await firestore().collection('qr_codes').doc(id).update({
                 phone_number: phoneToSave,
                 location: location.trim(),
                 name: name.trim(),

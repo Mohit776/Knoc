@@ -18,8 +18,7 @@ import type { EventSubscription } from 'expo-modules-core';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useTheme } from '../../lib/themeContext';
-import { db } from '../../lib/firebase';
-import { collection, query, where, getDocs, doc, updateDoc, serverTimestamp, limit } from '@react-native-firebase/firestore';
+import firestore from '@react-native-firebase/firestore';
 
 const { width } = Dimensions.get('window');
 const LOGS_PER_PAGE = 10;
@@ -89,17 +88,16 @@ export default function HomeScreen() {
             let qrId: string | null = null;
 
             if (!qrId && guestPhone) {
-                const q = query(
-                    collection(db, 'qr_codes'),
-                    where('phone_number', '==', `+91${guestPhone}`),
-                    limit(1)
-                );
-                const snapshot = await getDocs(q);
+                const snapshot = await firestore()
+                    .collection('qr_codes')
+                    .where('phone_number', '==', `+91${guestPhone}`)
+                    .limit(1)
+                    .get();
 
                 if (!snapshot.empty) {
                     const data = snapshot.docs[0].data();
                     // IMPORTANT: Use the Firestore document ID, not the qr_id data field.
-                    // This ensures updateDoc(doc(db, ...)) calls work correctly.
+                    // This ensures .doc(id).update() calls work correctly.
                     const docId = snapshot.docs[0].id;
                     qrId = docId;
                     setLocationName(data.location || 'Home');
@@ -131,12 +129,11 @@ export default function HomeScreen() {
 
         try {
             console.log('[Home] Fetching logs for qr_id:', id);
-            const q = query(
-                collection(db, 'knoc_logs'),
-                where('qr_id', '==', id),
-                limit(20)
-            );
-            const snapshot = await getDocs(q);
+            const snapshot = await firestore()
+                .collection('knoc_logs')
+                .where('qr_id', '==', id)
+                .limit(20)
+                .get();
 
             console.log('[Home] Logs fetched, count:', snapshot.docs.length);
 
@@ -170,9 +167,9 @@ export default function HomeScreen() {
         if (!activeKnock) return;
 
         try {
-            await updateDoc(doc(db, 'knoc_logs', activeKnock.logId), {
+            await firestore().collection('knoc_logs').doc(activeKnock.logId).update({
                 response: 'coming',
-                responded_at: serverTimestamp(),
+                responded_at: firestore.FieldValue.serverTimestamp(),
             });
 
             setActiveKnock(null);
@@ -189,9 +186,9 @@ export default function HomeScreen() {
         if (!activeKnock) return;
 
         try {
-            await updateDoc(doc(db, 'knoc_logs', activeKnock.logId), {
+            await firestore().collection('knoc_logs').doc(activeKnock.logId).update({
                 response: 'ignored',
-                responded_at: serverTimestamp(),
+                responded_at: firestore.FieldValue.serverTimestamp(),
             });
 
             setActiveKnock(null);

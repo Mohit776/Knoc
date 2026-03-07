@@ -30,7 +30,8 @@ export default async function QRPage({ params }: { params: Promise<{ qr_id: stri
         notFound();
     }
 
-    const isLinked = !!qrData.location;
+    // A QR is "linked" only when a user has onboarded with it (phone_number is set)
+    const isLinked = !!qrData.phone_number;
 
     return (
         <VisitorSelector

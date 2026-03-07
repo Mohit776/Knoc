@@ -13,9 +13,9 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { auth, db } from '../lib/firebase';
+import { auth } from '../lib/firebase';
 import { signInWithPhoneNumber } from '@react-native-firebase/auth';
-import { collection, query, where, getDocs, doc, limit } from '@react-native-firebase/firestore';
+import firestore from '@react-native-firebase/firestore';
 import { firebaseConfirmation } from './login';
 import { useNotification } from '../lib/NotificationProvider';
 
@@ -77,12 +77,11 @@ export default function OTPScreen() {
 
             // Check if user is already linked in the database
             const fullPhoneFormatted = `+91${rawPhone}`;
-            const q = query(
-                collection(db, 'qr_codes'),
-                where('phone_number', '==', fullPhoneFormatted),
-                limit(1)
-            );
-            const snapshot = await getDocs(q);
+            const snapshot = await firestore()
+                .collection('qr_codes')
+                .where('phone_number', '==', fullPhoneFormatted)
+                .limit(1)
+                .get();
 
             if (!snapshot.empty) {
                 // User exists! Restore their session and skip onboarding
@@ -156,7 +155,7 @@ export default function OTPScreen() {
             >
                 <View style={styles.content}>
                     {/* KNOC App Logo */}
-                   
+
                     <Text style={styles.title}>Your OTP is on its way</Text>
 
                     <View style={styles.subtitleRow}>

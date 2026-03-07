@@ -5,8 +5,7 @@
  * Firestore when it is missing or has actually changed.
  */
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { db } from './firebase';
-import { doc, getDoc, updateDoc } from '@react-native-firebase/firestore';
+import firestore from '@react-native-firebase/firestore';
 import { registerForPushNotificationsAsync } from './notifications';
 
 const LAST_TOKEN_KEY = 'fcm_token_cached';
@@ -56,7 +55,7 @@ export async function syncFcmToken(): Promise<void> {
         }
 
         // 4. Double-check against Firestore (in case another device/session updated it)
-        const qrDoc = await getDoc(doc(db, 'qr_codes', qrId));
+        const qrDoc = await firestore().collection('qr_codes').doc(qrId).get();
         const existingToken = qrDoc.data()?.fcm_token;
 
         if (existingToken === currentToken) {
@@ -68,7 +67,7 @@ export async function syncFcmToken(): Promise<void> {
 
         // 5. Token is new or changed — write to Firestore
         console.log('[FCM] Token changed. Updating Firestore for doc:', qrId);
-        await updateDoc(doc(db, 'qr_codes', qrId), { fcm_token: currentToken });
+        await firestore().collection('qr_codes').doc(qrId).update({ fcm_token: currentToken });
         await AsyncStorage.setItem(LAST_TOKEN_KEY, currentToken);
         console.log('[FCM] Token saved successfully.');
     } catch (e) {

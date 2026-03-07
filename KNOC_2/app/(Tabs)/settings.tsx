@@ -12,8 +12,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { db, auth } from '../../lib/firebase';
-import { doc, getDoc, updateDoc } from '@react-native-firebase/firestore';
+import { auth } from '../../lib/firebase';
+import firestore from '@react-native-firebase/firestore';
 import { signOut } from '@react-native-firebase/auth';
 import { clearCachedFcmToken } from '../../lib/NotificationProvider';
 
@@ -66,7 +66,7 @@ export default function SettingsScreen() {
 
             // Fetch more details from Firestore if we have a QR ID
             if (storedQrId) {
-                const docSnap = await getDoc(doc(db, 'qr_codes', storedQrId));
+                const docSnap = await firestore().collection('qr_codes').doc(storedQrId).get();
 
                 const data = docSnap.data();
                 if (data) {
@@ -112,7 +112,7 @@ export default function SettingsScreen() {
                             const qrId = await AsyncStorage.getItem('linked_qr_id');
                             if (qrId) {
                                 try {
-                                    await updateDoc(doc(db, 'qr_codes', qrId), { fcm_token: null });
+                                    await firestore().collection('qr_codes').doc(qrId).update({ fcm_token: null });
                                     console.log('[Settings] FCM token cleared from Firestore for doc:', qrId);
                                 } catch (e) {
                                     console.error('[Settings] Failed to clear FCM token:', e);

@@ -6,6 +6,7 @@ import { View, Image, StyleSheet, Dimensions } from 'react-native';
 import { ThemeProvider } from '../lib/themeContext';
 import { NotificationProvider } from '../lib/NotificationProvider';
 import * as Notifications from 'expo-notifications';
+import messaging from '@react-native-firebase/messaging';
 
 const { width, height } = Dimensions.get('window');
 
@@ -13,7 +14,26 @@ const { width, height } = Dimensions.get('window');
 SplashScreen.preventAutoHideAsync();
 
 /**
- * Extract knock data from a notification response, if present.
+ * Extract knock data from a Firebase RemoteMessage, if present.
+ */
+function extractKnockDataFromMessage(message: any) {
+  if (!message) return null;
+  const data = message.data;
+  if (!data?.logId || !data?.qrId) return null;
+  return {
+    logId: data.logId as string,
+    qrId: data.qrId as string,
+    action: (data.action as string) || 'Alarm',
+    visitorType: (data.visitorType as string) || '',
+    visitorName: (data.visitorName as string) || '',
+    visitorPurpose: (data.visitorPurpose as string) || '',
+    deliveryApp: (data.deliveryApp as string) || '',
+    sentAt: new Date().toISOString(),
+  };
+}
+
+/**
+ * Extract knock data from an expo-notifications response (background tap fallback).
  */
 function extractKnockData(response: Notifications.NotificationResponse | null | undefined) {
   if (!response) return null;
@@ -56,17 +76,27 @@ export default function RootLayout() {
     }
   }, [fontsLoaded, fontError]);
 
-  // ─── Cold-start: check for the notification that launched the app ───
+  // ─── Cold-start: check for the FCM notification that launched the app ───
   useEffect(() => {
     if (coldStartHandled.current) return;
 
     const checkInitialNotification = async () => {
       try {
-        const lastResponse = await Notifications.getLastNotificationResponseAsync();
-        const knockData = extractKnockData(lastResponse);
+        // Primary: use Firebase Messaging getInitialNotification (works for FCM cold-start)
+        const remoteMessage = await messaging().getInitialNotification();
+        const knockData = extractKnockDataFromMessage(remoteMessage);
         if (knockData) {
-          console.log('[RootLayout] Cold-start notification detected:', knockData.logId);
+          console.log('[RootLayout] Cold-start FCM notification detected:', knockData.logId);
           pendingKnockData.current = knockData;
+          return;
+        }
+
+        // Fallback: expo-notifications response (covers edge cases)
+        const lastResponse = await Notifications.getLastNotificationResponseAsync();
+        const expoKnockData = extractKnockData(lastResponse);
+        if (expoKnockData) {
+          console.log('[RootLayout] Cold-start expo notification detected:', expoKnockData.logId);
+          pendingKnockData.current = expoKnockData;
         }
       } catch (e) {
         console.error('[RootLayout] Error checking initial notification:', e);

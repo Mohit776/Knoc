@@ -23,8 +23,7 @@ import * as Device from 'expo-device';
 import * as Notifications from 'expo-notifications';
 import { Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { db } from './firebase';
-import { doc, getDoc, updateDoc } from '@react-native-firebase/firestore';
+import firestore from '@react-native-firebase/firestore';
 import messaging from '@react-native-firebase/messaging';
 
 // ── Constants ──────────────────────────────────────────────────────────
@@ -107,6 +106,9 @@ async function ensureTokenReady(): Promise<string | null> {
 /**
  * Write `currentToken` to the Firestore `qr_codes/{qrId}` document,
  * but ONLY if it differs from both the local cache and the remote value.
+ *
+ * Uses the namespaced @react-native-firebase/firestore API (firestore()) which
+ * is consistent with how the rest of the app accesses Firestore.
  */
 async function syncTokenToFirestore(currentToken: string): Promise<void> {
     const qrId = await AsyncStorage.getItem('linked_qr_id');
@@ -125,8 +127,8 @@ async function syncTokenToFirestore(currentToken: string): Promise<void> {
         return;
     }
 
-    // Double-check against Firestore
-    const qrDoc = await getDoc(doc(db, 'qr_codes', qrId));
+    // Double-check against Firestore (using namespaced API)
+    const qrDoc = await firestore().collection('qr_codes').doc(qrId).get();
     const remoteToken = qrDoc.data()?.fcm_token;
     if (remoteToken === currentToken) {
         await AsyncStorage.setItem(LAST_TOKEN_KEY, currentToken);
@@ -136,7 +138,7 @@ async function syncTokenToFirestore(currentToken: string): Promise<void> {
 
     // Token is new or changed — write once
     console.log('[Notifications] Token changed. Writing to Firestore for:', qrId);
-    await updateDoc(doc(db, 'qr_codes', qrId), { fcm_token: currentToken });
+    await firestore().collection('qr_codes').doc(qrId).update({ fcm_token: currentToken });
     await AsyncStorage.setItem(LAST_TOKEN_KEY, currentToken);
     console.log('[Notifications] Token saved to Firestore.');
 }

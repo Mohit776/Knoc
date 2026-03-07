@@ -10,8 +10,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter, useLocalSearchParams } from 'expo-router';
-import { db } from '../lib/firebase';
-import { doc, updateDoc, serverTimestamp } from '@react-native-firebase/firestore';
+import firestore from '@react-native-firebase/firestore';
 import { useTheme } from '../lib/themeContext';
 
 export default function KnockDetailScreen() {
@@ -53,9 +52,9 @@ export default function KnockDetailScreen() {
 
     const handleComing = async () => {
         try {
-            await updateDoc(doc(db, 'knoc_logs', params.logId), {
+            await firestore().collection('knoc_logs').doc(params.logId).update({
                 response: 'coming',
-                responded_at: serverTimestamp(),
+                responded_at: firestore.FieldValue.serverTimestamp(),
             });
             router.back();
         } catch (e) {
@@ -66,9 +65,9 @@ export default function KnockDetailScreen() {
 
     const handleIgnore = async () => {
         try {
-            await updateDoc(doc(db, 'knoc_logs', params.logId), {
+            await firestore().collection('knoc_logs').doc(params.logId).update({
                 response: 'ignored',
-                responded_at: serverTimestamp(),
+                responded_at: firestore.FieldValue.serverTimestamp(),
             });
             router.back();
         } catch (e) {
