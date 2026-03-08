@@ -412,7 +412,7 @@ export default function VisitorSelector({ qrId, location, isLinked }: Props) {
                     />
                     <input
                         type="text"
-                        placeholder="purpose of visit"
+                        placeholder="Message"
                         value={purpose}
                         onChange={(e) => setPurpose(e.target.value)}
                         style={{

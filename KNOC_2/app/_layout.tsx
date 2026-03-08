@@ -13,6 +13,12 @@ const { width, height } = Dimensions.get('window');
 // Keep native splash visible while fonts load
 SplashScreen.preventAutoHideAsync();
 
+// ── Background FCM handler (must be registered at module scope) ─────
+// This handles data-only messages when the app is in the background/killed.
+messaging().setBackgroundMessageHandler(async (remoteMessage) => {
+  console.log('[FCM] Background message received:', remoteMessage.messageId);
+});
+
 /**
  * Extract knock data from a Firebase RemoteMessage, if present.
  */
