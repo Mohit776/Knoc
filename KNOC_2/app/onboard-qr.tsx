@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
     View,
     Text,
@@ -14,7 +14,7 @@ import {
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import firestore from '@react-native-firebase/firestore';
 import { useNotification } from '../lib/NotificationProvider';
 import * as Print from 'expo-print';
@@ -36,12 +36,20 @@ const colors = {
 
 export default function OnboardQRScreen() {
     const router = useRouter();
+    const { qr_id } = useLocalSearchParams<{ qr_id?: string }>();
     const { triggerSync } = useNotification();
-    const [qrCodeId, setQrCodeId] = useState('');
+    const [qrCodeId, setQrCodeId] = useState(qr_id || '');
     const [name, setName] = useState('');
     const [location, setLocation] = useState('');
     const [loading, setLoading] = useState(false);
     const [focusedInput, setFocusedInput] = useState<string | null>(null);
+
+    // Update qrCodeId if route param changes (e.g. navigating back and scanning again)
+    useEffect(() => {
+        if (qr_id) {
+            setQrCodeId(qr_id);
+        }
+    }, [qr_id]);
 
     const handleActivateAndDownload = async () => {
         // Validate inputs
