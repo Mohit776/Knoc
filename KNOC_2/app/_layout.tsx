@@ -1,8 +1,9 @@
 import { Stack, useRouter, useSegments } from 'expo-router';
 import { useFonts } from 'expo-font';
 import * as SplashScreen from 'expo-splash-screen';
-import { useEffect, useRef, useCallback } from 'react';
+import { useEffect, useRef, useCallback, useState } from 'react';
 import { View, Image, StyleSheet, Dimensions } from 'react-native';
+import AppSplash from './AppSplash';
 import { ThemeProvider } from '../lib/themeContext';
 import { NotificationProvider } from '../lib/NotificationProvider';
 import * as Notifications from 'expo-notifications';
@@ -58,6 +59,7 @@ function extractKnockData(response: Notifications.NotificationResponse | null | 
 }
 
 export default function RootLayout() {
+  const [splashVisible, setSplashVisible] = useState(true);
   const [fontsLoaded, fontError] = useFonts({
     'Gilroy-Regular': require('../assets/fonts/Gilroy-Regular.ttf'),
     'Gilroy-Medium': require('../assets/fonts/Gilroy-Medium.ttf'),
@@ -139,17 +141,12 @@ export default function RootLayout() {
     }
   }, [segments, router]);
 
-  // Show custom JS splash screen while fonts are loading
   if (!fontsLoaded && !fontError) {
-    return (
-      <View style={styles.splashContainer}>
-        <Image
-          source={require('../assets/new_knoc/Splash_Logo.png')}
-          style={styles.splashLogo}
-          resizeMode="contain"
-        />
-      </View>
-    );
+    return null; // Keep native splash visible while fonts load
+  }
+
+  if (splashVisible) {
+    return <AppSplash onFinish={() => setSplashVisible(false)} />;
   }
 
   return (

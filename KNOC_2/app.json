@@ -4,7 +4,7 @@
     "slug": "KNOC",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/new_knoc/Base_App_Icon.png",
+    "icon": "./assets/new_knoc/base.png",
     "scheme": "knoc",
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
@@ -26,7 +26,7 @@
       "googleServicesFile": "./google-services.json",
       "adaptiveIcon": {
         "backgroundColor": "#FFFFFF",
-        "foregroundImage": "./assets/new_knoc/Adaptive_Foreground.png"
+        "foregroundImage": "./assets/new_knoc/icon.png"
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
@@ -37,7 +37,7 @@
     },
     "web": {
       "output": "static",
-      "favicon": "./assets/new_knoc/Base_App_Icon.png"
+      "favicon": "./assets/new_knoc/base.png"
     },
     "plugins": [
       "expo-router",

@@ -360,7 +360,7 @@ export default function HomeScreen() {
                     contentFit="contain"
                 />
                 <TouchableOpacity onPress={() => router.push('/(Tabs)/settings')} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
-                    <Ionicons name="person-circle-outline" size={30} color={colors.textMain} />
+                    <Ionicons name="person-circle-outline" size={36} color={colors.textMain} />
                 </TouchableOpacity>
             </View>
 
@@ -486,7 +486,7 @@ const getStyles = (colors: any, isDark: boolean) => StyleSheet.create({
 
     // Welcome
     welcomeText: {
-        fontSize: 22,
+        fontSize: 20,
         fontFamily: 'Gilroy-Bold',
         color: colors.textMain,
         marginBottom: 16,
