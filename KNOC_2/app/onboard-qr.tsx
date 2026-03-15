@@ -7,10 +7,10 @@ import {
     StyleSheet,
     ScrollView,
     Dimensions,
-    Image,
     Alert,
     ActivityIndicator,
 } from 'react-native';
+import { Image } from 'expo-image';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -282,9 +282,9 @@ export default function OnboardQRScreen() {
 
                 {/* Background decorative image */}
                 <Image
-                    source={require('../assets/new_knoc/qr_code_backgeound.jpeg')}
+                    source={require('../assets/new_knoc/Background.svg')}
                     style={styles.backgroundImage}
-                    resizeMode="contain"
+                    contentFit="contain"
                 />
             </ScrollView>
         </SafeAreaView>
@@ -368,7 +368,7 @@ const styles = StyleSheet.create({
 
     // Background decorative image
     backgroundImage: {
-        width: '100%',
+        width: 356,
         height: 160,
         marginTop: 20,
         alignSelf: 'center',

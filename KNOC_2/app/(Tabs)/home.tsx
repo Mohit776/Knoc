@@ -5,12 +5,12 @@ import {
     TouchableOpacity,
     StyleSheet,
     ScrollView,
-    Image,
     Dimensions,
     Alert,
     RefreshControl,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import * as Notifications from 'expo-notifications';
@@ -355,11 +355,11 @@ export default function HomeScreen() {
             {/* Header */}
             <View style={styles.header}>
                 <Image
-                    source={require('../../assets/new_knoc/logo_text.png')}
+                    source={require('../../assets/new_knoc/logo_gull.svg')}
                     style={styles.logo}
-                    resizeMode="contain"
+                    contentFit="contain"
                 />
-                <TouchableOpacity hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+                <TouchableOpacity onPress={() => router.push('/(Tabs)/settings')} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
                     <Ionicons name="person-circle-outline" size={30} color={colors.textMain} />
                 </TouchableOpacity>
             </View>
@@ -420,19 +420,24 @@ export default function HomeScreen() {
                         </View>
                     ) : (
                         <>
-                            {todayLogs.slice(0, visibleLogCount).map((log, index) => (
-                                <View
-                                    key={log.id}
-                                    style={styles.visitRow}
-                                >
-                                    <Text style={styles.visitLabel}>
-                                        {log.visitorType === 'delivery' ? 'Delivery Parcel' : 'Visitor'}
-                                    </Text>
-                                    <Text style={styles.visitTime}>
-                                        {formatTime(log.created_at)}
-                                    </Text>
-                                </View>
-                            ))}
+                            {todayLogs.slice(0, visibleLogCount).map((log, index) => {
+                                const isDenied = log.action === 'No Entry' || log.response === 'ignored' || log.response === 'declined';
+                                return (
+                                    <View
+                                        key={log.id}
+                                        style={[styles.visitRow, isDenied && styles.visitRowDenied]}
+                                    >
+                                        <Text style={styles.visitLabel}>
+                                            {isDenied 
+                                                ? 'Not Approved' 
+                                                : (log.visitorType === 'delivery' ? 'Delivery Parcel' : 'Visitor')}
+                                        </Text>
+                                        <Text style={styles.visitTime}>
+                                            Time {formatTime(log.created_at)}
+                                        </Text>
+                                    </View>
+                                );
+                            })}
                             {visibleLogCount < todayLogs.length && (
                                 <TouchableOpacity
                                     style={styles.showMoreBtn}
@@ -463,7 +468,7 @@ const getStyles = (colors: any, isDark: boolean) => StyleSheet.create({
         alignItems: 'center',
         justifyContent: 'space-between',
         paddingHorizontal: 20,
-        paddingVertical: 12,
+        paddingVertical: 16,
         backgroundColor: colors.cardBg,
     },
     logo: {
@@ -485,6 +490,7 @@ const getStyles = (colors: any, isDark: boolean) => StyleSheet.create({
         fontFamily: 'Gilroy-Bold',
         color: colors.textMain,
         marginBottom: 16,
+        marginTop: 8,
     },
 
     // Stats Card
@@ -493,10 +499,11 @@ const getStyles = (colors: any, isDark: boolean) => StyleSheet.create({
         flexDirection: 'row',
         justifyContent: 'space-around',
         alignItems: 'center',
-        paddingVertical: 20,
+        paddingTop: 16,
         paddingHorizontal: 12,
         marginBottom: 20,
         gap: 10,
+        paddingBottom: 26,
     },
     statItem: {
         flex: 1,
@@ -509,27 +516,28 @@ const getStyles = (colors: any, isDark: boolean) => StyleSheet.create({
         color: colors.textPrimary,
     },
     statValueBox: {
-        width: '100%',
-        aspectRatio: 1,
+        width: 90,
+        aspectRatio: 0.98,
         borderRadius: 12,
+        marginHorizontal: 10,
         justifyContent: 'center',
         alignItems: 'center',
         backgroundColor: isDark ? '#3B3666' : '#D9CFFF',
     },
     statValueHighlight: {
-        width: '95%',
-        height: '95%',
+        width: '97%',
+        height: '97%',
         borderRadius: 12,
         position: 'absolute',
-        top: 2.5,
-        left: 2.5,
+        top: 1,
+        left: 1,
         backgroundColor: isDark ? '#2C2A40' : '#D9CFFF',
         justifyContent: 'center',
         alignItems: 'center',
     },
 
     statValue: {
-        fontSize: 36,
+        fontSize: 45,
         fontFamily: 'Gilroy-Heavy',
         color: colors.primary,
     },
@@ -539,7 +547,7 @@ const getStyles = (colors: any, isDark: boolean) => StyleSheet.create({
         fontSize: 18,
         fontFamily: 'Gilroy-ExtraBold',
         color: colors.textMain,
-        marginBottom: 12,
+        marginBottom: 8,
         marginLeft: 8,
     },
     visitList: {
@@ -549,14 +557,20 @@ const getStyles = (colors: any, isDark: boolean) => StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
-        paddingHorizontal: 10,
+        paddingHorizontal: 16,
         paddingVertical: 16,
-        borderBottomWidth: 1,
-        borderBottomColor: colors.separator,
         backgroundColor: colors.cardBg,
         borderRadius: 12,
         marginHorizontal: 4,
-        marginVertical: 3,
+        marginVertical: 8,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.05,
+        shadowRadius: 3,
+        elevation: 1,
+    },
+    visitRowDenied: {
+        backgroundColor: isDark ? '#5C2D2D' : '#F5C1C1',
     },
     visitLabel: {
         fontSize: 15,

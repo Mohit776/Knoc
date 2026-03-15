@@ -20,22 +20,37 @@ module.exports = function withManifestColorFix(config) {
             manifest.manifest.$['xmlns:tools'] = 'http://schemas.android.com/tools';
         }
 
-        // 2. Walk all application entries (usually just one)
+        // 2. Fetch the main application
         const applications = manifest.manifest.application ?? [];
         for (const app of applications) {
-            const metaDataList = app['meta-data'] ?? [];
-
-            for (const meta of metaDataList) {
-                if (
-                    meta.$['android:name'] ===
-                    'com.google.firebase.messaging.default_notification_color'
-                ) {
-                    // Add tools:replace so the manifest merger uses our value
-                    meta.$['tools:replace'] = 'android:resource';
-                    console.log(
-                        '[withManifestFix] ✅ Added tools:replace to default_notification_color'
-                    );
+            if (!app['meta-data']) {
+                app['meta-data'] = [];
+            }
+            
+            let foundIndex = -1;
+            for (let i = 0; i < app['meta-data'].length; i++) {
+                if (app['meta-data'][i].$['android:name'] === 'com.google.firebase.messaging.default_notification_color') {
+                    foundIndex = i;
+                    break;
                 }
+            }
+            
+            const newMetaData = {
+                $: {
+                    'android:name': 'com.google.firebase.messaging.default_notification_color',
+                    'android:resource': '@color/notification_icon_color',
+                    'tools:replace': 'android:resource'
+                }
+            };
+
+            if (foundIndex > -1) {
+                // Merge/Overwrite the existing element to preserve the tools attribute
+                app['meta-data'][foundIndex] = newMetaData;
+                console.log('[withManifestFix] ✅ Overwrote existing default_notification_color with tools:replace');
+            } else {
+                // Simply push a new one if not found
+                app['meta-data'].push(newMetaData);
+                console.log('[withManifestFix] ✅ Added new default_notification_color with tools:replace');
             }
         }
 

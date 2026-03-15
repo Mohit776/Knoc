@@ -1,13 +1,13 @@
 {
   "project_info": {
-    "project_number": "754746347083",
-    "project_id": "knoc-d5a1c",
-    "storage_bucket": "knoc-d5a1c.firebasestorage.app"
+    "project_number": "981884824732",
+    "project_id": "trueknoc-57525",
+    "storage_bucket": "trueknoc-57525.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:754746347083:android:0d82d2d7f6b30c962387ce",
+        "mobilesdk_app_id": "1:981884824732:android:beb9ebe5e909f4d33f9159",
         "android_client_info": {
           "package_name": "com.knoc.app"
         }
@@ -15,7 +15,7 @@
       "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyC0GUtQNP5fPyni1UwyEV3j8QZ_rpMsXlA"
+          "current_key": "AIzaSyD5l6TUHLPOq-qzsE3uOwBaFmcUVw4dht4"
         }
       ],
       "services": {

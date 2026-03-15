@@ -59,7 +59,6 @@ function extractKnockData(response: Notifications.NotificationResponse | null | 
 
 export default function RootLayout() {
   const [fontsLoaded, fontError] = useFonts({
-    'Gilroy-Light': require('../assets/fonts/Gilroy-Light.ttf'),
     'Gilroy-Regular': require('../assets/fonts/Gilroy-Regular.ttf'),
     'Gilroy-Medium': require('../assets/fonts/Gilroy-Medium.ttf'),
     'Gilroy-SemiBold': require('../assets/fonts/Gilroy-SemiBold.ttf'),
@@ -145,7 +144,7 @@ export default function RootLayout() {
     return (
       <View style={styles.splashContainer}>
         <Image
-          source={require('../assets/new_knoc/Splace_Logo.png')}
+          source={require('../assets/new_knoc/Splash_Logo.png')}
           style={styles.splashLogo}
           resizeMode="contain"
         />

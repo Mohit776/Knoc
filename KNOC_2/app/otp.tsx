@@ -242,12 +242,12 @@ const styles = StyleSheet.create({
         marginBottom: 32,
     },
     subtitle: {
-        fontSize: 14,
+        fontSize: 12,
         fontFamily: 'Gilroy-Regular',
         color: colors.textMuted,
     },
     editText: {
-        fontSize: 14,
+        fontSize: 12,
         fontFamily: 'Gilroy-Medium',
         color: colors.primary,
     },
@@ -255,7 +255,7 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         justifyContent: 'space-between',
         marginBottom: 24,
-        width: '100%',
+        width: '98%',
     },
     otpBox: {
         width: 46,

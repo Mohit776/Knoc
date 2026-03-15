@@ -8,6 +8,7 @@ import {
     KeyboardAvoidingView,
     Platform,
     Image,
+    Linking,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -109,7 +110,10 @@ export default function LoginScreen() {
 
                 {/* Footer */}
                 <View style={styles.footer}>
-                    <TouchableOpacity activeOpacity={0.6}>
+                    <TouchableOpacity 
+                        activeOpacity={0.6}
+                        onPress={() => Linking.openURL('https://knoc.vercel.app/privacy/')}
+                    >
                         <Text style={styles.privacyText}>Privacy policy</Text>
                     </TouchableOpacity>
                 </View>
@@ -142,7 +146,7 @@ const styles = StyleSheet.create({
     },
     content: {
         flex: 1,
-        marginTop: 60, // To roughly match the position in the image
+        marginTop: 120, // To roughly match the position in the image
     },
     logo: {
         width: 140,
@@ -163,7 +167,7 @@ const styles = StyleSheet.create({
         borderRadius: 8,
         paddingHorizontal: 16,
         height: 56,
-        marginBottom: 32,
+        marginBottom: 28,
     },
     countryCode: {
         fontSize: 16,

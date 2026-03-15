@@ -4,7 +4,7 @@
     "slug": "KNOC",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/new_knoc/Bsee_icon_app_11zon.png",
+    "icon": "./assets/new_knoc/Base_App_Icon.png",
     "scheme": "knoc",
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
@@ -26,27 +26,38 @@
       "googleServicesFile": "./google-services.json",
       "adaptiveIcon": {
         "backgroundColor": "#FFFFFF",
-        "foregroundImage": "./assets/new_knoc/Adaptive_forground_11zon.png"
+        "foregroundImage": "./assets/new_knoc/Adaptive_Foreground.png"
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
-      "package": "com.knoc.app"
+      "package": "com.knoc.app",
+      "permissions": [
+        "android.permission.CAMERA"
+      ]
     },
     "web": {
       "output": "static",
-      "favicon": "./assets/new_knoc/Bsee_icon_app_11zon.png"
+      "favicon": "./assets/new_knoc/Base_App_Icon.png"
     },
     "plugins": [
       "expo-router",
       [
+        "expo-camera",
+        {
+          "cameraPermission": "Allow KNOC to access your camera to scan QR codes.",
+          "microphonePermission": false,
+          "recordAudioAndroid": false
+        }
+      ],
+      [
         "expo-splash-screen",
         {
-          "image": "./assets/new_knoc/Splace_Logo.png",
+          "image": "./assets/new_knoc/Splash_Logo.png",
           "imageWidth": 200,
           "resizeMode": "contain",
-          "backgroundColor": "#341dab",
+          "backgroundColor": "#ffffff",
           "dark": {
-            "backgroundColor": "#341dab"
+            "backgroundColor": "#ffffff"
           }
         }
       ],
@@ -68,8 +79,9 @@
     "extra": {
       "router": {},
       "eas": {
-        "projectId": "7a54e5f2-0c2c-4ff8-baed-3d961d34b2ea"
+        "projectId": "4c01ad95-1a51-49e9-92d2-47435b2fb7a2"
       }
-    }
+    },
+    "owner": "mohit551"
   }
 }

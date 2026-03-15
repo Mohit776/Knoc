@@ -128,7 +128,7 @@ export default function KnocWelcomeScreen() {
                     ]}
                 >
                     <Image
-                        source={require('../assets/new_knoc/wordlogo.png')}
+                        source={require('../assets/new_knoc/wordlogo.svg')}
                         style={{ width: width * 0.45, height: 45, marginTop: 0 }}
                         contentFit="contain"
                     />
@@ -212,7 +212,11 @@ export default function KnocWelcomeScreen() {
 
                     {/* Bottom branding */}
                     <View style={styles.scannerFooter}>
-                        <Text style={styles.scannerBrand}>trueknoc</Text>
+                        <Image
+                            source={require('../assets/new_knoc/logo_gull.svg')}
+                            style={{ width: 110, height: 32 }}
+                            contentFit="contain"
+                        />
                     </View>
                 </SafeAreaView>
             </Modal>
