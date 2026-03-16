@@ -27,15 +27,16 @@ module.exports = function withManifestColorFix(config) {
                 app['meta-data'] = [];
             }
             
-            let foundIndex = -1;
+            // Add or update color metadata
+            let colorIndex = -1;
             for (let i = 0; i < app['meta-data'].length; i++) {
                 if (app['meta-data'][i].$['android:name'] === 'com.google.firebase.messaging.default_notification_color') {
-                    foundIndex = i;
+                    colorIndex = i;
                     break;
                 }
             }
             
-            const newMetaData = {
+            const colorMetaData = {
                 $: {
                     'android:name': 'com.google.firebase.messaging.default_notification_color',
                     'android:resource': '@color/notification_icon_color',
@@ -43,14 +44,34 @@ module.exports = function withManifestColorFix(config) {
                 }
             };
 
-            if (foundIndex > -1) {
-                // Merge/Overwrite the existing element to preserve the tools attribute
-                app['meta-data'][foundIndex] = newMetaData;
-                console.log('[withManifestFix] ✅ Overwrote existing default_notification_color with tools:replace');
+            if (colorIndex > -1) {
+                app['meta-data'][colorIndex] = colorMetaData;
             } else {
-                // Simply push a new one if not found
-                app['meta-data'].push(newMetaData);
-                console.log('[withManifestFix] ✅ Added new default_notification_color with tools:replace');
+                app['meta-data'].push(colorMetaData);
+            }
+
+            // Add or update icon metadata
+            let iconIndex = -1;
+            for (let i = 0; i < app['meta-data'].length; i++) {
+                if (app['meta-data'][i].$['android:name'] === 'com.google.firebase.messaging.default_notification_icon') {
+                    iconIndex = i;
+                    break;
+                }
+            }
+            
+            const iconMetaData = {
+                $: {
+                    'android:name': 'com.google.firebase.messaging.default_notification_icon',
+                    'android:resource': '@drawable/notification_icon'
+                }
+            };
+
+            // If Firebase library manifest happens to have it, replace it using tools:replace
+            if (iconIndex > -1) {
+                iconMetaData.$['tools:replace'] = 'android:resource';
+                app['meta-data'][iconIndex] = iconMetaData;
+            } else {
+                app['meta-data'].push(iconMetaData);
             }
         }
 

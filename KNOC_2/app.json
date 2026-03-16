@@ -1,14 +1,14 @@
 {
   "expo": {
-    "name": "KNOC",
-    "slug": "KNOC",
+    "name": "TrueKNOC",
+    "slug": "TrueKNOC",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/new_knoc/base.png",
-    "scheme": "knoc",
+    "scheme": "trueknoc",
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
-    "ios": {
+    "ios": {  
       "supportsTablet": true,
       "bundleIdentifier": "com.knoc.app",
       "googleServicesFile": "./GoogleService-Info.plist",

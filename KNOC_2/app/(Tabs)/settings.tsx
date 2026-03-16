@@ -7,10 +7,13 @@ import {
     ScrollView,
     ActivityIndicator,
     Alert,
+    Share,
+    Linking
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
+import { Image } from 'expo-image';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { auth } from '../../lib/firebase';
 import firestore from '@react-native-firebase/firestore';
@@ -40,8 +43,9 @@ export default function SettingsScreen() {
     });
     const [loading, setLoading] = useState(true);
     const [loggingOut, setLoggingOut] = useState(false);
+    const [deletingAccount, setDeletingAccount] = useState(false);
 
-    const appVersion = Constants.expoConfig?.version ?? '1.0.0';
+    const appVersion = Constants.expoConfig?.version ?? '54.26.0';
 
     useEffect(() => {
         loadUserInfo();
@@ -60,7 +64,7 @@ export default function SettingsScreen() {
             setUserInfo(prev => ({
                 ...prev,
                 name: storedName || '',
-                phone: guestPhone ? `+91 ${guestPhone}` : '',
+                phone: guestPhone ? guestPhone : '',
                 qrId: storedQrId || '',
             }));
 
@@ -74,7 +78,7 @@ export default function SettingsScreen() {
                         name: data?.name || storedName || 'Unknown',
                         phone: data?.phone_number
                             ? formatPhone(data.phone_number)
-                            : (guestPhone ? `+91 ${guestPhone}` : ''),
+                            : (guestPhone ? guestPhone : ''),
                         qrId: storedQrId,
                         location: data?.location || '',
                     });
@@ -88,12 +92,9 @@ export default function SettingsScreen() {
     };
 
     const formatPhone = (phone: string) => {
-        // Format +919876543210 → +91 98765 43210
+        // Format +919876543210 → 9876543210 or just keep as is without +91
         const digits = phone.replace('+91', '').trim();
-        if (digits.length === 10) {
-            return `+91 ${digits.slice(0, 5)} ${digits.slice(5)}`;
-        }
-        return phone;
+        return digits;
     };
 
     const handleLogout = () => {
@@ -141,6 +142,87 @@ export default function SettingsScreen() {
         );
     };
 
+    const handleDeleteAccount = () => {
+        Alert.alert(
+            'Delete Account',
+            'Are you sure you want to permanently delete your account and all associated data? This action cannot be undone.',
+            [
+                { text: 'Cancel', style: 'cancel' },
+                {
+                    text: 'Delete',
+                    style: 'destructive',
+                    onPress: async () => {
+                        setDeletingAccount(true);
+                        try {
+                            const qrId = await AsyncStorage.getItem('linked_qr_id');
+                            // 1. Remove user data from QR code in Firestore
+                            if (qrId) {
+                                await firestore().collection('qr_codes').doc(qrId).update({
+                                    phone_number: firestore.FieldValue.delete(),
+                                    name: firestore.FieldValue.delete(),
+                                    location: firestore.FieldValue.delete(),
+                                    fcm_token: firestore.FieldValue.delete(),
+                                });
+                                console.log('[Settings] User data unlinked from QR code');
+                            }
+
+                            // 2. Delete Firebase Auth user
+                            const user = auth.currentUser;
+                            if (user) {
+                                await user.delete();
+                                console.log('[Settings] Firebase auth user deleted');
+                            }
+
+                            // 3. Clear local device data
+                            await clearCachedFcmToken();
+                            await AsyncStorage.multiRemove([
+                                'is_guest',
+                                'guest_phone',
+                                'has_onboarded',
+                                'user_name',
+                                'linked_qr_id',
+                            ]);
+
+                            Alert.alert(
+                                'Account Deleted', 
+                                'Your account and data have been successfully deleted.',
+                                [{ text: 'OK', onPress: () => router.replace('/login') }]
+                            );
+                        } catch (error: any) {
+                            console.error('Delete account error:', error);
+                            if (error.code === 'auth/requires-recent-login') {
+                                Alert.alert('Session Expired', 'Please log out and log in again before deleting your account for security purposes.');
+                            } else {
+                                Alert.alert('Error', 'Could not delete account. Please try again or contact support.');
+                            }
+                        } finally {
+                            setDeletingAccount(false);
+                        }
+                    },
+                },
+            ]
+        );
+    };
+
+    const handleShare = async () => {
+        try {
+            await Share.share({
+                message: 'Check out this awesome app TrueKNOC! Download it now.',
+            });
+        } catch (error) {
+            console.error('Error sharing:', error);
+        }
+    };
+
+    const getInitials = (name: string) => {
+        if (!name) return 'U';
+        const parts = name.trim().split(' ');
+        if (parts.length > 1) {
+            return (parts[0][0] + parts[1][0]).toUpperCase();
+        }
+        return name.substring(0, 2).toUpperCase();
+    };
+
     return (
         <SafeAreaView style={styles.safeArea} edges={['top', 'bottom']}>
             {/* Header */}
@@ -150,7 +232,7 @@ export default function SettingsScreen() {
                     hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
                     style={styles.backButton}
                 >
-                    <Ionicons name="arrow-back" size={22} color={colors.textMain} />
+                    <Ionicons name="arrow-back" size={24} color={colors.textMain} />
                 </TouchableOpacity>
                 <Text style={styles.headerTitle}>Settings</Text>
             </View>
@@ -167,16 +249,23 @@ export default function SettingsScreen() {
                         {/* Profile Row */}
                         <View style={styles.profileRow}>
                             <View style={styles.avatarCircle}>
-                                <Ionicons name="person-outline" size={24} color={colors.avatarIcon} />
+                                <Text style={styles.avatarText}>{getInitials(userInfo.name)}</Text>
                             </View>
-                            <Text style={styles.profileName} numberOfLines={1}>
-                                {userInfo.name || 'Your Name'}
-                            </Text>
+                            <View style={styles.profileInfoText}>
+                                <Text style={styles.profileName} numberOfLines={1}>
+                                    {userInfo.name || 'User'}
+                                </Text>
+                                {userInfo.phone ? (
+                                    <Text style={styles.profilePhone} numberOfLines={1}>
+                                        {userInfo.phone}
+                                    </Text>
+                                ) : null}
+                            </View>
                         </View>
 
-                        {/* Theme Section */}
-                        <Text style={styles.sectionLabel}>Theme</Text>
-                        <View style={styles.themeCard}>
+                        {/* Appearance Section */}
+                        <Text style={styles.sectionLabel}>Appearance</Text>
+                        <View style={styles.cardGroup}>
                             {['Automatic', 'Light', 'Dark'].map((item, index, arr) => {
                                 const isSelected = theme === item;
                                 const isLast = index === arr.length - 1;
@@ -184,43 +273,127 @@ export default function SettingsScreen() {
                                     <TouchableOpacity
                                         key={item}
                                         style={[
-                                            styles.themeRow,
-                                            !isLast && styles.themeRowBorder,
+                                            styles.cardRow,
+                                            !isLast && styles.cardRowBorder,
                                         ]}
                                         onPress={() => setTheme(item as any)}
                                         activeOpacity={0.7}
                                     >
-                                        <Text style={styles.themeRowText}>{item}</Text>
+                                        <Text style={styles.cardRowText}>{item}</Text>
                                         <Ionicons
                                             name={isSelected ? 'checkmark-circle-outline' : 'ellipse-outline'}
                                             size={22}
-                                            color={isSelected ? colors.primary : '#C7C7CC'}
+                                            color={isSelected ? '#7A52D1' : '#C7C7CC'}
                                         />
                                     </TouchableOpacity>
                                 );
                             })}
                         </View>
-                        <Text style={styles.themeNote}>
-                            Automatic is only supported on operating systems that allow you to control the system-wide color scheme
-                        </Text>
 
-                        {/* Logout Button */}
-                        <TouchableOpacity
-                            onPress={handleLogout}
-                            style={styles.logoutButton}
-                            activeOpacity={0.8}
-                            disabled={loggingOut}
-                        >
-                            {loggingOut ? (
-                                <ActivityIndicator color={colors.primary} />
-                            ) : (
-                                <Text style={styles.logoutText}>Logout</Text>
-                            )}
-                        </TouchableOpacity>
+                        {/* Your Information Section */}
+                        <Text style={styles.sectionLabel}>Your information</Text>
+                        <View style={styles.cardGroup}>
+                            <TouchableOpacity style={[styles.cardRow, styles.cardRowBorder]} onPress={() => router.push('/profile' as any)} activeOpacity={0.7}>
+                                <View style={styles.cardRowLeft}>
+                                    <View style={styles.iconContainer}>
+                                        <Ionicons name="person-outline" size={18} color={isDark ? '#CCC' : '#333'} />
+                                    </View>
+                                    <Text style={styles.cardRowText}>View your profile</Text>
+                                </View>
+                                <Ionicons name="chevron-forward" size={18} color="#C7C7CC" />
+                            </TouchableOpacity>
+                            <TouchableOpacity style={[styles.cardRow, styles.cardRowBorder]} onPress={() => router.push('/addAdress' as any)} activeOpacity={0.7}>
+                                <View style={styles.cardRowLeft}>
+                                    <View style={styles.iconContainer}>
+                                        <Ionicons name="location-outline" size={18} color={isDark ? '#CCC' : '#333'} />
+                                    </View>
+                                    <Text style={styles.cardRowText}>Addresses</Text>
+                                </View>
+                                <Ionicons name="chevron-forward" size={18} color="#C7C7CC" />
+                            </TouchableOpacity>
+                            <TouchableOpacity style={styles.cardRow} onPress={() => router.push('/notification' as any)} activeOpacity={0.7}>
+                                <View style={styles.cardRowLeft}>
+                                    <View style={styles.iconContainer}>
+                                        <Ionicons name="notifications-outline" size={18} color={isDark ? '#CCC' : '#333'} />
+                                    </View>
+                                    <Text style={styles.cardRowText}>Notification</Text>
+                                </View>
+                                <Ionicons name="chevron-forward" size={18} color="#C7C7CC" />
+                            </TouchableOpacity>
+                        </View>
 
-                        {/* App Version */}
-                        <View style={styles.versionContainer}>
-                            <Text style={styles.versionLabel}>App version</Text>
+                        {/* Others Information Section */}
+                        <Text style={styles.sectionLabel}>Others information</Text>
+                        <View style={styles.cardGroup}>
+                           
+                            <TouchableOpacity style={[styles.cardRow, styles.cardRowBorder]} onPress={() => router.push('/aboutus' as any)} activeOpacity={0.7}>
+                                <View style={styles.cardRowLeft}>
+                                    <View style={styles.iconContainer}>
+                                        <Ionicons name="information-circle-outline" size={18} color={isDark ? '#CCC' : '#333'} />
+                                    </View>
+                                    <Text style={styles.cardRowText}>About us</Text>
+                                </View>
+                                <Ionicons name="chevron-forward" size={18} color="#C7C7CC" />
+                            </TouchableOpacity>
+                            <TouchableOpacity 
+                                style={[styles.cardRow, styles.cardRowBorder]} 
+                                activeOpacity={0.7}
+                                onPress={() => Linking.openURL('https://knoc.vercel.app/privacy/')}
+                            >
+                                <View style={styles.cardRowLeft}>
+                                    <View style={styles.iconContainer}>
+                                        <Ionicons name="lock-closed-outline" size={18} color={isDark ? '#CCC' : '#333'} />
+                                    </View>
+                                    <Text style={styles.cardRowText}>Privacy policy</Text>
+                                </View>
+                                <Ionicons name="chevron-forward" size={18} color="#C7C7CC" />
+                            </TouchableOpacity>
+                            <TouchableOpacity 
+                                style={[styles.cardRow, styles.cardRowBorder]} 
+                                activeOpacity={0.7}
+                                onPress={() => Linking.openURL('https://knoc.vercel.app/term/')}
+                            >
+                                <View style={styles.cardRowLeft}>
+                                    <View style={styles.iconContainer}>
+                                        <Ionicons name="document-text-outline" size={18} color={isDark ? '#CCC' : '#333'} />
+                                    </View>
+                                    <Text style={styles.cardRowText}>Terms & conditions</Text>
+                                </View>
+                                <Ionicons name="chevron-forward" size={18} color="#C7C7CC" />
+                            </TouchableOpacity>
+
+                            <TouchableOpacity style={[styles.cardRow, styles.cardRowBorder]} onPress={handleDeleteAccount} activeOpacity={0.7} disabled={deletingAccount}>
+                                <View style={styles.cardRowLeft}>
+                                    <View style={styles.iconContainer}>
+                                        <Ionicons name="trash-outline" size={18} color={isDark ? '#ff4d4d' : '#e60000'} />
+                                    </View>
+                                    <Text style={[styles.cardRowText, { color: isDark ? '#ff4d4d' : '#e60000' }]}>Delete account</Text>
+                                </View>
+                                {deletingAccount ? (
+                                    <ActivityIndicator size="small" color={isDark ? '#ff4d4d' : '#e60000'} />
+                                ) : (
+                                    <Ionicons name="chevron-forward" size={18} color="#C7C7CC" />
+                                )}
+                            </TouchableOpacity>
+
+                            <TouchableOpacity style={styles.cardRow} onPress={handleLogout} activeOpacity={0.7} disabled={loggingOut}>
+                                <View style={styles.cardRowLeft}>
+                                    <View style={styles.iconContainer}>
+                                        <Ionicons name="log-out-outline" size={18} color={isDark ? '#CCC' : '#333'} />
+                                    </View>
+                                    <Text style={styles.cardRowText}>Log out</Text>
+                                </View>
+                                {loggingOut ? (
+                                    <ActivityIndicator size="small" color={colors.primary} />
+                                ) : (
+                                    <Ionicons name="chevron-forward" size={18} color="#C7C7CC" />
+                                )}
+                            </TouchableOpacity>
+                        </View>
+
+                        {/* Logo and App Version */}
+                        <View style={styles.footerContainer}>
+                          <Image source={require('../../assets/new_knoc/withimg.svg')} style={styles.logo} />
                             <Text style={styles.versionLabel}>{appVersion}</Text>
                         </View>
                     </>
@@ -233,9 +406,8 @@ export default function SettingsScreen() {
 const getStyles = (colors: any, isDark: boolean) => StyleSheet.create({
     safeArea: {
         flex: 1,
-        backgroundColor: colors.background,
+        backgroundColor: colors.background, // Match light grayish background from design if customized in theme, otherwise white
     },
-
     // Header
     header: {
         flexDirection: 'row',
@@ -243,24 +415,30 @@ const getStyles = (colors: any, isDark: boolean) => StyleSheet.create({
         paddingHorizontal: 16,
         paddingTop: 12,
         paddingBottom: 20,
-        backgroundColor: colors.cardBg,
+        backgroundColor: colors.background,
         gap: 16,
     },
-    backButton: { padding: 2 },
+    backButton: { padding: 4 },
     headerTitle: {
-        fontSize: 16,
+        fontSize: 18,
         fontFamily: 'Gilroy-SemiBold',
         color: colors.textMain,
     },
 
     // Scroll
-    scroll: { flex: 1 },
+    scroll: { flex: 1, backgroundColor: isDark ? '#000000' : '#F4F4F4' },
     scrollContent: {
         paddingHorizontal: 16,
-        paddingTop: 24,
+        paddingTop: 12,
         paddingBottom: 48,
     },
 
+    logo: {
+        width: 150,
+        height: 70,
+        resizeMode: 'contain',
+       
+    },
     // Profile Row
     profileRow: {
         flexDirection: 'row',
@@ -269,88 +447,97 @@ const getStyles = (colors: any, isDark: boolean) => StyleSheet.create({
         marginBottom: 32,
     },
     avatarCircle: {
-        width: 36,
-        height: 36,
-        borderRadius: 18,
-        backgroundColor: colors.avatarProfileCircle,
+        width: 60,
+        height: 60,
+        borderRadius: 30,
+        backgroundColor: '#EBE5F7',
         justifyContent: 'center',
         alignItems: 'center',
     },
+    avatarText: {
+        fontSize: 22,
+        fontFamily: 'Gilroy-Bold',
+        color: '#602CD9',
+    },
+    profileInfoText: {
+        flex: 1,
+        justifyContent: 'center',
+    },
     profileName: {
-        fontSize: 15,
+        fontSize: 18,
         fontFamily: 'Gilroy-SemiBold',
         color: colors.textMain,
+        marginBottom: 4,
+    },
+    profilePhone: {
+        fontSize: 14,
+        fontFamily: 'Gilroy-Medium',
+        color: isDark ? '#aaaaaa' : '#8E8E93',
     },
 
     // Section label
     sectionLabel: {
-        fontSize: 15,
-        fontFamily: 'Gilroy-Bold',
-        color: isDark ? '#FFFFFF' : '#4A4A4A',
+        fontSize: 16,
+        fontFamily: 'Gilroy-SemiBold',
+        color: colors.textMain,
         marginBottom: 12,
+        marginTop: 8,
     },
 
-    // Theme card
-    themeCard: {
-        backgroundColor: colors.cardBg,
-        borderRadius: 8,
-        borderWidth: 1,
-        borderColor: colors.borderMedium,
+    // Cards
+    cardGroup: {
+        backgroundColor: colors.cardBg || (isDark ? '#1C1C1E' : '#FFFFFF'),
+        borderRadius: 12,
         overflow: 'hidden',
-        marginBottom: 16,
+        marginBottom: 24,
     },
-    themeRow: {
+    cardRow: {
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
         paddingHorizontal: 16,
-        paddingVertical: 14,
+        paddingVertical: 16,
     },
-    themeRowBorder: {
+    cardRowBorder: {
         borderBottomWidth: 1,
-        borderBottomColor: colors.borderLight,
+        borderBottomColor: isDark ? '#2C2C2E' : '#F0F0F0',
     },
-    themeRowText: {
+    cardRowLeft: {
+        flexDirection: 'row',
+        alignItems: 'center',
+    },
+    iconContainer: {
+        width: 24,
+        marginRight: 12,
+        alignItems: 'flex-start',
+    },
+    cardRowText: {
         fontSize: 14,
         fontFamily: 'Gilroy-Medium',
         color: colors.textMain,
     },
 
-    // Theme note
-    themeNote: {
-        fontSize: 12,
-        fontFamily: 'Gilroy-Medium',
-        color: isDark ? '#98989E' : '#1A1A1A',
-        lineHeight: 16,
-        marginBottom: 48,
-        paddingRight: 20,
-    },
-
-    // Logout
-    logoutButton: {
-        justifyContent: 'center',
+    // Logo & Version
+    footerContainer: {
         alignItems: 'center',
-        backgroundColor: colors.cardBg,
-        borderRadius: 8,
-        borderWidth: 1,
-        borderColor: colors.borderMedium,
-        height: 48,
-        marginBottom: 24,
+     
+     
     },
-    logoutText: {
-        fontSize: 14,
-        fontFamily: 'Gilroy-SemiBold',
-        color: colors.primary,
+    logoText: {
+        fontSize: 20,
+        fontFamily: 'Gilroy-Bold',
+        letterSpacing: -0.5,
     },
-
-    // Version
-    versionContainer: {
-        alignItems: 'center',
-        gap: 4,
+    logoTextBlue: {
+        color: '#3B5998', 
+    },
+    logoTextPurple: {
+        color: '#602CD9',
     },
     versionLabel: {
-        fontSize: 14,
+        fontSize: 12,
         fontFamily: 'Gilroy-Medium',
-        color: isDark ? '#98989E' : '#4A4A4A',
+        color: isDark ? '#98989E' : '#8E8E93',
     },
 });
+

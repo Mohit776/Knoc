@@ -330,25 +330,32 @@ export default function HomeScreen() {
     // Pad number like "01", "12"
     const padNumber = (n: number) => n.toString().padStart(2, '0');
 
-    // Filter logs to only show today's entries
-    const todayLogs = React.useMemo(() => {
-        const today = new Date().toDateString();
+    // Filter logs to only show today and yesterday's entries
+    const displayLogs = React.useMemo(() => {
+        const today = new Date();
+        const yesterday = new Date(today);
+        yesterday.setDate(today.getDate() - 1);
+        
+        const todayStr = today.toDateString();
+        const yesterdayStr = yesterday.toDateString();
+
         return recentLogs.filter(log => {
             if (!log.created_at) return false;
-            return new Date(log.created_at).toDateString() === today;
+            const logDateStr = new Date(log.created_at).toDateString();
+            return logDateStr === todayStr || logDateStr === yesterdayStr;
         });
     }, [recentLogs]);
 
-    // Derive stats from today's logs only
-    const todayStats = React.useMemo(() => {
-        const entry = todayLogs.filter(
+    // Derive stats from display logs (today & yesterday)
+    const displayStats = React.useMemo(() => {
+        const entry = displayLogs.filter(
             (l) => l.action === 'Entry' || l.response === 'coming'
         ).length;
-        const exit = todayLogs.filter(
+        const exit = displayLogs.filter(
             (l) => l.action === 'No Entry' || l.response === 'ignored'
         ).length;
-        return { entry, exit, total: todayLogs.length };
-    }, [todayLogs]);
+        return { entry, exit, total: displayLogs.length };
+    }, [displayLogs]);
 
     return (
         <SafeAreaView style={styles.safeArea} edges={['top']}>
@@ -360,10 +367,14 @@ export default function HomeScreen() {
                     contentFit="contain"
                 />
                 <TouchableOpacity onPress={() => router.push('/(Tabs)/settings')} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
-                    <Ionicons name="person-circle-outline" size={36} color={colors.textMain} />
+                    <Image
+                        source={require('../../assets/new_knoc/ICON.svg')}
+                        style={styles.profile}
+                        contentFit="contain"
+                    />
                 </TouchableOpacity>
             </View>
-
+            <View style={styles.divider} />
             <ScrollView
                 style={styles.scroll}
                 contentContainerStyle={styles.scrollContent}
@@ -389,9 +400,9 @@ export default function HomeScreen() {
                     style={styles.statsCard}
                 >
                     {([
-                        { label: 'Entry', value: todayStats.entry },
-                        { label: 'Denied', value: todayStats.exit },
-                        { label: 'Total', value: todayStats.total },
+                        { label: 'Entry', value: displayStats.entry },
+                        { label: 'Denied', value: displayStats.exit },
+                        { label: 'Total', value: displayStats.total },
                     ] as const).map((item) => (
                         <View key={item.label} style={styles.statItem}>
                             <Text style={styles.statLabel}>{item.label}</Text>
@@ -410,17 +421,17 @@ export default function HomeScreen() {
 
 
 
-                {/* Today's KNOC */}
+                {/* Recently KNOC */}
                 <Text style={styles.sectionTitle}>Recently KNOC</Text>
                 <View style={styles.visitList}>
-                    {todayLogs.length === 0 ? (
+                    {displayLogs.length === 0 ? (
                         <View style={styles.emptyState}>
                             <Ionicons name="notifications-off-outline" size={32} color={colors.textMuted} />
-                            <Text style={styles.emptyText}>No knoc activity today</Text>
+                            <Text style={styles.emptyText}>No recent knoc activity</Text>
                         </View>
                     ) : (
                         <>
-                            {todayLogs.slice(0, visibleLogCount).map((log, index) => {
+                            {displayLogs.slice(0, visibleLogCount).map((log, index) => {
                                 const isDenied = log.action === 'No Entry' || log.response === 'ignored' || log.response === 'declined';
                                 return (
                                     <View
@@ -433,12 +444,12 @@ export default function HomeScreen() {
                                                 : (log.visitorType === 'delivery' ? 'Delivery Parcel' : 'Visitor')}
                                         </Text>
                                         <Text style={styles.visitTime}>
-                                            Time {formatTime(log.created_at)}
+                                            {formatDate(log.created_at)}, {formatTime(log.created_at)}
                                         </Text>
                                     </View>
                                 );
                             })}
-                            {visibleLogCount < todayLogs.length && (
+                            {visibleLogCount < displayLogs.length && (
                                 <TouchableOpacity
                                     style={styles.showMoreBtn}
                                     activeOpacity={0.7}
@@ -459,7 +470,7 @@ export default function HomeScreen() {
 const getStyles = (colors: any, isDark: boolean) => StyleSheet.create({
     safeArea: {
         flex: 1,
-        backgroundColor: colors.background,
+        backgroundColor: isDark ? '#000000' : '#ffffff',
     },
 
     // Header
@@ -474,6 +485,14 @@ const getStyles = (colors: any, isDark: boolean) => StyleSheet.create({
     logo: {
         width: 110,
         height: 32,
+    },
+    profile: {
+        width: 30,
+        height: 30,
+    },
+    divider: {
+        height: 1,
+        backgroundColor: isDark ? '#2C2C2E' : '#F0F0F0',
     },
 
     // Scroll

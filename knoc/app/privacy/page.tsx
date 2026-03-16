@@ -1,38 +1,12 @@
 import React from 'react';
 import Link from 'next/link';
+import Navbar from '../../components/Navbar';
+import Footer from '../../components/Footer';
 
 export default function PrivacyPolicy() {
     return (
-        <div className="min-h-screen bg-white text-black font-sans selection:bg-purple-100">
-            {/* Navbar Container */}
-            <div className="w-full px-4 sm:px-6 lg:px-8 tracking-tight">
-                <nav className="flex items-center justify-between px-6 py-3 border border-gray-100 shadow-[0_2px_8px_-2px_rgba(0,0,0,0.05)] max-w-[1200px] mx-auto rounded-xl mt-6 bg-white">
-                    {/* Logo */}
-                    <div className="text-[#5b21b6] font-bold text-2xl tracking-tighter cursor-pointer">
-                        trueknoc
-                    </div>
-
-                    {/* Links */}
-                    <div className="hidden md:flex items-center space-x-10 text-[13px] font-medium text-gray-800">
-                        <div className="flex items-center cursor-pointer hover:text-black">
-                            Products
-                            <svg className="w-3.5 h-3.5 ml-1.5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
-                        </div>
-                        <div className="flex items-center cursor-pointer hover:text-black">
-                            Why KNOC?
-                            <svg className="w-3.5 h-3.5 ml-1.5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
-                        </div>
-                        <div className="cursor-pointer hover:text-black">Support</div>
-                    </div>
-
-                    {/* CTA */}
-                    <div>
-                        <button className="bg-[#1c1c1c] text-white px-6 py-2 rounded-[8px] text-[13px] font-medium hover:bg-black transition-colors">
-                            Shop Now
-                        </button>
-                    </div>
-                </nav>
-            </div>
+        <div className="min-h-screen bg-white text-black font-sans selection:bg-purple-100 flex flex-col">
+            <Navbar />
 
             {/* Main Content */}
             <main className="max-w-[800px] mx-auto px-6 py-12 md:py-20">
@@ -132,6 +106,7 @@ export default function PrivacyPolicy() {
 
                 </div>
             </main>
+            <Footer />
         </div>
     );
 }

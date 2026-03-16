@@ -1,20 +1,36 @@
-import { Stack, useRouter, useSegments } from 'expo-router';
-import { useFonts } from 'expo-font';
-import * as SplashScreen from 'expo-splash-screen';
-import { useEffect, useRef, useCallback, useState } from 'react';
-import { View, Image, StyleSheet, Dimensions } from 'react-native';
-import AppSplash from './AppSplash';
-import { ThemeProvider } from '../lib/themeContext';
-import { NotificationProvider } from '../lib/NotificationProvider';
-import * as Notifications from 'expo-notifications';
 import messaging from '@react-native-firebase/messaging';
+import { useFonts } from 'expo-font';
+import * as Notifications from 'expo-notifications';
+import { Stack, useRouter, useSegments } from 'expo-router';
+import { useEffect, useRef, useState } from 'react';
+import { NotificationProvider } from '../lib/NotificationProvider';
+import { ThemeProvider } from '../lib/themeContext';
+import NetInfo from '@react-native-community/netinfo';
+import { View, Text, StyleSheet } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import AppSplash from './AppSplash';
 
-const { width, height } = Dimensions.get('window');
+const OfflineBanner = () => {
+  const [isConnected, setIsConnected] = useState(true);
 
-// Keep native splash visible while fonts load
-SplashScreen.preventAutoHideAsync();
+  useEffect(() => {
+    const unsubscribe = NetInfo.addEventListener(state => {
+      setIsConnected(state.isConnected ?? true);
+    });
+    return () => unsubscribe();
+  }, []);
 
-// ── Background FCM handler (must be registered at module scope) ─────
+  if (isConnected) return null;
+
+  return (
+    <SafeAreaView style={styles.offlineBannerContainer}>
+      <View style={styles.offlineBanner}>
+        <Text style={styles.offlineText}>No Internet Connection</Text>
+      </View>
+    </SafeAreaView>
+  );
+};
+
 // This handles data-only messages when the app is in the background/killed.
 messaging().setBackgroundMessageHandler(async (remoteMessage) => {
   console.log('[FCM] Background message received:', remoteMessage.messageId);
@@ -59,7 +75,7 @@ function extractKnockData(response: Notifications.NotificationResponse | null | 
 }
 
 export default function RootLayout() {
-  const [splashVisible, setSplashVisible] = useState(true);
+  const [customSplashDone, setCustomSplashDone] = useState(false);
   const [fontsLoaded, fontError] = useFonts({
     'Gilroy-Regular': require('../assets/fonts/Gilroy-Regular.ttf'),
     'Gilroy-Medium': require('../assets/fonts/Gilroy-Medium.ttf'),
@@ -76,12 +92,6 @@ export default function RootLayout() {
   const coldStartHandled = useRef(false);
   // Store cold-start knock data until the app is ready to navigate
   const pendingKnockData = useRef<ReturnType<typeof extractKnockData>>(null);
-
-  useEffect(() => {
-    if (fontsLoaded || fontError) {
-      SplashScreen.hideAsync();
-    }
-  }, [fontsLoaded, fontError]);
 
   // ─── Cold-start: check for the FCM notification that launched the app ───
   useEffect(() => {
@@ -141,22 +151,24 @@ export default function RootLayout() {
     }
   }, [segments, router]);
 
-  if (!fontsLoaded && !fontError) {
-    return null; // Keep native splash visible while fonts load
-  }
-
-  if (splashVisible) {
-    return <AppSplash onFinish={() => setSplashVisible(false)} />;
+  const showCustomSplash = !customSplashDone || (!fontsLoaded && !fontError);
+  if (showCustomSplash) {
+    return (
+      <AppSplash
+        onFinish={customSplashDone ? undefined : () => setCustomSplashDone(true)}
+      />
+    );
   }
 
   return (
     <ThemeProvider>
       <NotificationProvider>
+        <OfflineBanner />
         <Stack screenOptions={{ headerShown: false }}>
           <Stack.Screen name="index" />
           <Stack.Screen name="(Tabs)" />
           <Stack.Screen name="otp" />
-          <Stack.Screen name="onboard-qr" />
+          <Stack.Screen name="onboard-qr" />  
           <Stack.Screen name="knock-detail" options={{ presentation: 'fullScreenModal' }} />
         </Stack>
       </NotificationProvider>
@@ -165,14 +177,25 @@ export default function RootLayout() {
 }
 
 const styles = StyleSheet.create({
-  splashContainer: {
-    flex: 1,
-    backgroundColor: '#FFFFFF', // White background matching app.json
+  offlineBannerContainer: {
+    backgroundColor: '#b52424', // deep red matching alert
+    position: 'absolute',
+    top: 0,
+    width: '100%',
+    zIndex: 9999,
+    elevation: 10,
+  },
+  offlineBanner: {
+    paddingVertical: 10,
+    paddingHorizontal: 16,
     justifyContent: 'center',
     alignItems: 'center',
+    flexDirection: 'row',
   },
-  splashLogo: {
-    width: width * 0.55,
-    height: height * 0.15,
+  offlineText: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: '600',
+    fontFamily: 'Gilroy-Medium',
   },
 });
