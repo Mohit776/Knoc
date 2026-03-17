@@ -9,6 +9,7 @@ import {
 import { Ionicons, MaterialIcons } from "@expo/vector-icons";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
+import { Typography, s, vs, ms, Spacing, VSpacing, Radius, IconSize, FontFamily } from "../lib/typography";
 
 const NotificationScreen: React.FC = () => {
   const router = useRouter();
@@ -46,7 +47,7 @@ const NotificationScreen: React.FC = () => {
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()}>
-          <Ionicons name="arrow-back" size={22} color="#000" />
+          <Ionicons name="arrow-back" size={IconSize.md} color="#000" />
         </TouchableOpacity>
 
         <Text style={styles.headerTitle}>Notification</Text>
@@ -58,14 +59,14 @@ const NotificationScreen: React.FC = () => {
       {/* Card */}
       <View style={styles.card}>
         <Row
-          icon={<Ionicons name="logo-whatsapp" size={18} color="#000" />}
+          icon={<Ionicons name="logo-whatsapp" size={IconSize.sm} color="#000" />}
           label="WhatsApp"
           value={whatsappEnabled}
           onChange={setWhatsappEnabled}
         />
 
         <Row
-          icon={<MaterialIcons name="sms" size={18} color="#000" />}
+          icon={<MaterialIcons name="sms" size={IconSize.sm} color="#000" />}
           label="SMS"
           value={smsEnabled}
           onChange={setSmsEnabled}
@@ -81,33 +82,33 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#F5F5F5",
-    paddingHorizontal: 16,
+    paddingHorizontal: Spacing.md,
   },
 
   header: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 10,
-    paddingVertical: 12,
+    gap: s(10),
+    paddingVertical: VSpacing.sm,
   },
 
   headerTitle: {
-    fontSize: 16,
-    fontWeight: "600",
+    ...Typography.title,
+    fontFamily: FontFamily.semiBold,
   },
 
   sectionTitle: {
-    marginTop: 20,
-    marginBottom: 10,
-    fontSize: 14,
-    fontWeight: "500",
+    marginTop: VSpacing.lg,
+    marginBottom: vs(10),
+    ...Typography.label,
+    fontFamily: FontFamily.medium,
   },
 
   card: {
     backgroundColor: "#fff",
-    borderRadius: 12,
-    paddingVertical: 8,
-    paddingHorizontal: 12,
+    borderRadius: Radius.lg,
+    paddingVertical: VSpacing.xs,
+    paddingHorizontal: Spacing.sm,
     elevation: 2,
   },
 
@@ -115,26 +116,26 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    paddingVertical: 14,
+    paddingVertical: VSpacing.md,
   },
 
   left: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 10,
+    gap: s(10),
   },
 
   iconBox: {
-    width: 34,
-    height: 34,
-    borderRadius: 8,
+    width: s(34),
+    height: s(34),
+    borderRadius: Radius.md,
     backgroundColor: "#EDE7FF",
     justifyContent: "center",
     alignItems: "center",
   },
 
   label: {
-    fontSize: 14,
-    fontWeight: "500",
+    ...Typography.bodyMedium,
+    fontFamily: FontFamily.medium,
   },
 });

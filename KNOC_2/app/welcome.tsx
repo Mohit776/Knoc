@@ -14,6 +14,7 @@ import { CameraView, useCameraPermissions } from 'expo-camera';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
+import { Typography, s, vs, ms, Spacing, VSpacing, Radius, IconSize, FontFamily } from '../lib/typography';
 
 const AnimatedTouchable = Animated.createAnimatedComponent(TouchableOpacity);
 
@@ -129,7 +130,7 @@ export default function KnocWelcomeScreen() {
                 >
                     <Image
                         source={require('../assets/new_knoc/wordlogo.svg')}
-                        style={{ width: width * 0.45, height: 45, marginTop: 0 }}
+                        style={{ width: width * 0.45, height: vs(45) }}
                         contentFit="contain"
                     />
                 </Animated.View>
@@ -148,7 +149,7 @@ export default function KnocWelcomeScreen() {
                 >
                     <Image
                         source={require('../assets/logo/Group 90.png')}
-                        style={{ width: width * 0.25, height: 55, marginTop: 0 }}
+                        style={{ width: width * 0.25, height: vs(55) }}
                         contentFit="contain"
                     />
                     <Text style={styles.cardTitle}>Onboard Your QR Code</Text>
@@ -159,7 +160,7 @@ export default function KnocWelcomeScreen() {
 
                 <Image
                     source={require('../assets/logo/Rectangle.png')}
-                    style={{ width: width * 1, height: 450, marginTop: 50 }}
+                    style={{ width: width, height: vs(400), marginTop: vs(50) }}
                     contentFit="contain"
                 />
 
@@ -189,7 +190,7 @@ export default function KnocWelcomeScreen() {
                             <Text style={styles.scannerBackArrow}>←</Text>
                         </TouchableOpacity>
                         <Text style={styles.scannerHeaderTitle}>Onboard Your QR Code</Text>
-                        <View style={{ width: 40 }} />
+                        <View style={{ width: s(40) }} />
                     </View>
 
                     {/* Camera + Viewfinder */}
@@ -214,7 +215,7 @@ export default function KnocWelcomeScreen() {
                     <View style={styles.scannerFooter}>
                         <Image
                             source={require('../assets/new_knoc/logo_gull.svg')}
-                            style={{ width: 110, height: 32 }}
+                            style={{ width: s(110), height: vs(32) }}
                             contentFit="contain"
                         />
                     </View>
@@ -234,7 +235,7 @@ const styles = StyleSheet.create({
         backgroundColor: colors.background,
         alignItems: 'center',
         justifyContent: 'flex-start',
-        paddingHorizontal: 24,
+        paddingHorizontal: Spacing.xl,
     },
 
     // Logo
@@ -246,17 +247,17 @@ const styles = StyleSheet.create({
     logoRow: {
         flexDirection: 'row',
         alignItems: 'center',
-        gap: 8,
+        gap: s(8),
     },
     logoIcon: {
-        fontSize: 28,
+        fontSize: ms(28),
         color: colors.white,
-        fontFamily: 'Gilroy-Bold',
+        fontFamily: FontFamily.bold,
     },
     logoText: {
-        fontSize: 30,
+        fontSize: ms(30),
         color: colors.white,
-        fontFamily: 'Gilroy-ExtraBold',
+        fontFamily: FontFamily.extraBold,
         letterSpacing: 4,
     },
 
@@ -264,56 +265,54 @@ const styles = StyleSheet.create({
     card: {
         width: '100%',
         backgroundColor: colors.cardBg,
-        borderRadius: 20,
-        paddingVertical: 32,
-        paddingHorizontal: 24,
+        borderRadius: Radius.xxl,
+        paddingVertical: VSpacing.xxl,
+        paddingHorizontal: Spacing.xl,
         alignItems: 'center',
         shadowColor: '#1a0050',
-        shadowOffset: { width: 0, height: 12 },
+        shadowOffset: { width: 0, height: vs(12) },
         shadowOpacity: 0.4,
-        shadowRadius: 24,
+        shadowRadius: ms(24),
         elevation: 12,
     },
     cardTitle: {
-        fontSize: 20,
-        fontFamily: 'Gilroy-Bold',
+        ...Typography.cardTitle,
         color: colors.white,
-        marginTop: 20,
+        marginTop: VSpacing.lg,
         letterSpacing: 0.3,
     },
     cardSubtitle: {
-        fontSize: 14,
-        fontFamily: 'Gilroy-Regular',
+        ...Typography.cardSubtitle,
         color: colors.subtleWhite,
-        marginTop: 6,
+        marginTop: vs(6),
         textAlign: 'center',
     },
 
     // QR Code
     qrContainer: {
-        width: 90,
-        height: 90,
+        width: s(90),
+        height: s(90),
         alignItems: 'center',
         justifyContent: 'center',
         position: 'relative',
     },
     qrFrame: {
-        width: 80,
-        height: 80,
+        width: s(80),
+        height: s(80),
         borderWidth: 2,
         borderColor: colors.white,
-        borderRadius: 6,
+        borderRadius: Radius.sm,
         alignItems: 'center',
         justifyContent: 'center',
         position: 'relative',
-        padding: 8,
+        padding: s(8),
     },
     qrCornerTL: {
         position: 'absolute',
         top: -2,
         left: -2,
-        width: 18,
-        height: 18,
+        width: s(18),
+        height: s(18),
         borderTopWidth: 4,
         borderLeftWidth: 4,
         borderColor: colors.white,
@@ -323,8 +322,8 @@ const styles = StyleSheet.create({
         position: 'absolute',
         top: -2,
         right: -2,
-        width: 18,
-        height: 18,
+        width: s(18),
+        height: s(18),
         borderTopWidth: 4,
         borderRightWidth: 4,
         borderColor: colors.white,
@@ -334,8 +333,8 @@ const styles = StyleSheet.create({
         position: 'absolute',
         bottom: -2,
         left: -2,
-        width: 18,
-        height: 18,
+        width: s(18),
+        height: s(18),
         borderBottomWidth: 4,
         borderLeftWidth: 4,
         borderColor: colors.white,
@@ -345,23 +344,23 @@ const styles = StyleSheet.create({
         position: 'absolute',
         bottom: -2,
         right: -2,
-        width: 18,
-        height: 18,
+        width: s(18),
+        height: s(18),
         borderBottomWidth: 4,
         borderRightWidth: 4,
         borderColor: colors.white,
         borderRadius: 3,
     },
     qrDotGrid: {
-        gap: 3,
+        gap: s(3),
     },
     qrRow: {
         flexDirection: 'row',
-        gap: 3,
+        gap: s(3),
     },
     qrDot: {
-        width: 6,
-        height: 6,
+        width: s(6),
+        height: s(6),
         borderRadius: 1,
     },
     qrDotFilled: {
@@ -372,8 +371,8 @@ const styles = StyleSheet.create({
     },
     scanLine: {
         position: 'absolute',
-        left: 8,
-        right: 8,
+        left: s(8),
+        right: s(8),
         top: '50%',
         height: 2,
         backgroundColor: 'rgba(255,255,255,0.6)',
@@ -383,28 +382,28 @@ const styles = StyleSheet.create({
     // Wave
     waveWrapper: {
         position: 'absolute',
-        bottom: 60,
-        left: -60,
-        right: -60,
+        bottom: vs(60),
+        left: s(-60),
+        right: s(-60),
         alignItems: 'center',
     },
     waveEllipse: {
-        width: width + 120,
-        height: 340,
+        width: width + s(120),
+        height: vs(340),
         backgroundColor: colors.wavePurple,
-        borderRadius: (width + 120) / 2,
+        borderRadius: (width + s(120)) / 2,
         opacity: 0.55,
     },
 
     // Footer
     footer: {
         position: 'absolute',
-        bottom: 36,
+        bottom: vs(36),
         alignItems: 'center',
     },
     footerText: {
-        fontSize: 13,
-        fontFamily: 'Gilroy-Medium',
+        ...Typography.captionMedium,
+        fontSize: ms(13),
         color: colors.subtleWhite,
         letterSpacing: 1.5,
     },
@@ -418,25 +417,25 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
-        paddingHorizontal: 20,
-        height: 56,
+        paddingHorizontal: Spacing.lg,
+        minHeight: vs(56),
         borderBottomWidth: 1,
         borderBottomColor: '#F2F2F7',
         backgroundColor: '#fff',
     },
     scannerBackButton: {
-        width: 40,
+        width: s(40),
         alignItems: 'flex-start',
         justifyContent: 'center',
     },
     scannerBackArrow: {
-        fontSize: 24,
+        fontSize: ms(24),
         color: '#1A1A1A',
-        lineHeight: 28,
+        lineHeight: ms(28),
     },
     scannerHeaderTitle: {
-        fontSize: 17,
-        fontFamily: 'Gilroy-Bold',
+        ...Typography.headerTitle,
+        fontSize: ms(17),
         color: '#1A1A1A',
         flex: 1,
         textAlign: 'center',
@@ -446,20 +445,20 @@ const styles = StyleSheet.create({
         backgroundColor: '#fff',
         alignItems: 'center',
         justifyContent: 'center',
-        paddingBottom: 60,
+        paddingBottom: vs(60),
     },
     viewfinderWrapper: {
         width: width * 0.78,
         height: width * 0.78,
-        borderRadius: 12,
+        borderRadius: Radius.lg,
         overflow: 'hidden',
         backgroundColor: '#F0EFF8',
         position: 'relative',
     },
     corner: {
         position: 'absolute',
-        width: 36,
-        height: 36,
+        width: s(36),
+        height: s(36),
         zIndex: 10,
     },
     cornerTL: {
@@ -468,7 +467,7 @@ const styles = StyleSheet.create({
         borderTopWidth: 4,
         borderLeftWidth: 4,
         borderColor: colors.primary,
-        borderTopLeftRadius: 12,
+        borderTopLeftRadius: Radius.lg,
     },
     cornerTR: {
         top: 0,
@@ -476,7 +475,7 @@ const styles = StyleSheet.create({
         borderTopWidth: 4,
         borderRightWidth: 4,
         borderColor: colors.primary,
-        borderTopRightRadius: 12,
+        borderTopRightRadius: Radius.lg,
     },
     cornerBL: {
         bottom: 0,
@@ -484,7 +483,7 @@ const styles = StyleSheet.create({
         borderBottomWidth: 4,
         borderLeftWidth: 4,
         borderColor: colors.primary,
-        borderBottomLeftRadius: 12,
+        borderBottomLeftRadius: Radius.lg,
     },
     cornerBR: {
         bottom: 0,
@@ -492,18 +491,17 @@ const styles = StyleSheet.create({
         borderBottomWidth: 4,
         borderRightWidth: 4,
         borderColor: colors.primary,
-        borderBottomRightRadius: 12,
+        borderBottomRightRadius: Radius.lg,
     },
     scannerFooter: {
         position: 'absolute',
-        bottom: 48,
+        bottom: vs(48),
         left: 0,
         right: 0,
         alignItems: 'center',
     },
     scannerBrand: {
-        fontSize: 20,
-        fontFamily: 'Gilroy-Bold',
+        ...Typography.cardTitle,
         color: colors.primary,
         fontStyle: 'italic',
         letterSpacing: 0.5,

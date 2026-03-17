@@ -22,6 +22,7 @@ import { clearCachedFcmToken } from '../../lib/NotificationProvider';
 
 import Constants from 'expo-constants';
 import { useTheme } from '../../lib/themeContext';
+import { Typography, s, vs, ms, Spacing, VSpacing, Radius, IconSize, FontFamily } from '../../lib/typography';
 
 interface UserInfo {
     name: string;
@@ -232,7 +233,7 @@ export default function SettingsScreen() {
                     hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
                     style={styles.backButton}
                 >
-                    <Ionicons name="arrow-back" size={24} color={colors.textMain} />
+                    <Ionicons name="arrow-back" size={IconSize.lg} color={colors.textMain} />
                 </TouchableOpacity>
                 <Text style={styles.headerTitle}>Settings</Text>
             </View>
@@ -243,7 +244,7 @@ export default function SettingsScreen() {
                 showsVerticalScrollIndicator={false}
             >
                 {loading ? (
-                    <ActivityIndicator color={colors.primary} style={{ marginTop: 40 }} />
+                    <ActivityIndicator color={colors.primary} style={{ marginTop: VSpacing.xxxl }} />
                 ) : (
                     <>
                         {/* Profile Row */}
@@ -282,7 +283,7 @@ export default function SettingsScreen() {
                                         <Text style={styles.cardRowText}>{item}</Text>
                                         <Ionicons
                                             name={isSelected ? 'checkmark-circle-outline' : 'ellipse-outline'}
-                                            size={22}
+                                            size={IconSize.md}
                                             color={isSelected ? '#7A52D1' : '#C7C7CC'}
                                         />
                                     </TouchableOpacity>
@@ -296,29 +297,29 @@ export default function SettingsScreen() {
                             <TouchableOpacity style={[styles.cardRow, styles.cardRowBorder]} onPress={() => router.push('/profile' as any)} activeOpacity={0.7}>
                                 <View style={styles.cardRowLeft}>
                                     <View style={styles.iconContainer}>
-                                        <Ionicons name="person-outline" size={18} color={isDark ? '#CCC' : '#333'} />
+                                        <Ionicons name="person-outline" size={IconSize.sm} color={isDark ? '#CCC' : '#333'} />
                                     </View>
                                     <Text style={styles.cardRowText}>View your profile</Text>
                                 </View>
-                                <Ionicons name="chevron-forward" size={18} color="#C7C7CC" />
+                                <Ionicons name="chevron-forward" size={IconSize.sm} color="#C7C7CC" />
                             </TouchableOpacity>
                             <TouchableOpacity style={[styles.cardRow, styles.cardRowBorder]} onPress={() => router.push('/addAdress' as any)} activeOpacity={0.7}>
                                 <View style={styles.cardRowLeft}>
                                     <View style={styles.iconContainer}>
-                                        <Ionicons name="location-outline" size={18} color={isDark ? '#CCC' : '#333'} />
+                                        <Ionicons name="location-outline" size={IconSize.sm} color={isDark ? '#CCC' : '#333'} />
                                     </View>
                                     <Text style={styles.cardRowText}>Addresses</Text>
                                 </View>
-                                <Ionicons name="chevron-forward" size={18} color="#C7C7CC" />
+                                <Ionicons name="chevron-forward" size={IconSize.sm} color="#C7C7CC" />
                             </TouchableOpacity>
                             <TouchableOpacity style={styles.cardRow} onPress={() => router.push('/notification' as any)} activeOpacity={0.7}>
                                 <View style={styles.cardRowLeft}>
                                     <View style={styles.iconContainer}>
-                                        <Ionicons name="notifications-outline" size={18} color={isDark ? '#CCC' : '#333'} />
+                                        <Ionicons name="notifications-outline" size={IconSize.sm} color={isDark ? '#CCC' : '#333'} />
                                     </View>
                                     <Text style={styles.cardRowText}>Notification</Text>
                                 </View>
-                                <Ionicons name="chevron-forward" size={18} color="#C7C7CC" />
+                                <Ionicons name="chevron-forward" size={IconSize.sm} color="#C7C7CC" />
                             </TouchableOpacity>
                         </View>
 
@@ -329,11 +330,11 @@ export default function SettingsScreen() {
                             <TouchableOpacity style={[styles.cardRow, styles.cardRowBorder]} onPress={() => router.push('/aboutus' as any)} activeOpacity={0.7}>
                                 <View style={styles.cardRowLeft}>
                                     <View style={styles.iconContainer}>
-                                        <Ionicons name="information-circle-outline" size={18} color={isDark ? '#CCC' : '#333'} />
+                                        <Ionicons name="information-circle-outline" size={IconSize.sm} color={isDark ? '#CCC' : '#333'} />
                                     </View>
                                     <Text style={styles.cardRowText}>About us</Text>
                                 </View>
-                                <Ionicons name="chevron-forward" size={18} color="#C7C7CC" />
+                                <Ionicons name="chevron-forward" size={IconSize.sm} color="#C7C7CC" />
                             </TouchableOpacity>
                             <TouchableOpacity 
                                 style={[styles.cardRow, styles.cardRowBorder]} 
@@ -342,11 +343,11 @@ export default function SettingsScreen() {
                             >
                                 <View style={styles.cardRowLeft}>
                                     <View style={styles.iconContainer}>
-                                        <Ionicons name="lock-closed-outline" size={18} color={isDark ? '#CCC' : '#333'} />
+                                        <Ionicons name="lock-closed-outline" size={IconSize.sm} color={isDark ? '#CCC' : '#333'} />
                                     </View>
                                     <Text style={styles.cardRowText}>Privacy policy</Text>
                                 </View>
-                                <Ionicons name="chevron-forward" size={18} color="#C7C7CC" />
+                                <Ionicons name="chevron-forward" size={IconSize.sm} color="#C7C7CC" />
                             </TouchableOpacity>
                             <TouchableOpacity 
                                 style={[styles.cardRow, styles.cardRowBorder]} 
@@ -355,45 +356,45 @@ export default function SettingsScreen() {
                             >
                                 <View style={styles.cardRowLeft}>
                                     <View style={styles.iconContainer}>
-                                        <Ionicons name="document-text-outline" size={18} color={isDark ? '#CCC' : '#333'} />
+                                        <Ionicons name="document-text-outline" size={IconSize.sm} color={isDark ? '#CCC' : '#333'} />
                                     </View>
                                     <Text style={styles.cardRowText}>Terms & conditions</Text>
                                 </View>
-                                <Ionicons name="chevron-forward" size={18} color="#C7C7CC" />
+                                <Ionicons name="chevron-forward" size={IconSize.sm} color="#C7C7CC" />
                             </TouchableOpacity>
 
                             <TouchableOpacity style={[styles.cardRow, styles.cardRowBorder]} onPress={handleDeleteAccount} activeOpacity={0.7} disabled={deletingAccount}>
                                 <View style={styles.cardRowLeft}>
                                     <View style={styles.iconContainer}>
-                                        <Ionicons name="trash-outline" size={18} color={isDark ? '#ff4d4d' : '#e60000'} />
+                                        <Ionicons name="trash-outline" size={IconSize.sm} color={isDark ? '#ff4d4d' : '#e60000'} />
                                     </View>
                                     <Text style={[styles.cardRowText, { color: isDark ? '#ff4d4d' : '#e60000' }]}>Delete account</Text>
                                 </View>
                                 {deletingAccount ? (
                                     <ActivityIndicator size="small" color={isDark ? '#ff4d4d' : '#e60000'} />
                                 ) : (
-                                    <Ionicons name="chevron-forward" size={18} color="#C7C7CC" />
+                                    <Ionicons name="chevron-forward" size={IconSize.sm} color="#C7C7CC" />
                                 )}
                             </TouchableOpacity>
 
                             <TouchableOpacity style={styles.cardRow} onPress={handleLogout} activeOpacity={0.7} disabled={loggingOut}>
                                 <View style={styles.cardRowLeft}>
                                     <View style={styles.iconContainer}>
-                                        <Ionicons name="log-out-outline" size={18} color={isDark ? '#CCC' : '#333'} />
+                                        <Ionicons name="log-out-outline" size={IconSize.sm} color={isDark ? '#CCC' : '#333'} />
                                     </View>
                                     <Text style={styles.cardRowText}>Log out</Text>
                                 </View>
                                 {loggingOut ? (
                                     <ActivityIndicator size="small" color={colors.primary} />
                                 ) : (
-                                    <Ionicons name="chevron-forward" size={18} color="#C7C7CC" />
+                                    <Ionicons name="chevron-forward" size={IconSize.sm} color="#C7C7CC" />
                                 )}
                             </TouchableOpacity>
                         </View>
 
                         {/* Logo and App Version */}
                         <View style={styles.footerContainer}>
-                          <Image source={require('../../assets/new_knoc/withimg.svg')} style={styles.logo} />
+                          <Image source={require('../../assets/new_knoc/withimg.svg')} style={styles.logo} contentFit="contain" />
                             <Text style={styles.versionLabel}>{appVersion}</Text>
                         </View>
                     </>
@@ -406,57 +407,54 @@ export default function SettingsScreen() {
 const getStyles = (colors: any, isDark: boolean) => StyleSheet.create({
     safeArea: {
         flex: 1,
-        backgroundColor: colors.background, // Match light grayish background from design if customized in theme, otherwise white
+        backgroundColor: colors.background,
     },
     // Header
     header: {
         flexDirection: 'row',
         alignItems: 'center',
-        paddingHorizontal: 16,
-        paddingTop: 12,
-        paddingBottom: 20,
+        paddingHorizontal: Spacing.md,
+        paddingTop: VSpacing.sm,
+        paddingBottom: VSpacing.lg,
         backgroundColor: colors.background,
-        gap: 16,
+        gap: Spacing.md,
     },
-    backButton: { padding: 4 },
+    backButton: { padding: s(4) },
     headerTitle: {
-        fontSize: 18,
-        fontFamily: 'Gilroy-SemiBold',
+        ...Typography.headerTitle,
         color: colors.textMain,
     },
 
     // Scroll
     scroll: { flex: 1, backgroundColor: isDark ? '#000000' : '#F4F4F4' },
     scrollContent: {
-        paddingHorizontal: 16,
-        paddingTop: 12,
-        paddingBottom: 48,
+        paddingHorizontal: Spacing.md,
+        paddingTop: VSpacing.sm,
+        paddingBottom: vs(48),
     },
 
     logo: {
-        width: 150,
-        height: 70,
-        resizeMode: 'contain',
-       
+        width: s(150),
+        height: vs(70),
     },
     // Profile Row
     profileRow: {
         flexDirection: 'row',
         alignItems: 'center',
-        gap: 16,
-        marginBottom: 32,
+        gap: Spacing.md,
+        marginBottom: VSpacing.xxl,
     },
     avatarCircle: {
-        width: 60,
-        height: 60,
-        borderRadius: 30,
+        width: s(60),
+        height: s(60),
+        borderRadius: s(30),
         backgroundColor: '#EBE5F7',
         justifyContent: 'center',
         alignItems: 'center',
     },
     avatarText: {
-        fontSize: 22,
-        fontFamily: 'Gilroy-Bold',
+        ...Typography.heading,
+        fontSize: ms(22),
         color: '#602CD9',
     },
     profileInfoText: {
@@ -464,39 +462,36 @@ const getStyles = (colors: any, isDark: boolean) => StyleSheet.create({
         justifyContent: 'center',
     },
     profileName: {
-        fontSize: 18,
-        fontFamily: 'Gilroy-SemiBold',
+        ...Typography.headerTitle,
         color: colors.textMain,
-        marginBottom: 4,
+        marginBottom: vs(4),
     },
     profilePhone: {
-        fontSize: 14,
-        fontFamily: 'Gilroy-Medium',
+        ...Typography.bodyMedium,
         color: isDark ? '#aaaaaa' : '#8E8E93',
     },
 
     // Section label
     sectionLabel: {
-        fontSize: 16,
-        fontFamily: 'Gilroy-SemiBold',
+        ...Typography.title,
         color: colors.textMain,
-        marginBottom: 12,
-        marginTop: 8,
+        marginBottom: VSpacing.sm,
+        marginTop: VSpacing.xs,
     },
 
     // Cards
     cardGroup: {
         backgroundColor: colors.cardBg || (isDark ? '#1C1C1E' : '#FFFFFF'),
-        borderRadius: 12,
+        borderRadius: Radius.lg,
         overflow: 'hidden',
-        marginBottom: 24,
+        marginBottom: VSpacing.xl,
     },
     cardRow: {
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
-        paddingHorizontal: 16,
-        paddingVertical: 16,
+        paddingHorizontal: Spacing.md,
+        paddingVertical: VSpacing.md,
     },
     cardRowBorder: {
         borderBottomWidth: 1,
@@ -505,27 +500,24 @@ const getStyles = (colors: any, isDark: boolean) => StyleSheet.create({
     cardRowLeft: {
         flexDirection: 'row',
         alignItems: 'center',
+        flex: 1,
     },
     iconContainer: {
-        width: 24,
-        marginRight: 12,
+        width: s(24),
+        marginRight: Spacing.sm,
         alignItems: 'flex-start',
     },
     cardRowText: {
-        fontSize: 14,
-        fontFamily: 'Gilroy-Medium',
+        ...Typography.bodyMedium,
         color: colors.textMain,
     },
 
     // Logo & Version
     footerContainer: {
         alignItems: 'center',
-     
-     
     },
     logoText: {
-        fontSize: 20,
-        fontFamily: 'Gilroy-Bold',
+        ...Typography.cardTitle,
         letterSpacing: -0.5,
     },
     logoTextBlue: {
@@ -535,9 +527,7 @@ const getStyles = (colors: any, isDark: boolean) => StyleSheet.create({
         color: '#602CD9',
     },
     versionLabel: {
-        fontSize: 12,
-        fontFamily: 'Gilroy-Medium',
+        ...Typography.captionMedium,
         color: isDark ? '#98989E' : '#8E8E93',
     },
 });
-

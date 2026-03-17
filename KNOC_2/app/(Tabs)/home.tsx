@@ -5,7 +5,6 @@ import {
     TouchableOpacity,
     StyleSheet,
     ScrollView,
-    Dimensions,
     Alert,
     RefreshControl,
 } from 'react-native';
@@ -19,8 +18,8 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useTheme } from '../../lib/themeContext';
 import firestore from '@react-native-firebase/firestore';
+import { Typography, s, vs, ms, Spacing, VSpacing, Radius, IconSize } from '../../lib/typography';
 
-const { width } = Dimensions.get('window');
 const LOGS_PER_PAGE = 10;
 
 interface KnocLog {
@@ -96,8 +95,6 @@ export default function HomeScreen() {
 
                 if (!snapshot.empty) {
                     const data = snapshot.docs[0].data();
-                    // IMPORTANT: Use the Firestore document ID, not the qr_id data field.
-                    // This ensures .doc(id).update() calls work correctly.
                     const docId = snapshot.docs[0].id;
                     qrId = docId;
                     setLocationName(data.location || 'Home');
@@ -116,11 +113,9 @@ export default function HomeScreen() {
     }, []);
 
     // Fetch recent knoc logs from Firestore
-    // NOTE: qrId is passed as a parameter, so no state deps needed
     const fetchRecentLogs = useCallback(async (qrId: string) => {
         const id = qrId;
         if (!id) return;
-        // Prevent concurrent duplicate fetches
         if (fetchInProgressRef.current) {
             console.log('[Home] Fetch already in progress, skipping duplicate for qr_id:', id);
             return;
@@ -173,7 +168,6 @@ export default function HomeScreen() {
             });
 
             setActiveKnock(null);
-            // Refresh the logs and stats
             if (linkedQrId) fetchRecentLogs(linkedQrId);
         } catch (e) {
             console.error('Error handling coming:', e);
@@ -245,7 +239,6 @@ export default function HomeScreen() {
                         visitorPurpose: knockData.visitorPurpose,
                         deliveryApp: knockData.deliveryApp,
                     });
-                    // Auto-navigate to full-screen knock detail
                     routerRef.current.push({
                         pathname: '/knock-detail' as any,
                         params: knockData,
@@ -259,7 +252,6 @@ export default function HomeScreen() {
         responseListener.current = Notifications.addNotificationResponseReceivedListener(
             (response) => {
                 const notificationId = response.notification.request.identifier;
-                // Skip if this notification was already handled (e.g. by cold-start handler in _layout.tsx)
                 if (lastHandledNotificationId.current === notificationId) {
                     console.log('[Home] Notification already handled, skipping:', notificationId);
                     return;
@@ -389,7 +381,9 @@ export default function HomeScreen() {
                 }
             >
                 {/* Welcome */}
-                <Text style={styles.welcomeText}>Welcome, {userName || locationName}</Text>
+                <Text style={styles.welcomeText} numberOfLines={1} ellipsizeMode="tail">
+                    Welcome, {userName || locationName}
+                </Text>
 
                 {/* Stats Card */}
                 <LinearGradient
@@ -426,7 +420,7 @@ export default function HomeScreen() {
                 <View style={styles.visitList}>
                     {displayLogs.length === 0 ? (
                         <View style={styles.emptyState}>
-                            <Ionicons name="notifications-off-outline" size={32} color={colors.textMuted} />
+                            <Ionicons name="notifications-off-outline" size={IconSize.xl} color={colors.textMuted} />
                             <Text style={styles.emptyText}>No recent knoc activity</Text>
                         </View>
                     ) : (
@@ -438,12 +432,12 @@ export default function HomeScreen() {
                                         key={log.id}
                                         style={[styles.visitRow, isDenied && styles.visitRowDenied]}
                                     >
-                                        <Text style={styles.visitLabel}>
+                                        <Text style={styles.visitLabel} numberOfLines={1} ellipsizeMode="tail">
                                             {isDenied 
                                                 ? 'Not Approved' 
                                                 : (log.visitorType === 'delivery' ? 'Delivery Parcel' : 'Visitor')}
                                         </Text>
-                                        <Text style={styles.visitTime}>
+                                        <Text style={styles.visitTime} numberOfLines={1}>
                                             {formatDate(log.created_at)}, {formatTime(log.created_at)}
                                         </Text>
                                     </View>
@@ -456,7 +450,7 @@ export default function HomeScreen() {
                                     onPress={() => setVisibleLogCount(prev => prev + LOGS_PER_PAGE)}
                                 >
                                     <Text style={styles.showMoreText}>Show More</Text>
-                                    <Ionicons name="chevron-down" size={16} color={colors.primary} />
+                                    <Ionicons name="chevron-down" size={IconSize.sm} color={colors.primary} />
                                 </TouchableOpacity>
                             )}
                         </>
@@ -478,17 +472,17 @@ const getStyles = (colors: any, isDark: boolean) => StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
-        paddingHorizontal: 20,
-        paddingVertical: 16,
+        paddingHorizontal: Spacing.lg,
+        paddingVertical: VSpacing.md,
         backgroundColor: colors.cardBg,
     },
     logo: {
-        width: 110,
-        height: 32,
+        width: s(110),
+        height: vs(32),
     },
     profile: {
-        width: 30,
-        height: 30,
+        width: s(30),
+        height: s(30),
     },
     divider: {
         height: 1,
@@ -498,55 +492,54 @@ const getStyles = (colors: any, isDark: boolean) => StyleSheet.create({
     // Scroll
     scroll: { flex: 1 },
     scrollContent: {
-        paddingHorizontal: 16,
-        paddingTop: 4,
-        paddingBottom: 32,
+        paddingHorizontal: Spacing.md,
+        paddingTop: VSpacing.xxs,
+        paddingBottom: VSpacing.xxl,
     },
 
     // Welcome
     welcomeText: {
-        fontSize: 20,
-        fontFamily: 'Gilroy-Bold',
+        ...Typography.heading,
         color: colors.textMain,
-        marginBottom: 16,
-        marginTop: 8,
+        marginBottom: VSpacing.md,
+        marginTop: VSpacing.xs,
     },
 
     // Stats Card
     statsCard: {
-        borderRadius: 16,
+        borderRadius: Radius.xl,
         flexDirection: 'row',
         justifyContent: 'space-around',
         alignItems: 'center',
-        paddingTop: 16,
-        paddingHorizontal: 12,
-        marginBottom: 20,
-        gap: 10,
-        paddingBottom: 26,
+        paddingTop: vs(14),
+        paddingHorizontal: s(20),
+        marginBottom: VSpacing.lg,
+        gap: s(10),
+        paddingBottom: vs(20),
     },
     statItem: {
         flex: 1,
         alignItems: 'center',
-        gap: 10,
+        gap: vs(6),
     },
     statLabel: {
-        fontSize: 16,
+        ...Typography.title,
+        fontSize: ms(14),
         fontFamily: 'Gilroy-ExtraBold',
         color: colors.textPrimary,
     },
     statValueBox: {
-        width: 90,
-        aspectRatio: 0.98,
-        borderRadius: 12,
-        marginHorizontal: 10,
+        width: '90%',
+        aspectRatio: 1,
+        borderRadius: Radius.lg,
         justifyContent: 'center',
         alignItems: 'center',
         backgroundColor: isDark ? '#3B3666' : '#D9CFFF',
     },
     statValueHighlight: {
-        width: '97%',
-        height: '97%',
-        borderRadius: 12,
+        width: '96%',
+        height: '96%',
+        borderRadius: Radius.lg,
         position: 'absolute',
         top: 1,
         left: 1,
@@ -556,18 +549,17 @@ const getStyles = (colors: any, isDark: boolean) => StyleSheet.create({
     },
 
     statValue: {
-        fontSize: 45,
-        fontFamily: 'Gilroy-Heavy',
+        ...Typography.stat,
+        fontSize: ms(34),
         color: colors.primary,
     },
 
     // Recently KNOC
     sectionTitle: {
-        fontSize: 18,
-        fontFamily: 'Gilroy-ExtraBold',
+        ...Typography.subheading,
         color: colors.textMain,
-        marginBottom: 8,
-        marginLeft: 8,
+        marginBottom: VSpacing.xs,
+        marginLeft: Spacing.xs,
     },
     visitList: {
         gap: 0,
@@ -576,12 +568,12 @@ const getStyles = (colors: any, isDark: boolean) => StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
-        paddingHorizontal: 16,
-        paddingVertical: 16,
+        paddingHorizontal: Spacing.md,
+        paddingVertical: VSpacing.md,
         backgroundColor: colors.cardBg,
-        borderRadius: 12,
-        marginHorizontal: 4,
-        marginVertical: 8,
+        borderRadius: Radius.lg,
+        marginHorizontal: s(4),
+        marginVertical: vs(8),
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 1 },
         shadowOpacity: 0.05,
@@ -592,25 +584,25 @@ const getStyles = (colors: any, isDark: boolean) => StyleSheet.create({
         backgroundColor: isDark ? '#5C2D2D' : '#F5C1C1',
     },
     visitLabel: {
-        fontSize: 15,
-        fontFamily: 'Gilroy-Medium',
+        ...Typography.bodyMedium,
+        fontSize: ms(15),
         color: colors.textMain,
+        flex: 1,
+        marginRight: Spacing.xs,
     },
     visitTime: {
-        fontSize: 14,
-        fontFamily: 'Gilroy-Regular',
+        ...Typography.body,
         color: colors.textMain,
     },
 
     // Empty state
     emptyState: {
         alignItems: 'center',
-        paddingVertical: 40,
-        gap: 10,
+        paddingVertical: VSpacing.xxxl,
+        gap: vs(10),
     },
     emptyText: {
-        fontSize: 14,
-        fontFamily: 'Gilroy-Regular',
+        ...Typography.body,
         color: colors.textMuted,
     },
 
@@ -619,11 +611,11 @@ const getStyles = (colors: any, isDark: boolean) => StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'center',
-        paddingVertical: 14,
-        gap: 6,
+        paddingVertical: VSpacing.md,
+        gap: s(6),
     },
     showMoreText: {
-        fontSize: 14,
+        ...Typography.buttonSmall,
         fontFamily: 'Gilroy-SemiBold',
         color: colors.primary,
     },

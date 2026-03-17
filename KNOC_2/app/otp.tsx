@@ -18,6 +18,7 @@ import { signInWithPhoneNumber } from '@react-native-firebase/auth';
 import firestore from '@react-native-firebase/firestore';
 import { firebaseConfirmation } from './login';
 import { useNotification } from '../lib/NotificationProvider';
+import { Typography, s, vs, ms, Spacing, VSpacing, Radius, ButtonHeight, IconSize, FontFamily } from '../lib/typography';
 
 const colors = {
     primary: '#431BB8',
@@ -87,8 +88,6 @@ export default function OTPScreen() {
                 // User exists! Restore their session and skip onboarding
                 const existingDoc = snapshot.docs[0];
                 const existingData = existingDoc.data();
-                // IMPORTANT: Always use the Firestore document ID, NOT the qr_id data field.
-                // The document ID is what we use for updateDoc(doc(db, ...)) calls later.
                 const docId = existingDoc.id;
 
                 // Always store the document ID as linked_qr_id (not the qr_id field)
@@ -145,7 +144,7 @@ export default function OTPScreen() {
                     onPress={() => router.back()}
                     hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
                 >
-                    <Ionicons name="arrow-back" size={24} color={colors.textMain} />
+                    <Ionicons name="arrow-back" size={IconSize.lg} color={colors.textMain} />
                 </TouchableOpacity>
             </View>
 
@@ -159,7 +158,9 @@ export default function OTPScreen() {
                     <Text style={styles.title}>Your OTP is on its way</Text>
 
                     <View style={styles.subtitleRow}>
-                        <Text style={styles.subtitle}>Enter the OTP sent to {phone}</Text>
+                        <Text style={styles.subtitle} numberOfLines={2} ellipsizeMode="tail">
+                            Enter the OTP sent to {phone}
+                        </Text>
                         <TouchableOpacity onPress={() => router.back()}>
                             <Text style={styles.editText}> Edit</Text>
                         </TouchableOpacity>
@@ -209,84 +210,82 @@ const styles = StyleSheet.create({
         backgroundColor: colors.background,
     },
     header: {
-        height: 56,
+        minHeight: ButtonHeight,
         flexDirection: 'row',
         alignItems: 'center',
-        paddingHorizontal: 20,
+        paddingHorizontal: Spacing.lg,
         borderBottomWidth: 1,
         borderBottomColor: colors.headerBorder,
     },
     container: {
         flex: 1,
-        paddingHorizontal: 24,
+        paddingHorizontal: Spacing.xl,
     },
     content: {
         flex: 1,
-        paddingTop: 40,
+        paddingTop: VSpacing.xxxl,
     },
     logo: {
-        width: 140,
-        height: 48,
-        marginBottom: 24,
+        width: s(140),
+        height: vs(48),
+        marginBottom: VSpacing.xl,
         alignSelf: 'flex-start',
     },
     title: {
-        fontSize: 22,
-        fontFamily: 'Gilroy-Bold',
+        ...Typography.heading,
+        fontSize: ms(22),
         color: colors.textMain,
-        marginBottom: 8,
+        marginBottom: VSpacing.xs,
     },
     subtitleRow: {
         flexDirection: 'row',
         alignItems: 'center',
-        marginBottom: 32,
+        marginBottom: VSpacing.xxl,
+        flexWrap: 'wrap',
     },
     subtitle: {
-        fontSize: 12,
-        fontFamily: 'Gilroy-Regular',
+        ...Typography.caption,
         color: colors.textMuted,
+        flexShrink: 1,
     },
     editText: {
-        fontSize: 12,
-        fontFamily: 'Gilroy-Medium',
+        ...Typography.captionMedium,
         color: colors.primary,
     },
     otpContainer: {
         flexDirection: 'row',
         justifyContent: 'space-between',
-        marginBottom: 24,
-        width: '98%',
+        marginBottom: VSpacing.xl,
+        gap: s(8),
     },
     otpBox: {
-        width: 46,
-        height: 52,
+        flex: 1,
+        aspectRatio: 0.88,
+        maxWidth: s(52),
         borderWidth: 1,
         borderColor: colors.inputBorder,
-        borderRadius: 8,
-        fontSize: 22,
-        fontFamily: 'Gilroy-Medium',
+        borderRadius: Radius.md,
+        ...Typography.otpDigit,
         color: colors.textMain,
         textAlign: 'center',
     },
     resendButton: {
         alignSelf: 'flex-start',
-        marginBottom: 32,
+        marginBottom: VSpacing.xxl,
     },
     resendText: {
-        fontSize: 14,
-        fontFamily: 'Gilroy-Medium',
-        color: '#8875F4', // Slightly lighter purple matching the image
+        ...Typography.bodyMedium,
+        color: '#8875F4',
     },
     continueButton: {
         backgroundColor: colors.primary,
-        borderRadius: 8,
-        height: 56,
+        borderRadius: Radius.md,
+        minHeight: ButtonHeight,
         justifyContent: 'center',
         alignItems: 'center',
     },
     continueButtonText: {
+        ...Typography.button,
         color: colors.background,
-        fontSize: 16,
-        fontFamily: 'Gilroy-Medium',
     },
 });

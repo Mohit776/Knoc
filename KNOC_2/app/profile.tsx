@@ -13,6 +13,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import firestore from "@react-native-firebase/firestore";
+import { Typography, s, vs, ms, Spacing, VSpacing, Radius, IconSize, FontFamily } from "../lib/typography";
 
 const Row = ({
   label,
@@ -44,7 +45,9 @@ const Row = ({
           autoFocus
         />
       ) : (
-        <Text style={styles.value}>{value || "Not Provided"}</Text>
+        <Text style={styles.value} numberOfLines={1} ellipsizeMode="tail">
+          {value || "Not Provided"}
+        </Text>
       )}
     </View>
 
@@ -137,7 +140,7 @@ const ProfileScreen: React.FC = () => {
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()}>
-          <Ionicons name="arrow-back" size={22} color="#000" />
+          <Ionicons name="arrow-back" size={IconSize.md} color="#000" />
         </TouchableOpacity>
 
         <Text style={styles.headerTitle}>Your profile</Text>
@@ -147,7 +150,7 @@ const ProfileScreen: React.FC = () => {
       <Text style={styles.sectionTitle}>Personal details</Text>
 
       {loading ? (
-        <ActivityIndicator size="large" color="#4B1FAF" style={{ marginTop: 40 }} />
+        <ActivityIndicator size="large" color="#4B1FAF" style={{ marginTop: VSpacing.xxxl }} />
       ) : (
         /* Card */
         <View style={styles.card}>
@@ -178,34 +181,34 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#f5f5f5",
-    paddingHorizontal: 16,
+    paddingHorizontal: Spacing.md,
   },
 
   header: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 10,
-    paddingVertical: 12,
+    gap: s(10),
+    paddingVertical: VSpacing.sm,
   },
 
   headerTitle: {
-    fontSize: 16,
-    fontWeight: "600",
+    ...Typography.title,
+    fontFamily: FontFamily.semiBold,
   },
 
   sectionTitle: {
-    marginTop: 16,
-    marginBottom: 10,
-    fontSize: 14,
-    fontWeight: "500",
+    marginTop: VSpacing.md,
+    marginBottom: vs(10),
+    ...Typography.label,
+    fontFamily: FontFamily.medium,
     color: "#444",
   },
 
   card: {
     backgroundColor: "#fff",
-    borderRadius: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 8,
+    borderRadius: Radius.lg,
+    paddingHorizontal: Spacing.md,
+    paddingVertical: VSpacing.xs,
     shadowColor: "#000",
     shadowOpacity: 0.05,
     shadowRadius: 4,
@@ -216,38 +219,39 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    paddingVertical: 14,
+    paddingVertical: VSpacing.md,
     borderBottomWidth: 0.5,
     borderBottomColor: "#eee",
   },
   
   rowLeft: {
     flex: 1,
-    marginRight: 10,
+    marginRight: s(10),
   },
 
   label: {
-    fontSize: 12,
+    ...Typography.caption,
     color: "#888",
   },
 
   value: {
-    fontSize: 14,
+    ...Typography.bodyMedium,
     color: "#000",
-    marginTop: 2,
+    marginTop: vs(2),
   },
   
   input: {
-    fontSize: 14,
+    ...Typography.bodyMedium,
     color: "#000",
-    marginTop: 2,
+    marginTop: vs(2),
     borderBottomWidth: 1,
     borderBottomColor: "#5b5cff",
     paddingVertical: 0,
   },
 
   edit: {
+    ...Typography.bodyMedium,
     color: "#5b5cff",
-    fontWeight: "500",
+    fontFamily: FontFamily.medium,
   },
 });

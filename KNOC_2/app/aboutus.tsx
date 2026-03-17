@@ -9,6 +9,7 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
+import { Typography, s, vs, ms, Spacing, VSpacing, Radius, IconSize, FontFamily } from "../lib/typography";
 
 const AboutScreen: React.FC = () => {
   const router = useRouter();
@@ -18,7 +19,7 @@ const AboutScreen: React.FC = () => {
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()}>
-          <Ionicons name="arrow-back" size={22} color="#000" />
+          <Ionicons name="arrow-back" size={IconSize.md} color="#000" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>About us</Text>
       </View>
@@ -90,68 +91,73 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#F5F5F5",
-    paddingHorizontal: 16,
+    paddingHorizontal: Spacing.md,
   },
 
   header: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 10,
-    paddingVertical: 12,
+    gap: s(10),
+    paddingVertical: VSpacing.sm,
   },
 
   headerTitle: {
-    fontSize: 16,
-    fontWeight: "600",
+    ...Typography.title,
+    fontFamily: FontFamily.semiBold,
   },
 
   title: {
-    fontSize: 16,
-    fontWeight: "600",
-    marginTop: 10,
-    marginBottom: 10,
+    ...Typography.title,
+    fontFamily: FontFamily.semiBold,
+    marginTop: vs(10),
+    marginBottom: vs(10),
   },
 
   text: {
-    fontSize: 13,
+    ...Typography.body,
+    fontSize: ms(13),
     color: "#444",
-    lineHeight: 20,
-    marginBottom: 12,
+    lineHeight: ms(20),
+    marginBottom: VSpacing.sm,
   },
 
   info: {
-    fontSize: 13,
+    ...Typography.body,
+    fontSize: ms(13),
     color: "#444",
-    marginBottom: 12,
+    marginBottom: VSpacing.sm,
   },
 
   contactTitle: {
-    marginTop: 10,
-    fontSize: 14,
-    fontWeight: "500",
+    marginTop: vs(10),
+    ...Typography.label,
+    fontFamily: FontFamily.medium,
   },
 
   contact: {
-    fontSize: 13,
-    marginTop: 4,
+    ...Typography.body,
+    fontSize: ms(13),
+    marginTop: vs(4),
     color: "#444",
   },
   
   developerSection: {
-    marginTop: 30,
-    marginBottom: 20,
-    paddingTop: 15,
+    marginTop: vs(30),
+    marginBottom: VSpacing.lg,
+    paddingTop: vs(15),
     borderTopWidth: 1,
     borderTopColor: '#E0E0E0',
   },
   developerText: {
-    fontSize: 13,
-    fontWeight: "600",
+    ...Typography.body,
+    fontSize: ms(13),
+    fontFamily: FontFamily.semiBold,
     color: "#5f259f",
-    marginBottom: 4,
+    marginBottom: vs(4),
   },
   developerContact: {
-    fontSize: 13,
+    ...Typography.body,
+    fontSize: ms(13),
     color: "#444",
   },
 });

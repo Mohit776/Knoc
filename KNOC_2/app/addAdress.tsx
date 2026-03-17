@@ -13,6 +13,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import firestore from "@react-native-firebase/firestore";
+import { Typography, s, vs, ms, Spacing, VSpacing, Radius, ButtonHeight, IconSize, FontFamily } from "../lib/typography";
 
 const InputField = ({
   label,
@@ -87,7 +88,7 @@ const AddressScreen: React.FC = () => {
       const fullAddress = fullAddressParts.join(", ");
 
       await firestore().collection("qr_codes").doc(qrId).update({
-        location: fullAddress, // This allows the Home/Settings screens to still read a general location string
+        location: fullAddress,
         addressDetails: {
           house: house.trim(),
           apartment: apartment.trim(),
@@ -111,7 +112,7 @@ const AddressScreen: React.FC = () => {
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()}>
-          <Ionicons name="arrow-back" size={22} color="#000" />
+          <Ionicons name="arrow-back" size={IconSize.md} color="#000" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Address</Text>
       </View>
@@ -120,7 +121,7 @@ const AddressScreen: React.FC = () => {
       <Text style={styles.sectionTitle}>Change Address</Text>
 
       {fetching ? (
-        <ActivityIndicator size="large" color="#4B1FAF" style={{ marginTop: 40 }} />
+        <ActivityIndicator size="large" color="#4B1FAF" style={{ marginTop: VSpacing.xxxl }} />
       ) : (
         <>
           {/* Form Card */}
@@ -174,64 +175,67 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#F5F5F5",
-    paddingHorizontal: 16,
+    paddingHorizontal: Spacing.md,
   },
 
   header: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 10,
-    paddingVertical: 12,
+    gap: s(10),
+    paddingVertical: VSpacing.sm,
   },
 
   headerTitle: {
-    fontSize: 16,
-    fontWeight: "600",
+    ...Typography.title,
+    fontFamily: FontFamily.semiBold,
   },
 
   sectionTitle: {
-    marginTop: 20,
-    marginBottom: 10,
-    fontSize: 14,
-    fontWeight: "500",
+    marginTop: VSpacing.lg,
+    marginBottom: vs(10),
+    ...Typography.label,
+    fontFamily: FontFamily.medium,
   },
 
   card: {
     backgroundColor: "#fff",
-    borderRadius: 12,
-    padding: 16,
+    borderRadius: Radius.lg,
+    padding: Spacing.md,
   },
 
   inputContainer: {
-    marginBottom: 14,
+    marginBottom: VSpacing.md,
   },
 
   label: {
-    fontSize: 13,
-    marginBottom: 6,
+    ...Typography.caption,
+    fontSize: ms(13),
+    marginBottom: vs(6),
     color: "#333",
+    fontFamily: FontFamily.regular,
   },
 
   input: {
     borderWidth: 1,
     borderColor: "#ddd",
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    fontSize: 14,
+    borderRadius: Radius.md,
+    paddingHorizontal: Spacing.sm,
+    paddingVertical: VSpacing.sm,
+    ...Typography.bodyMedium,
+    fontFamily: FontFamily.regular,
   },
 
   button: {
-    marginTop: 20,
+    marginTop: VSpacing.lg,
     backgroundColor: "#4B1FAF",
-    paddingVertical: 14,
-    borderRadius: 6,
+    paddingVertical: VSpacing.md,
+    borderRadius: Radius.sm,
     alignItems: "center",
   },
 
   buttonText: {
+    ...Typography.bodyMedium,
+    fontFamily: FontFamily.semiBold,
     color: "#fff",
-    fontWeight: "600",
-    fontSize: 14,
   },
 });

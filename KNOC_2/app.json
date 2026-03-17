@@ -8,6 +8,10 @@
     "scheme": "trueknoc",
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
+    "splash": {
+      "backgroundColor": "#FFFFFF",
+      "resizeMode": "contain"
+    },
     "ios": {  
       "supportsTablet": true,
       "bundleIdentifier": "com.knoc.app",
@@ -47,18 +51,6 @@
           "cameraPermission": "Allow KNOC to access your camera to scan QR codes.",
           "microphonePermission": false,
           "recordAudioAndroid": false
-        }
-      ],
-      [
-        "expo-splash-screen",
-        {
-          "image": "./assets/new_knoc/Splash_Logo.png",
-          "imageWidth": 200,
-          "resizeMode": "contain",
-          "backgroundColor": "#ffffff",
-          "dark": {
-            "backgroundColor": "#ffffff"
-          }
         }
       ],
       [

@@ -1,6 +1,7 @@
 import { Tabs } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../lib/themeContext';
+import { Typography, vs, ms } from '../../lib/typography';
 
 export default function TabsLayout() {
     const { colors } = useTheme();
@@ -15,13 +16,13 @@ export default function TabsLayout() {
                     backgroundColor: colors.cardBg,
                     borderTopWidth: 1,
                     borderTopColor: colors.separator,
-                    height: 100,
-                    paddingBottom: 8,
-                    paddingTop: 6,
+                    paddingBottom: vs(10),
+                    paddingTop: vs(4),
+                    height: vs(60),
                 },
                 tabBarLabelStyle: {
                     fontFamily: 'Gilroy-Medium',
-                    fontSize: 12,
+                    fontSize: ms(12),
                 },
             }}
         >

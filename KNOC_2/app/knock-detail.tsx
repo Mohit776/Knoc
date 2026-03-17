@@ -12,6 +12,7 @@ import { useRouter, useLocalSearchParams } from 'expo-router';
 import firestore from '@react-native-firebase/firestore';
 import { useTheme } from '../lib/themeContext';
 import { Image } from 'expo-image';
+import { Typography, s, vs, ms, Spacing, VSpacing, Radius, IconSize, FontFamily } from '../lib/typography';
 
 export default function KnockDetailScreen() {
     const router = useRouter();
@@ -105,7 +106,7 @@ export default function KnockDetailScreen() {
                                     : require('../assets/logo/Ellipse 1174.png')
                             }
                             style={styles.knockAvatar}
-                            resizeMode="cover"
+                            contentFit="cover"
                         />
                     </View>
 
@@ -115,7 +116,7 @@ export default function KnockDetailScreen() {
                             <>
                                 <View style={styles.knockInfoRow}>
                                     <Text style={styles.knockInfoLabel}>Order:</Text>
-                                    <Text style={styles.knockInfoValue}>
+                                    <Text style={styles.knockInfoValue} numberOfLines={1} ellipsizeMode="tail">
                                         {params.deliveryApp || 'Delivery'}
                                     </Text>
                                 </View>
@@ -128,7 +129,7 @@ export default function KnockDetailScreen() {
                             <>
                                 <View style={styles.knockInfoRow}>
                                     <Text style={styles.knockInfoLabel}>Name:</Text>
-                                    <Text style={styles.knockInfoValue}>
+                                    <Text style={styles.knockInfoValue} numberOfLines={1} ellipsizeMode="tail">
                                         {params.visitorName || 'Umesh Kumar'}
                                     </Text>
                                 </View>
@@ -177,56 +178,56 @@ const getStyles = (colors: any, isDark: boolean) => StyleSheet.create({
     },
     content: {
         flex: 1,
-        paddingHorizontal: 20,
-        paddingTop: 160,
+        paddingHorizontal: Spacing.lg,
+        justifyContent: 'center',
     },
     knockCard: {
         backgroundColor: '#FFFFFF',
-        borderRadius: 24,
+        borderRadius: Radius.xxl,
         overflow: 'visible',
         borderWidth: 1.5,
         borderColor: '#F3F4F6',
-        paddingBottom: 24,
+        paddingBottom: VSpacing.xl,
     },
     knockCardHeader: {
         backgroundColor: isDark ? '#2B2640' : '#EBE4FF', 
-        borderTopLeftRadius: 24,
-        borderTopRightRadius: 24,
-        paddingHorizontal: 20,
-        paddingTop: 18,
-        paddingBottom: 60,
+        borderTopLeftRadius: Radius.xxl,
+        borderTopRightRadius: Radius.xxl,
+        paddingHorizontal: Spacing.lg,
+        paddingTop: VSpacing.lg,
+        paddingBottom: vs(60),
     },
     headerTopRow: {
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
-        marginBottom: 20,
+        marginBottom: VSpacing.lg,
     },
     knockCardLogo: {
-        width: 104,
-        height: 24,
+        width: s(104),
+        height: vs(24),
     },
     knockCardNow: {
-        fontSize: 14,
-        fontFamily: 'Gilroy-Medium',
+        ...Typography.bodyMedium,
         color: '#6B7280',
     },
     knockCardTitle: {
-        fontSize: 22,
-        fontFamily: 'Gilroy-SemiBold',
+        ...Typography.heading,
+        fontSize: ms(22),
+        fontFamily: FontFamily.semiBold,
         color: isDark ? '#FFFFFF' : '#111827',
         textAlign: 'center',
     },
     knockAvatarWrap: {
         alignSelf: 'center',
-        width: 108,
-        height: 108,
-        borderRadius: 54,
+        width: s(108),
+        height: s(108),
+        borderRadius: s(54),
         backgroundColor: '#FFFFFF',
         overflow: 'hidden',
         borderWidth: 4,
         borderColor: '#FFFFFF',
-        marginTop: -54,
+        marginTop: -s(54),
         zIndex: 10,
     },
     knockAvatar: {
@@ -234,64 +235,65 @@ const getStyles = (colors: any, isDark: boolean) => StyleSheet.create({
         height: '100%',
     },
     knockInfoContainer: {
-        marginTop: 12,
-        marginBottom: 24,
+        marginTop: VSpacing.sm,
+        marginBottom: VSpacing.xl,
         alignSelf: 'center',
-        gap: 8,
+        gap: vs(8),
     },
     knockInfoRow: {
         flexDirection: 'row',
         alignItems: 'center',
-        gap: 16,
+        gap: Spacing.md,
     },
     knockInfoLabel: {
-        fontSize: 18,
-        fontFamily: 'Gilroy-Medium',
+        ...Typography.headerTitle,
+        fontFamily: FontFamily.medium,
         color: '#9CA3AF',
-        width: 70,
+        width: s(70),
     },
     knockInfoValue: {
-        fontSize: 18,
-        fontFamily: 'Gilroy-Medium',
+        ...Typography.headerTitle,
+        fontFamily: FontFamily.medium,
         color: isDark ? '#FFFFFF' : '#111827',
+        flex: 1,
     },
     knockInfoAccess: {
-        fontSize: 18,
-        fontFamily: 'Gilroy-Medium',
+        ...Typography.headerTitle,
+        fontFamily: FontFamily.medium,
         color: '#368955', 
     },
     knockDivider: {
         height: 1.5,
         backgroundColor: '#F3F4F6',
-        marginHorizontal: 20,
+        marginHorizontal: Spacing.lg,
     },
     knockBtnGroup: {
-        paddingHorizontal: 20,
-        paddingTop: 20,
-        gap: 12,
+        paddingHorizontal: Spacing.lg,
+        paddingTop: VSpacing.lg,
+        gap: vs(12),
     },
     knockPrimaryBtn: {
         backgroundColor: '#35129B',
-        borderRadius: 14,
-        paddingVertical: 14,
+        borderRadius: ms(14),
+        paddingVertical: VSpacing.md,
         alignItems: 'center',
     },
     knockPrimaryBtnText: {
-        fontSize: 17,
-        fontFamily: 'Gilroy-Medium',
+        ...Typography.button,
+        fontSize: ms(17),
         color: '#FFFFFF',
     },
     knockDeclineBtn: {
         backgroundColor: '#FFFFFF',
-        borderRadius: 14,
-        paddingVertical: 14,
+        borderRadius: ms(14),
+        paddingVertical: VSpacing.md,
         alignItems: 'center',
         borderWidth: 1,
         borderColor: '#D1D5DB',
     },
     knockDeclineBtnText: {
-        fontSize: 17,
-        fontFamily: 'Gilroy-Medium',
+        ...Typography.button,
+        fontSize: ms(17),
         color: '#B91C1C',
     },
 });

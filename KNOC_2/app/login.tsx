@@ -14,6 +14,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { auth } from '../lib/firebase';
 import { signInWithPhoneNumber } from '@react-native-firebase/auth';
+import { Typography, s, vs, ms, Spacing, VSpacing, Radius, ButtonHeight, FontFamily } from '../lib/typography';
 
 // Design system colors based on previous Knoc colors and the new image
 const colors = {
@@ -109,14 +110,7 @@ export default function LoginScreen() {
                 </View>
 
                 {/* Footer */}
-                <View style={styles.footer}>
-                    <TouchableOpacity 
-                        activeOpacity={0.6}
-                        onPress={() => Linking.openURL('https://knoc.vercel.app/privacy/')}
-                    >
-                        <Text style={styles.privacyText}>Privacy policy</Text>
-                    </TouchableOpacity>
-                </View>
+              
             </KeyboardAvoidingView>
         </SafeAreaView>
     );
@@ -130,9 +124,9 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         justifyContent: 'space-between',
-        paddingHorizontal: 24,
-        paddingTop: 20, // Adjust depending on if there's a header
-        paddingBottom: 40,
+        paddingHorizontal: Spacing.xl,
+        paddingTop: VSpacing.lg,
+        paddingBottom: VSpacing.xxxl,
     },
     header: {
         flexDirection: 'row',
@@ -140,73 +134,69 @@ const styles = StyleSheet.create({
         width: '100%',
     },
     skipText: {
-        fontSize: 16,
-        fontFamily: 'Gilroy-Medium',
+        ...Typography.button,
         color: colors.primary,
     },
     content: {
         flex: 1,
-        marginTop: 120, // To roughly match the position in the image
+        marginTop: vs(120),
     },
     logo: {
-        width: 140,
-        height: 48,
-        marginBottom: 24,
+        width: s(140),
+        height: vs(48),
+        marginBottom: VSpacing.xl,
         alignSelf: 'flex-start',
     },
     title: {
-        fontSize: 24,
-        fontFamily: 'Gilroy-Bold',
+        ...Typography.heading,
+        fontSize: ms(24),
         color: colors.textMain,
-        marginBottom: 24,
+        marginBottom: VSpacing.xl,
     },
     inputContainer: {
         flexDirection: 'row',
         alignItems: 'center',
         backgroundColor: colors.inputBg,
-        borderRadius: 8,
-        paddingHorizontal: 16,
-        height: 56,
-        marginBottom: 28,
+        borderRadius: Radius.md,
+        paddingHorizontal: Spacing.md,
+        minHeight: ButtonHeight,
+        marginBottom: vs(28),
     },
     countryCode: {
-        fontSize: 16,
-        fontFamily: 'Gilroy-Medium',
+        ...Typography.button,
         color: colors.textMain,
     },
     divider: {
         width: 1,
-        height: 24,
+        height: vs(24),
         backgroundColor: colors.divider,
-        marginHorizontal: 12,
+        marginHorizontal: Spacing.sm,
     },
     input: {
         flex: 1,
-        fontSize: 16,
-        fontFamily: 'Gilroy-Regular',
+        ...Typography.button,
+        fontFamily: FontFamily.regular,
         color: colors.textMain,
         height: '100%',
     },
     loginButton: {
         backgroundColor: colors.primary,
-        borderRadius: 8,
-        height: 56,
+        borderRadius: Radius.md,
+        minHeight: ButtonHeight,
         justifyContent: 'center',
         alignItems: 'center',
     },
     loginButtonText: {
+        ...Typography.button,
         color: colors.background,
-        fontSize: 16,
-        fontFamily: 'Gilroy-Medium',
     },
 
     footer: {
         alignItems: 'center',
-        paddingBottom: 20,
+        paddingBottom: VSpacing.lg,
     },
     privacyText: {
-        fontSize: 14,
-        fontFamily: 'Gilroy-Medium',
+        ...Typography.bodyMedium,
         color: colors.textMain,
         textDecorationLine: 'underline',
     },

@@ -9,6 +9,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Image } from 'expo-image';
+import { Typography, s, vs, ms, FontFamily } from '../lib/typography';
 
 const { width, height } = Dimensions.get('window');
 
@@ -65,9 +66,9 @@ export default function SplashScreen({ onFinish }: SplashScreenProps) {
           ]}
         >
           <Image
-            source={require('../assets/new_knoc/Logo.svg')} // 👈 Replace with your logo image
+            source={require('../assets/new_knoc/Logo.svg')}
             style={styles.logo}
-            resizeMode="contain"
+            contentFit="contain"
           />
         </Animated.View>
       </View>
@@ -97,7 +98,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     width: width * 0.45,
     height: width * 0.45,
-   
   },
   logo: {
     width: '80%',
@@ -110,8 +110,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   tagline: {
-    fontSize: 16,
-    fontFamily: 'Gilroy-SemiBold',
+    ...Typography.button,
+    fontFamily: FontFamily.semiBold,
     color: '#111',
     letterSpacing: 0.2,
   },

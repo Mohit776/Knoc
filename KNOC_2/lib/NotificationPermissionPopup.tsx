@@ -20,6 +20,7 @@ import {
     Dimensions,
     Platform,
 } from 'react-native';
+import { Typography, s, vs, ms, Spacing, VSpacing, Radius, FontFamily } from './typography';
 
 const { width } = Dimensions.get('window');
 
@@ -134,10 +135,6 @@ export default function NotificationPermissionPopup({
                         },
                     ]}
                 >
-                    {/* Purple accent bar at top */}
-                    <View style={styles.accentBar} />
-
-                    {/* Bell icon */}
                     <Animated.View
                         style={[
                             styles.bellContainer,
@@ -153,35 +150,12 @@ export default function NotificationPermissionPopup({
                     </Animated.View>
 
                     {/* Title */}
-                    <Text style={styles.title}>Stay in the Loop!</Text>
+                    <Text style={styles.title}>Enable Notifications</Text>
 
                     {/* Description */}
                     <Text style={styles.description}>
-                        Enable notifications to get instant alerts when someone
-                        knocks at your door. Never miss a visitor again!
+                        Get instant alerts when someone knocks at your door. You can turn this off anytime.
                     </Text>
-
-                    {/* Feature highlights */}
-                    <View style={styles.featuresContainer}>
-                        <View style={styles.featureRow}>
-                            <Text style={styles.featureIcon}>⚡</Text>
-                            <Text style={styles.featureText}>
-                                Instant knock alerts
-                            </Text>
-                        </View>
-                        <View style={styles.featureRow}>
-                            <Text style={styles.featureIcon}>🔒</Text>
-                            <Text style={styles.featureText}>
-                                Know who's at your door
-                            </Text>
-                        </View>
-                        <View style={styles.featureRow}>
-                            <Text style={styles.featureIcon}>🔕</Text>
-                            <Text style={styles.featureText}>
-                                You can turn them off anytime
-                            </Text>
-                        </View>
-                    </View>
 
                     {/* Enable button */}
                     <TouchableOpacity
@@ -211,117 +185,75 @@ export default function NotificationPermissionPopup({
 const styles = StyleSheet.create({
     overlay: {
         flex: 1,
-        backgroundColor: colors.overlay,
+        backgroundColor: 'rgba(0,0,0,0.4)',
         justifyContent: 'center',
         alignItems: 'center',
-        paddingHorizontal: 28,
+        paddingHorizontal: Spacing.xl,
     },
     card: {
         width: '100%',
-        maxWidth: 360,
-        backgroundColor: colors.cardBg,
-        borderRadius: 24,
-        paddingHorizontal: 28,
-        paddingBottom: 28,
-        paddingTop: 0,
+        maxWidth: s(340),
+        backgroundColor: '#FFFFFF',
+        borderRadius: Radius.xl,
+        padding: Spacing.xl,
         alignItems: 'center',
-        overflow: 'hidden',
-        // Shadow
-        shadowColor: '#431BB8',
-        shadowOffset: { width: 0, height: 16 },
-        shadowOpacity: 0.25,
-        shadowRadius: 32,
-        elevation: 20,
-    },
-    accentBar: {
-        width: '100%',
-        height: 6,
-        backgroundColor: colors.primary,
-        borderTopLeftRadius: 24,
-        borderTopRightRadius: 24,
-        marginBottom: 24,
+        elevation: 10,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: vs(4) },
+        shadowOpacity: 0.1,
+        shadowRadius: ms(10),
     },
     bellContainer: {
-        width: 80,
-        height: 80,
-        borderRadius: 40,
-        backgroundColor: colors.bellBg,
+        width: s(64),
+        height: s(64),
+        borderRadius: s(32),
+        backgroundColor: '#F3F4F6',
         justifyContent: 'center',
         alignItems: 'center',
-        marginBottom: 20,
+        marginBottom: VSpacing.md,
     },
     bellEmoji: {
-        fontSize: 38,
+        fontSize: ms(32),
     },
     title: {
-        fontSize: 22,
-        fontFamily: 'Gilroy-Bold',
-        color: colors.textPrimary,
+        ...Typography.cardTitle,
+        color: '#111827',
         textAlign: 'center',
-        marginBottom: 10,
-        letterSpacing: 0.3,
+        marginBottom: VSpacing.xs,
     },
     description: {
-        fontSize: 14,
-        fontFamily: 'Gilroy-Regular',
-        color: colors.textSecondary,
+        ...Typography.bodyMedium,
+        fontSize: ms(15),
+        color: '#6B7280',
         textAlign: 'center',
-        lineHeight: 21,
-        marginBottom: 20,
-        paddingHorizontal: 4,
-    },
-    featuresContainer: {
-        width: '100%',
-        marginBottom: 24,
-        gap: 10,
-    },
-    featureRow: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        backgroundColor: '#F8F7FF',
-        paddingVertical: 10,
-        paddingHorizontal: 14,
-        borderRadius: 12,
-    },
-    featureIcon: {
-        fontSize: 18,
-        marginRight: 12,
-    },
-    featureText: {
-        fontSize: 13.5,
-        fontFamily: 'Gilroy-Medium',
-        color: colors.textPrimary,
+        lineHeight: ms(22),
+        marginBottom: VSpacing.xl,
+        paddingHorizontal: s(10),
     },
     enableButton: {
         width: '100%',
-        backgroundColor: colors.enableBtn,
-        borderRadius: 14,
-        paddingVertical: 15,
+        backgroundColor: '#111827',
+        borderRadius: Radius.lg,
+        paddingVertical: VSpacing.md,
         alignItems: 'center',
         justifyContent: 'center',
-        marginBottom: 10,
-        // Subtle glow
-        shadowColor: colors.enableBtn,
-        shadowOffset: { width: 0, height: 6 },
-        shadowOpacity: 0.35,
-        shadowRadius: 12,
-        elevation: 8,
+        marginBottom: VSpacing.xs,
     },
     enableButtonText: {
-        fontSize: 16,
-        fontFamily: 'Gilroy-Bold',
-        color: colors.white,
-        letterSpacing: 0.5,
+        ...Typography.button,
+        fontFamily: FontFamily.bold,
+        color: '#FFFFFF',
     },
     skipButton: {
         width: '100%',
-        paddingVertical: 12,
+        paddingVertical: VSpacing.sm,
         alignItems: 'center',
         justifyContent: 'center',
     },
     skipButtonText: {
-        fontSize: 14,
-        fontFamily: 'Gilroy-Medium',
-        color: colors.textSecondary,
+        ...Typography.bodyMedium,
+        fontSize: ms(15),
+        fontFamily: FontFamily.bold,
+        color: '#9CA3AF',
     },
 });

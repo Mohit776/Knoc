@@ -6,7 +6,6 @@ import {
     TouchableOpacity,
     StyleSheet,
     ScrollView,
-    Dimensions,
     Alert,
     ActivityIndicator,
 } from 'react-native';
@@ -20,7 +19,7 @@ import { useNotification } from '../lib/NotificationProvider';
 import * as Print from 'expo-print';
 import * as Sharing from 'expo-sharing';
 import { LinearGradient } from 'expo-linear-gradient';
-const { width } = Dimensions.get('window');
+import { Typography, s, vs, ms, Spacing, VSpacing, Radius, ButtonHeight, IconSize, FontFamily } from '../lib/typography';
 
 const colors = {
     primary: '#431BB8',
@@ -209,7 +208,7 @@ export default function OnboardQRScreen() {
                     onPress={() => router.replace('/welcome')}
                     hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
                 >
-                    <Ionicons name="arrow-back" size={22} color={colors.textMain} />
+                    <Ionicons name="arrow-back" size={IconSize.md} color={colors.textMain} />
                 </TouchableOpacity>
                 <Text style={styles.headerTitle}>Onboard Your QR Code</Text>
             </View>
@@ -263,7 +262,7 @@ export default function OnboardQRScreen() {
                     activeOpacity={0.85}
                     onPress={handleActivateAndDownload}
                     disabled={loading}
-                    style={{ marginTop: 28 }}
+                    style={{ marginTop: vs(28) }}
                 >
                     <LinearGradient
                         colors={['#431BB8', '#6B45D5', '#926FF3']}
@@ -301,42 +300,42 @@ const styles = StyleSheet.create({
     header: {
         flexDirection: 'row',
         alignItems: 'center',
-        paddingHorizontal: 20,
-        height: 56,
+        paddingHorizontal: Spacing.lg,
+        minHeight: ButtonHeight,
         borderBottomWidth: 1,
         borderBottomColor: colors.headerBorder,
-        gap: 14,
+        gap: s(14),
     },
     headerTitle: {
-        fontSize: 18,
-        fontFamily: 'Gilroy-Bold',
+        ...Typography.headerTitle,
+        fontFamily: FontFamily.bold,
         color: colors.textMain,
     },
 
     // Scroll
     scroll: { flex: 1 },
     scrollContent: {
-        paddingHorizontal: 20,
-        paddingTop: 24,
-        paddingBottom: 40,
+        paddingHorizontal: Spacing.lg,
+        paddingTop: VSpacing.xl,
+        paddingBottom: VSpacing.xxxl,
     },
 
     // Form
     label: {
-        fontSize: 14,
-        fontFamily: 'Gilroy-SemiBold',
+        ...Typography.label,
         color: colors.textMain,
-        marginBottom: 8,
-        marginTop: 16,
+        marginBottom: VSpacing.xs,
+        marginTop: VSpacing.md,
     },
     input: {
         borderWidth: 1,
         borderColor: 'transparent',
-        borderRadius: 10,
-        paddingHorizontal: 16,
-        paddingVertical: 14,
-        fontSize: 15,
-        fontFamily: 'Gilroy-Regular',
+        borderRadius: ms(10),
+        paddingHorizontal: Spacing.md,
+        paddingVertical: VSpacing.md,
+        ...Typography.bodyMedium,
+        fontSize: ms(15),
+        fontFamily: FontFamily.regular,
         color: colors.textMain,
         backgroundColor: '#926FF31A',
     },
@@ -344,16 +343,16 @@ const styles = StyleSheet.create({
         borderColor: '#431BB880',
     },
     inputTaller: {
-        minHeight: 60,
+        minHeight: vs(60),
         textAlignVertical: 'top',
     },
 
     // Activate & Download Button
     activateButton: {
-        marginTop: 28,
+        marginTop: vs(28),
         backgroundColor: colors.primary,
-        borderRadius: 10,
-        height: 56,
+        borderRadius: ms(10),
+        minHeight: ButtonHeight,
         justifyContent: 'center',
         alignItems: 'center',
     },
@@ -361,16 +360,15 @@ const styles = StyleSheet.create({
         opacity: 0.7,
     },
     activateButtonText: {
+        ...Typography.buttonSemiBold,
         color: '#FFFFFF',
-        fontSize: 16,
-        fontFamily: 'Gilroy-SemiBold',
     },
 
     // Background decorative image
     backgroundImage: {
-        width: 356,
-        height: 160,
-        marginTop: 20,
+        width: '100%',
+        height: vs(160),
+        marginTop: VSpacing.lg,
         alignSelf: 'center',
     },
 });

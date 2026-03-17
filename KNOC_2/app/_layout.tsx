@@ -1,14 +1,35 @@
 import messaging from '@react-native-firebase/messaging';
 import { useFonts } from 'expo-font';
 import * as Notifications from 'expo-notifications';
+import * as SplashScreen from 'expo-splash-screen';
 import { Stack, useRouter, useSegments } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
 import { NotificationProvider } from '../lib/NotificationProvider';
 import { ThemeProvider } from '../lib/themeContext';
 import NetInfo from '@react-native-community/netinfo';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, TextInput, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import AppSplash from './AppSplash';
+import { Typography, vs, ms, VSpacing, Spacing, FontFamily } from '../lib/typography';
+
+// ─── Prevent the native splash from auto-hiding ────────────────────────────
+// This keeps the plain white native splash visible until we explicitly call
+// SplashScreen.hideAsync() inside RootLayout. That way there's no flash
+// between the native splash disappearing and our custom AppSplash rendering.
+SplashScreen.preventAutoHideAsync().catch(() => {
+  // If called before the native module is ready, silently ignore
+});
+
+// ─── Force Gilroy as the global default font ───────────────────────────────
+// React Native's Text and TextInput both expose defaultProps which lets us
+// set a style that applies to every instance unless overridden by a closer style.
+// This must be done at module level so it takes effect before any render.
+(Text as any).defaultProps = (Text as any).defaultProps ?? {};
+(Text as any).defaultProps.style = { fontFamily: FontFamily.regular };
+
+(TextInput as any).defaultProps = (TextInput as any).defaultProps ?? {};
+(TextInput as any).defaultProps.style = { fontFamily: FontFamily.regular };
+// ────────────────────────────────────────────────────────────────────────────
 
 const OfflineBanner = () => {
   const [isConnected, setIsConnected] = useState(true);
@@ -88,6 +109,14 @@ export default function RootLayout() {
   const router = useRouter();
   const segments = useSegments();
 
+  // ─── Hide the native splash immediately ──────────────────────────────────
+  // As soon as this component mounts, we dismiss the native (white) splash.
+  // Our custom AppSplash is already rendering underneath it, so the user
+  // transitions seamlessly from white → custom splash with no double flash.
+  useEffect(() => {
+    SplashScreen.hideAsync().catch(() => {});
+  }, []);
+
   // Track whether we've already handled the cold-start notification
   const coldStartHandled = useRef(false);
   // Store cold-start knock data until the app is ready to navigate
@@ -124,13 +153,10 @@ export default function RootLayout() {
   }, []);
 
   // ─── Navigate to knock-detail once the app has settled on a real screen ───
-  // We wait until segments indicate the user is past auth (e.g. on home tab).
-  // This prevents trying to push before the navigator stack is ready.
   useEffect(() => {
     if (coldStartHandled.current) return;
     if (!pendingKnockData.current) return;
 
-    // segments example: ["(Tabs)", "home"]  — means the tab navigator is mounted
     const isOnHomeScreen =
       segments.length >= 1 &&
       (segments[0] === '(Tabs)' || segments.join('/').includes('home'));
@@ -141,7 +167,6 @@ export default function RootLayout() {
       coldStartHandled.current = true;
 
       console.log('[RootLayout] Navigating to knock-detail from cold-start');
-      // Use setTimeout to ensure navigation happens after the current render cycle
       setTimeout(() => {
         router.push({
           pathname: '/knock-detail' as any,
@@ -178,7 +203,7 @@ export default function RootLayout() {
 
 const styles = StyleSheet.create({
   offlineBannerContainer: {
-    backgroundColor: '#b52424', // deep red matching alert
+    backgroundColor: '#b52424',
     position: 'absolute',
     top: 0,
     width: '100%',
@@ -186,16 +211,15 @@ const styles = StyleSheet.create({
     elevation: 10,
   },
   offlineBanner: {
-    paddingVertical: 10,
-    paddingHorizontal: 16,
+    paddingVertical: VSpacing.sm,
+    paddingHorizontal: Spacing.md,
     justifyContent: 'center',
     alignItems: 'center',
     flexDirection: 'row',
   },
   offlineText: {
     color: '#FFFFFF',
-    fontSize: 14,
-    fontWeight: '600',
-    fontFamily: 'Gilroy-Medium',
+    ...Typography.bodyMedium,
+    fontFamily: FontFamily.medium,
   },
 });
