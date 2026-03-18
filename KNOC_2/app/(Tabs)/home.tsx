@@ -53,6 +53,7 @@ export default function HomeScreen() {
     const [linkedQrId, setLinkedQrId] = useState<string | null>(null);
     const [locationName, setLocationName] = useState<string>('Home');
     const [userName, setUserName] = useState<string>('');
+    const [hideBadge, setHideBadge] = useState(false);
     const notificationListener = useRef<EventSubscription | undefined>(undefined);
     const responseListener = useRef<EventSubscription | undefined>(undefined);
 
@@ -349,6 +350,13 @@ export default function HomeScreen() {
         return { entry, exit, total: displayLogs.length };
     }, [displayLogs]);
 
+    useEffect(() => {
+        setHideBadge(false);
+    }, [displayLogs]);
+
+    const unansweredCount = displayLogs.filter(log => !log.response).length;
+    const displayBadgeCount = hideBadge ? 0 : unansweredCount;
+
     return (
         <SafeAreaView style={styles.safeArea} edges={['top']}>
             {/* Header */}
@@ -358,12 +366,22 @@ export default function HomeScreen() {
                     style={styles.logo}
                     contentFit="contain"
                 />
-                <TouchableOpacity onPress={() => router.push('/(Tabs)/settings')} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
-                    <Image
-                        source={require('../../assets/new_knoc/ICON.svg')}
-                        style={styles.profile}
-                        contentFit="contain"
-                    />
+                <TouchableOpacity 
+                    hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                    onPress={() => setHideBadge(true)}
+                >
+                    <View>
+                        <Image
+                            source={require('../../assets/new_knoc/ICON.svg')}
+                            style={styles.profile}
+                            contentFit="contain"
+                        />
+                        {displayBadgeCount > 0 && (
+                            <View style={styles.badgeContainer}>
+                                <Text style={styles.badgeText}>{displayBadgeCount}</Text>
+                            </View>
+                        )}
+                    </View>
                 </TouchableOpacity>
             </View>
             <View style={styles.divider} />
@@ -473,7 +491,7 @@ const getStyles = (colors: any, isDark: boolean) => StyleSheet.create({
         alignItems: 'center',
         justifyContent: 'space-between',
         paddingHorizontal: Spacing.lg,
-        paddingVertical: VSpacing.md,
+        paddingVertical: VSpacing.sm,
         backgroundColor: colors.cardBg,
     },
     logo: {
@@ -483,6 +501,25 @@ const getStyles = (colors: any, isDark: boolean) => StyleSheet.create({
     profile: {
         width: s(30),
         height: s(30),
+    },
+    badgeContainer: {
+        position: 'absolute',
+        top: -4,
+        right: -4,
+        backgroundColor: '#FF3B30',
+        borderRadius: Radius.full,
+        minWidth: ms(18),
+        height: ms(18),
+        justifyContent: 'center',
+        alignItems: 'center',
+        paddingHorizontal: s(4),
+        borderWidth: 1.5,
+        borderColor: isDark ? '#000000' : '#ffffff',
+    },
+    badgeText: {
+        color: '#FFFFFF',
+        fontSize: ms(12),
+        fontFamily: 'Gilroy-Bold',
     },
     divider: {
         height: 1,
@@ -550,7 +587,7 @@ const getStyles = (colors: any, isDark: boolean) => StyleSheet.create({
 
     statValue: {
         ...Typography.stat,
-        fontSize: ms(34),
+        fontSize: ms(46),
         color: colors.primary,
     },
 

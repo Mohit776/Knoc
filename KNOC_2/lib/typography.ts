@@ -47,105 +47,105 @@ export const Typography = {
     /** Page-level titles – e.g. "Welcome, Username" */
     heading: {
         fontFamily: FontFamily.bold,
-        fontSize: ms(20),
-        lineHeight: ms(26),
+        fontSize: ms(18),
+        lineHeight: ms(22),
     } as TextStyle,
 
     /** Section titles – e.g. "Recently KNOC" */
     subheading: {
         fontFamily: FontFamily.extraBold,
-        fontSize: ms(18),
-        lineHeight: ms(24),
+        fontSize: ms(16),
+        lineHeight: ms(22),
     } as TextStyle,
 
     /** Card titles, settings rows */
     title: {
         fontFamily: FontFamily.semiBold,
-        fontSize: ms(16),
-        lineHeight: ms(22),
+        fontSize: ms(15),
+        lineHeight: ms(20),
     } as TextStyle,
 
     /** Default paragraph / body text */
     body: {
         fontFamily: FontFamily.regular,
-        fontSize: ms(14),
-        lineHeight: ms(20),
+        fontSize: ms(13),
+        lineHeight: ms(18),
     } as TextStyle,
 
     /** Body with medium weight */
     bodyMedium: {
         fontFamily: FontFamily.medium,
-        fontSize: ms(14),
-        lineHeight: ms(20),
+        fontSize: ms(13),
+        lineHeight: ms(18),
     } as TextStyle,
 
     /** Smaller supportive text */
     caption: {
         fontFamily: FontFamily.regular,
-        fontSize: ms(12),
-        lineHeight: ms(16),
+        fontSize: ms(11),
+        lineHeight: ms(14),
     } as TextStyle,
 
     /** Caption with medium weight */
     captionMedium: {
         fontFamily: FontFamily.medium,
-        fontSize: ms(12),
-        lineHeight: ms(16),
+        fontSize: ms(11),
+        lineHeight: ms(14),
     } as TextStyle,
 
     /** Small labels – e.g. stat labels */
     label: {
         fontFamily: FontFamily.semiBold,
-        fontSize: ms(14),
-        lineHeight: ms(18),
+        fontSize: ms(13),
+        lineHeight: ms(16),
     } as TextStyle,
 
     /** Big stat numbers */
     stat: {
         fontFamily: FontFamily.heavy,
-        fontSize: ms(40),
+        fontSize: ms(32),
     } as TextStyle,
 
     /** Button text */
     button: {
         fontFamily: FontFamily.medium,
-        fontSize: ms(16),
+        fontSize: ms(15),
     } as TextStyle,
 
     /** Button text – semi-bold variant */
     buttonSemiBold: {
         fontFamily: FontFamily.semiBold,
-        fontSize: ms(16),
+        fontSize: ms(15),
     } as TextStyle,
 
     /** Small button / link text */
     buttonSmall: {
         fontFamily: FontFamily.medium,
-        fontSize: ms(14),
+        fontSize: ms(13),
     } as TextStyle,
 
     /** Header title text */
     headerTitle: {
         fontFamily: FontFamily.semiBold,
-        fontSize: ms(18),
+        fontSize: ms(16),
     } as TextStyle,
 
     /** OTP / code input digits */
     otpDigit: {
         fontFamily: FontFamily.medium,
-        fontSize: ms(22),
+        fontSize: ms(20),
     } as TextStyle,
 
     /** Large card title text */
     cardTitle: {
         fontFamily: FontFamily.bold,
-        fontSize: ms(20),
+        fontSize: ms(18),
     } as TextStyle,
 
     /** Card subtitle text */
     cardSubtitle: {
         fontFamily: FontFamily.regular,
-        fontSize: ms(14),
+        fontSize: ms(13),
     } as TextStyle,
 } as const;
 
@@ -158,12 +158,12 @@ export const Typography = {
 export const Spacing = {
     xxs: s(4),
     xs: s(8),
-    sm: s(12),
-    md: s(16),
-    lg: s(20),
-    xl: s(24),
-    xxl: s(32),
-    xxxl: s(40),
+    sm: s(10),
+    md: s(14),
+    lg: s(18),
+    xl: s(22),
+    xxl: s(28),
+    xxxl: s(36),
 } as const;
 
 /**
@@ -172,32 +172,32 @@ export const Spacing = {
 export const VSpacing = {
     xxs: vs(4),
     xs: vs(8),
-    sm: vs(12),
-    md: vs(16),
-    lg: vs(20),
-    xl: vs(24),
-    xxl: vs(32),
-    xxxl: vs(40),
+    sm: vs(10),
+    md: vs(14),
+    lg: vs(18),
+    xl: vs(22),
+    xxl: vs(28),
+    xxxl: vs(36),
 } as const;
 
 /* ────────────────────── Common Dimensions ───────────────────────── */
 
 export const Radius = {
-    sm: ms(6),
-    md: ms(8),
-    lg: ms(12),
-    xl: ms(16),
-    xxl: ms(20),
+    sm: ms(4),
+    md: ms(6),
+    lg: ms(10),
+    xl: ms(14),
+    xxl: ms(16),
     full: ms(9999),
 } as const;
 
 /** Standard tappable element height */
-export const ButtonHeight = vs(52);
+export const ButtonHeight = vs(46);
 
 /** Standard icon sizes */
 export const IconSize = {
-    sm: ms(18),
-    md: ms(22),
-    lg: ms(24),
-    xl: ms(32),
+    sm: ms(16),
+    md: ms(20),
+    lg: ms(22),
+    xl: ms(28),
 } as const;
