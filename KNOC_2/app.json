@@ -1,11 +1,11 @@
 {
   "expo": {
-    "name": "TrueKNOC",
-    "slug": "TrueKNOC",
+    "name": "Trueknoc",
+    "slug": "Trueknoc",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/new_knoc/base.png",
-    "scheme": "trueknoc",
+    "scheme": "truknoc",
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
     "splash": {
@@ -56,8 +56,8 @@
       [
         "expo-notifications",
         {
-          "icon": "./assets/new_knoc/Notification.png",
-          "color": "#341dab"
+          "icon": "./assets/new_knoc/noti.png",
+          "color": "#431BB8"
         }
       ],
       "@react-native-firebase/app",
