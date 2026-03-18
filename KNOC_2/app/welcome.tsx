@@ -148,8 +148,8 @@ export default function KnocWelcomeScreen() {
                     ]}
                 >
                     <Image
-                        source={require('../assets/logo/Group 90.svg')}
-                        style={{ width: width * 0.33, height: vs(65) }}
+                        source={require('../assets/logo/qrscan.svg')}
+                        style={{ width: width * 0.25, height: vs(55) }}
                         contentFit="contain"
                     />
                     <Text style={styles.cardTitle}>Onboard Your QR Code</Text>

@@ -4,6 +4,7 @@ import Image from "next/image";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 
+
 // ─── SVG ASSETS ────────────────────────────────────────────────────────────
 
 const StarIcon = ({ filled = true }: { filled?: boolean }) => (
@@ -83,7 +84,7 @@ export default function TrueKnocLanding() {
               <div className="inline-flex items-center gap-1.5 bg-[#f3edff] rounded-full px-1.5 py-1 mb-6">
                 <Image src="/new/Lable.svg" alt="India's #1" width={149} height={23} className="w-full h-auto" />
               </div>
-              <h1 className="text-4xl sm:text-4xl lg:text-4xl font-extrabold text-[#1f1e24] leading-tight mb-5 mx-auto lg:mx-0 max-w-lg" style={{ letterSpacing: "-0.03em" }}>
+              <h1 className="text-4xl sm:text-4xl lg:text-4xl font-extrabold text-[#1f1e24] leading-tight mb-2 mx-auto lg:mx-0 max-w-lg" style={{ letterSpacing: "-0.03em" }}>
                 Smart Entry. Safer Homes.
               </h1>
               <p className="text-gray-600 text-[15px] sm:text-base mb-10 leading-relaxed max-w-sm mx-auto lg:mx-0">
@@ -106,13 +107,13 @@ export default function TrueKnocLanding() {
                 <div className="flex flex-col items-center gap-8 w-full lg:block lg:relative lg:w-[620px] lg:h-[520px]">
                   
                   {/* India's #1 badge */}
-                  <div className="absolute -top-16 lg:-top-10 right-4 lg:right-8 z-30 w-[140px] lg:w-[170px]">
+                  <div className="absolute -top-16 lg:-top-15  right-6 lg:-right-20 z-30 w-[140px] lg:w-[170px]">
                     <Image src="/new/Group 1171275858.svg" alt="India's #1" width={191} height={49} className="w-full h-auto" />
                   </div>
 
                   {/* Woman with phone (Card 1) */}
                   <div className="w-full max-w-[380px] lg:max-w-none lg:absolute lg:top-24 lg:-left-2 lg:translate-x-[-120px] lg:w-[360px] xl:w-[400px] z-20 transition-all">
-                    <Image src="/new/Background+Shadow (1).svg" alt="Visitors" width={417} height={486} className="w-full h-auto object-contain drop-shadow-2xl" />
+                    <Image src="/new/Background+Shadow1.svg" alt="Visitors" width={417} height={486} className="w-full h-auto object-contain drop-shadow-2xl" />
                   </div>
 
                   {/* Delivery man card (Card 2) */}
@@ -132,8 +133,8 @@ export default function TrueKnocLanding() {
           <div className="text-center mb-10">
             <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">Explore FREE helpful Our ecosystem app</h2>
             <p className="text-gray-500 text-sm">We're the platform that pulls every moving part of your community into one place.</p>
-            <button className="mt-5 inline-flex items-center gap-2 bg-purple-700 text-white text-sm font-semibold px-5 py-2.5 rounded-xl hover:bg-purple-800 transition-colors">
-              <AppStoreIcon />
+            <button className="mt-5 inline-flex items-center gap-2 bg-black text-white text-sm font-semibold px-5 py-2.5 rounded-xl hover:bg-[#431BB8] transition-colors">
+            
               Get the app
             </button>
           </div>
@@ -279,13 +280,20 @@ export default function TrueKnocLanding() {
               <p className="text-gray-500 text-sm mb-7 leading-relaxed">
                 Delivery partners and visitors scan your Trueknoc QR code and send a entry request.
               </p>
-               <Image src="/new/Link.svg" alt="India's #1" width={288} height={58} />
+               {/* <Image src="/new/Link.svg" alt="India's #1" width={288} height={58} /> */}
+              <button
+                type="button"
+                className="inline-flex items-center gap-3 rounded-lg bg-gradient-to-r from-[#4d2ad0] to-[#3b1bb7] px-3 py-2 text-white  cursor-pointer "
+              >
+               <Image src="/new/Logo splash.svg" alt="India's #1" width={30} height={30} />
+                <span className="text-base font-semibold leading-none">Try Trueknoc for home</span>
+              </button>
              
             </div>
 
             {/* Right – QR card */}
             <div className="flex justify-center lg:justify-end">
-             <Image src="/new/image 48.svg" alt="India's #1" width={618} height={288} />
+             <Image src="/new/image%2048.svg" alt="India's #1" width={618} height={288} />
             </div>
           </div>
         </div>
@@ -336,23 +344,23 @@ export default function TrueKnocLanding() {
 
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-5">
             {[
-              { icon: <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2"><rect x="5" y="2" width="14" height="20" rx="2" ry="2" /><line x1="12" y1="18" x2="12.01" y2="18" /></svg>, val: "1.5 million+", label: "Entry", sub: "Secure visitor entries processed through Trueknoc" },
+              { icon: <Image src="/new/Group%201171275874.svg" alt="Entry Icon" width={28} height={28} />, val: "1.5 million+", label: "Entry", sub: "Secure visitor entries processed through Trueknoc" },
               { icon: <HomeIcon />, val: "150K+", label: "Active Homes", sub: "Homes using for smart doorstep access." },
-              { icon: <DeliveryReqIcon />, val: "450K+", label: "Delivery Requests", sub: "Deliveries managed through QR-based smart entry" },
-              { icon: <VisitorIcon />, val: "900K+", label: "Visitor Requests", sub: "Visitors verified before entering homes." },
-              { icon: <CommunityIcon />, val: "1,200+", label: "Communities", sub: "Apartments and societies adopting Trueknoc." },
-              { icon: <ClockIcon />, val: "Real-Time", label: "Notifications", sub: "99% Notification Reliability" },
+              { icon: <Image src="/new/Group%201171275874.svg" alt="Delivery Icon" width={28} height={28} />, val: "450K+", label: "Delivery Requests", sub: "Deliveries managed through QR-based smart entry" },
+              { icon: <Image src="/new/Group%201171275873.svg" alt="Visitor Icon" width={28} height={28} />, val: "900K+", label: "Visitor Requests", sub: "Visitors verified before entering homes." },
+              { icon: <Image src="/new/Group%201171275873.svg" alt="Visitor Icon" width={28} height={28} />, val: "1,200+", label: "Communities", sub: "Apartments and societies adopting Trueknoc." },
+              { icon: <Image src="/new/icon.svg" alt="Notifications Icon" width={28} height={28} />, val: "Real-Time", label: "Notifications", sub: "99% Notification Reliability" },
             ].map((stat, i) => (
-              <div key={i} className="backdrop-blur-sm rounded-2xl p-5 hover:bg-white/20 transition-colors">
+              <div key={i} className="backdrop-blur-sm rounded-2xl p-5 ">
                 <div className="flex justify-center mb-2">{stat.icon}</div>
                 <p className="text-white font-extrabold text-2xl">{stat.val}</p>
-                <p className="text-purple-200 font-semibold text-sm">{stat.label}</p>
-                <p className="text-purple-300 text-xs mt-1 leading-tight">{stat.sub}</p>
+                <p className="text-white font-semibold text-sm">{stat.label}</p>
+                <p className="text-white text-xs mt-1 leading-tight">{stat.sub}</p>
               </div>
             ))}
           </div>
 
-          <button className="mt-10 bg-white text-purple-700 font-bold text-sm px-7 py-3 rounded-xl hover:bg-purple-50 transition-colors shadow-lg">
+          <button className="mt-10 bg-white text-[#431BB8] font-bold text-sm px-7 py-3 rounded-xl hover:bg-purple-50 transition-colors shadow-lg">
             Download Trueknoc
           </button>
         </div>
@@ -373,7 +381,7 @@ export default function TrueKnocLanding() {
 
             {/* Right */}
            
-             <Image src="/new/Background+Shadow (2).svg" alt="Download QR" width={800} height={400} />
+             <Image src="/new/Background+Shadow2.svg" alt="Download QR" width={800} height={400} />
             </div>
         
         </div>

@@ -55,7 +55,7 @@ export default function Footer() {
             </p>
             <div className="flex gap-3">
               {[FacebookIcon, TwitterIcon, InstagramIcon, YoutubeIcon, LinkedInIcon].map((Icon, i) => (
-                <button key={i} className="w-8 h-8 rounded-full bg-gray-800 hover:bg-purple-700 flex items-center justify-center text-gray-400 hover:text-white transition-all">
+                <button key={i} className="w-8 h-8 rounded-full bg-white hover:bg-purple-700 flex items-center justify-center text-[#431BB8] transition-all">
                   <Icon />
                 </button>
               ))}
