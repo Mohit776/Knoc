@@ -119,7 +119,7 @@ export default function OnboardQRScreen() {
             await triggerSync();
 
             // 4. Generate QR Code PDF
-            const qrUrl = `https://knoc.vercel.app/qr/${id}`;
+            const qrUrl = `https://trueknoc.com/qr/${id}`;
             const encodedQrUrl = encodeURIComponent(qrUrl);
             const qrImageUrl = `https://api.qrserver.com/v1/create-qr-code/?size=280x280&data=${encodedQrUrl}&format=png&margin=0`;
 

@@ -60,7 +60,7 @@ export default function KnocWelcomeScreen() {
         setScanned(true);
         setScannerVisible(false);
 
-        // Extract QR ID from URL like https://knoc.vercel.app/qr/KNOD37C892AE8
+        // Extract QR ID from URL like https://trueknoc.com/qr/KNOD37C892AE8
         let qrId = data;
         try {
             const url = new URL(data);

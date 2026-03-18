@@ -18,7 +18,7 @@ export async function POST(req: NextRequest) {
         const count = Math.min(Math.max(Number(body.count) || 1, 1), 50);
 
         // Use the deployed domain or fallback
-        const baseUrl = 'https://knoc.vercel.app';
+        const baseUrl = 'https://trueknoc.com';
 
         const results: {
             qr_id: string;

@@ -185,7 +185,7 @@ export default function SettingsScreen() {
                             ]);
 
                             Alert.alert(
-                                'Account Deleted', 
+                                'Account Deleted',
                                 'Your account and data have been successfully deleted.',
                                 [{ text: 'OK', onPress: () => router.replace('/login') }]
                             );
@@ -326,7 +326,7 @@ export default function SettingsScreen() {
                         {/* Others Information Section */}
                         <Text style={styles.sectionLabel}>Others information</Text>
                         <View style={styles.cardGroup}>
-                           
+
                             <TouchableOpacity style={[styles.cardRow, styles.cardRowBorder]} onPress={() => router.push('/aboutus' as any)} activeOpacity={0.7}>
                                 <View style={styles.cardRowLeft}>
                                     <View style={styles.iconContainer}>
@@ -336,10 +336,10 @@ export default function SettingsScreen() {
                                 </View>
                                 <Ionicons name="chevron-forward" size={IconSize.sm} color="#C7C7CC" />
                             </TouchableOpacity>
-                            <TouchableOpacity 
-                                style={[styles.cardRow, styles.cardRowBorder]} 
+                            <TouchableOpacity
+                                style={[styles.cardRow, styles.cardRowBorder]}
                                 activeOpacity={0.7}
-                                onPress={() => Linking.openURL('https://knoc.vercel.app/privacy/')}
+                                onPress={() => Linking.openURL('https://trueknoc.com/privacy/')}
                             >
                                 <View style={styles.cardRowLeft}>
                                     <View style={styles.iconContainer}>
@@ -349,10 +349,10 @@ export default function SettingsScreen() {
                                 </View>
                                 <Ionicons name="chevron-forward" size={IconSize.sm} color="#C7C7CC" />
                             </TouchableOpacity>
-                            <TouchableOpacity 
-                                style={[styles.cardRow, styles.cardRowBorder]} 
+                            <TouchableOpacity
+                                style={[styles.cardRow, styles.cardRowBorder]}
                                 activeOpacity={0.7}
-                                onPress={() => Linking.openURL('https://knoc.vercel.app/term/')}
+                                onPress={() => Linking.openURL('https://trueknoc.com/term/')}
                             >
                                 <View style={styles.cardRowLeft}>
                                     <View style={styles.iconContainer}>
@@ -394,7 +394,7 @@ export default function SettingsScreen() {
 
                         {/* Logo and App Version */}
                         <View style={styles.footerContainer}>
-                          <Image source={require('../../assets/new_knoc/withimg.svg')} style={styles.logo} contentFit="contain" />
+                            <Image source={require('../../assets/new_knoc/withimg.svg')} style={styles.logo} contentFit="contain" />
                             <Text style={styles.versionLabel}>{appVersion}</Text>
                         </View>
                     </>
@@ -521,7 +521,7 @@ const getStyles = (colors: any, isDark: boolean) => StyleSheet.create({
         letterSpacing: -0.5,
     },
     logoTextBlue: {
-        color: '#3B5998', 
+        color: '#3B5998',
     },
     logoTextPurple: {
         color: '#602CD9',
