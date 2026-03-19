@@ -12,7 +12,7 @@
       "backgroundColor": "#FFFFFF",
       "resizeMode": "contain"
     },
-    "ios": {  
+    "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.knoc.app",
       "googleServicesFile": "./GoogleService-Info.plist",
@@ -27,6 +27,10 @@
       }
     },
     "android": {
+      "compileSdkVersion": 35,
+      "targetSdkVersion": 35,
+      "minSdkVersion": 24,
+      "versionCode": 1,
       "googleServicesFile": "./google-services.json",
       "adaptiveIcon": {
         "backgroundColor": "#FFFFFF",
@@ -71,9 +75,8 @@
     "extra": {
       "router": {},
       "eas": {
-        "projectId": "4c01ad95-1a51-49e9-92d2-47435b2fb7a2"
+        "projectId": "9d84c491-4005-46d3-a282-39bd30c53485"
       }
-    },
-    "owner": "mohit551"
+    }
   }
 }
