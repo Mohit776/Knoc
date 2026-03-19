@@ -99,16 +99,22 @@ export default function Footer() {
           </div>
         </div>
 
-        <div className="border-t border-gray-800 pt-5">
+        <div className="border-t border-b border-white/10 pt-5 pb-5">
           <p className="text-white text-[11px] text-center mb-1">
             © 2026 Trueknoc · Rewato Marketplace Private Limited. All rights reserved.
           </p>
-          <p className="text-white text-[10px] text-center mb-2">
+          <p className="text-white text-[10px] text-center mb-2 opacity-60">
             CIN: U62099DL2025PTC459490
           </p>
-          <p className="text-white text-[10px] text-center">
+          <p className="text-white text-[10px] text-center opacity-60">
             A1816, 18th Floor, Tower A, Spectrum Mall, Sector 75 Noida, Uttar Pradesh 201301, India
           </p>
+        </div>
+
+        <div className="flex flex-row items-center justify-center mt-4 gap-3 text-[10px] text-white/50 border-t border-white/5 pt-4">
+          <span>Developed by <span className="text-white font-medium">Mohit Aggarwal</span></span>
+          <span className="opacity-50">|</span>
+          <a href="mailto:mohitaggarwal551@gmail.com" className="hover:text-white transition-colors">mohitaggarwal551@gmail.com</a>
         </div>
       </div>
     </footer>

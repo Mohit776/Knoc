@@ -145,7 +145,7 @@ export const Typography = {
     /** Card subtitle text */
     cardSubtitle: {
         fontFamily: FontFamily.regular,
-        fontSize: ms(13),
+        fontSize: ms(11),
     } as TextStyle,
 } as const;
 
