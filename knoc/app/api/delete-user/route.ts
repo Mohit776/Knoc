@@ -14,6 +14,7 @@ import * as admin from 'firebase-admin';
 export async function DELETE(req: NextRequest) {
     try {
         let phone_number: string | null = null;
+        let delete_token: string | null = null;
 
         // Try getting from query params
         const { searchParams } = new URL(req.url);
@@ -24,6 +25,7 @@ export async function DELETE(req: NextRequest) {
             try {
                 const body = await req.json();
                 phone_number = body.phone_number;
+                delete_token = body.delete_token;
             } catch (e) {
                 // Ignore JSON parsing errors if body is empty
             }
@@ -35,6 +37,53 @@ export async function DELETE(req: NextRequest) {
                 { status: 400 }
             );
         }
+
+        if (!delete_token) {
+            return NextResponse.json(
+                { error: 'delete_token is required. Please verify OTP first.' },
+                { status: 400 }
+            );
+        }
+
+        // Verify the delete token
+        const tokenSnapshot = await db
+            .collection('otp_verifications')
+            .where('delete_token', '==', delete_token)
+            .where('verified', '==', true)
+            .where('used', '==', false)
+            .limit(1)
+            .get();
+
+        if (tokenSnapshot.empty) {
+            return NextResponse.json(
+                { error: 'Invalid or expired delete token. Please verify OTP again.' },
+                { status: 403 }
+            );
+        }
+
+        const tokenDoc = tokenSnapshot.docs[0];
+        const tokenData = tokenDoc.data();
+
+        // Check token expiry (same as OTP expiry — 5 minutes from OTP creation)
+        const expiresAt = tokenData.expires_at.toDate ? tokenData.expires_at.toDate() : new Date(tokenData.expires_at);
+        if (new Date() > expiresAt) {
+            return NextResponse.json(
+                { error: 'Delete token has expired. Please verify OTP again.' },
+                { status: 403 }
+            );
+        }
+
+        // Check that the phone number matches the OTP record
+        const formattedPhone = phone_number.startsWith('+') ? phone_number : `+91${phone_number.replace(/^91/, '')}`;
+        if (tokenData.phone_number !== formattedPhone && tokenData.phone_number !== phone_number) {
+            return NextResponse.json(
+                { error: 'Delete token does not match this phone number.' },
+                { status: 403 }
+            );
+        }
+
+        // Mark the token as used
+        await tokenDoc.ref.update({ used: true });
 
         // Format phone number to ensure it starts with +91 if missing
         if (!phone_number.startsWith('+')) {

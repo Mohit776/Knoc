@@ -28,9 +28,9 @@ export default function Navbar() {
           </div>
 
           <div className="hidden md:block">
-            <button className="rounded-lg bg-gray-900 px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-gray-700">
+            <Link href="https://wa.me/919098731086" target="_blank" rel="noopener noreferrer" className="rounded-lg bg-gray-900 px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-gray-700">
               Shop Now
-            </button>
+            </Link>
           </div>
 
           {/* Mobile hamburger */}
@@ -64,7 +64,7 @@ export default function Navbar() {
                 {item}
               </button>
             ))}
-            <button className="mt-2 w-full rounded-lg bg-gray-900 px-5 py-2.5 text-sm font-semibold text-white">Shop Now</button>
+            <Link href="https://wa.me/919098731086" target="_blank" rel="noopener noreferrer" className="mt-2 block w-full text-center rounded-lg bg-gray-900 px-5 py-2.5 text-sm font-semibold text-white">Shop Now</Link>
           </div>
         )}
       </div>

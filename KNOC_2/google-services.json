@@ -12,7 +12,16 @@
           "package_name": "com.knoc.app"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "981884824732-i0vge46u5kboheu959kt2imeh6atkmia.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.knoc.app",
+            "certificate_hash": "c19a784c61a965212fb1d2ce45c50a05867b2d34"
+          }
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyD5l6TUHLPOq-qzsE3uOwBaFmcUVw4dht4"

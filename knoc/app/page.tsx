@@ -87,7 +87,7 @@ export default function TrueKnocLanding() {
               <h1 className="text-4xl sm:text-4xl lg:text-4xl font-extrabold text-[#1f1e24] leading-tight mb-2 mx-auto lg:mx-0 max-w-lg" style={{ letterSpacing: "-0.03em" }}>
                 Smart Entry. Safer Homes.
               </h1>
-              <p className="text-gray-600 text-[15px] sm:text-base mb-10 leading-relaxed max-w-sm mx-auto lg:mx-0">
+              <p className="text-gray-600 text-[15px] sm:text-base mb-5 leading-relaxed max-w-sm mx-auto lg:mx-0">
                 Tech solutions to bring home convenience &amp; security, and keep you connected to the community.
               </p>
               <button className="inline-flex items-center gap-2.5 bg-[#4221b5] hover:bg-[#341890] text-white font-medium px-6 py-3.5 rounded-xl transition-all shadow-md mx-auto lg:mx-0">
@@ -107,18 +107,18 @@ export default function TrueKnocLanding() {
                 <div className="flex flex-col items-center gap-8 w-full lg:block lg:relative lg:w-[620px] lg:h-[520px]">
                   
                   {/* India's #1 badge */}
-                  <div className="absolute -top-16 lg:-top-15  right-6 lg:-right-20 z-30 w-[140px] lg:w-[170px]">
+                  <div className="absolute -top-12 lg:-top-15  right-25 lg:-right-20 z-30 w-[175px] lg:w-[170px]">
                     <Image src="/new/Group 1171275858.svg" alt="India's #1" width={191} height={49} className="w-full h-auto" />
                   </div>
 
                   {/* Woman with phone (Card 1) */}
                   <div className="w-full max-w-[380px] lg:max-w-none lg:absolute lg:top-24 lg:-left-2 lg:translate-x-[-120px] lg:w-[360px] xl:w-[400px] z-20 transition-all">
-                    <Image src="/new/Background+Shadow1.svg" alt="Visitors" width={417} height={486} className="w-full h-auto object-contain drop-shadow-2xl" />
+                    <Image src="/new/Background+Shadow1.svg" alt="Visitors" width={417} height={486} className="w-full h-auto object-contain" />
                   </div>
 
                   {/* Delivery man card (Card 2) */}
                   <div className="w-full max-w-[380px] lg:max-w-none lg:absolute lg:top-2 lg:right-0 lg:w-[360px] lg:translate-x-[100px] xl:w-[400px] z-10 transition-all">
-                    <Image src="/new/Background+Shadow.svg" alt="Delivery" width={417} height={486} className="w-full h-auto object-contain drop-shadow-xl" />
+                    <Image src="/new/Background+Shadow.svg" alt="Delivery" width={417} height={486} className="w-full h-auto object-contain " />
                   </div>
                 </div>
               </div>
@@ -128,7 +128,7 @@ export default function TrueKnocLanding() {
       </section>
 
       {/* ── ECOSYSTEM APP ──────────────────────────────────────────── */}
-      <section className="bg-gray-50 py-16 mt-10">
+      <section className="bg-gray-50 py-8">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-10">
             <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">Explore FREE helpful Our ecosystem app</h2>
@@ -262,13 +262,13 @@ export default function TrueKnocLanding() {
       {/* ── THE PROBLEM ────────────────────────────────────────────── */}
       <section className="bg-white py-14">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">THE PROBLEM (Why Trueknoc Exists)</h2>
+          <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">THE PROBLEM<br/> (Why Trueknoc Exists)</h2>
           <p className="text-gray-400 text-sm">Make traditional systems feel outdated.</p>
         </div>
       </section>
 
       {/* ── SMART ENTRY BAND ───────────────────────────────────────── */}
-      <section className="bg-gray-50 py-14">
+      <section className="bg-gray-50 py-3">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 items-center">
             {/* Left */}
@@ -283,7 +283,7 @@ export default function TrueKnocLanding() {
                {/* <Image src="/new/Link.svg" alt="India's #1" width={288} height={58} /> */}
               <button
                 type="button"
-                className="inline-flex items-center gap-3 rounded-lg bg-gradient-to-r from-[#4d2ad0] to-[#3b1bb7] px-3 py-2 text-white  cursor-pointer "
+                className="inline-flex items-center gap-3 rounded-lg bg-gradient-to-r from-[#4d2ad0] ml-12 lg:ml-0 to-[#3b1bb7] px-3 py-2 text-white  cursor-pointer "
               >
                <Image src="/new/Logo splash.svg" alt="India's #1" width={30} height={30} />
                 <span className="text-base font-semibold leading-none">Try Trueknoc for home</span>
@@ -311,11 +311,10 @@ export default function TrueKnocLanding() {
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mt-8">
-            {[1, 2].map((_, i) => (
-              <div key={i} className="bg-gray-50 rounded-2xl p-6 border border-gray-100 hover:shadow-md transition-shadow">
+              <div  className="bg-gray-50 rounded-2xl p-6 border border-gray-100 hover:shadow-md transition-shadow">
                 <p className="text-sm font-semibold text-gray-900 mb-2">Promises made. Promises kept.</p>
                 <div className="flex gap-0.5 mb-3">
-                  {[...Array(4)].map((__, j) => <StarIcon key={j} />)}
+              
                 </div>
                 <p className="text-sm text-gray-500 leading-relaxed mb-4">
                   "I recently switched to ADIO Insurance and I'm thoroughly impressed! The app is incredibly user-friendly, making it easy to purchase and manage policies. The claims process is also seamless and hassle free."
@@ -328,7 +327,23 @@ export default function TrueKnocLanding() {
                   </div>
                 </div>
               </div>
-            ))}
+
+                <div className="bg-gray-50 rounded-2xl p-6 border border-gray-100 hover:shadow-md transition-shadow">
+                <p className="text-sm font-semibold text-gray-900 mb-2">Promises made. Promises kept.</p>
+                <div className="flex gap-0.5 mb-3">
+               
+                </div>
+                <p className="text-sm text-gray-500 leading-relaxed mb-4">
+                 TrueKnoc has completely changed how we handle visitors at home. Earlier, we had to guess who was at the door, especially when my parents were alone. Now we can verify before opening, which gives us real peace of mind. Simple setup and very useful product
+                </p>
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-full bg-gradient-to-br from-purple-400 to-purple-600 flex items-center justify-center text-white font-bold text-sm">S</div>
+                  <div>
+                    <p className="text-sm font-semibold text-gray-900">Ananya Sharma</p>
+                    <p className="text-xs text-gray-400">Trueknoc customer</p>
+                  </div>
+                </div>
+              </div>
           </div>
         </div>
       </section>
