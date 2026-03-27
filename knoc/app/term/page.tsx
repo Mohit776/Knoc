@@ -3,10 +3,11 @@ import Navbar from "../../components/Navbar";
 import Footer from "../../components/Footer";
 
 export default function TermsPage() {
-  return (
-    <div className="min-h-screen flex flex-col bg-white text-gray-800 font-sans">
-      {/* Navbar */}
-      <Navbar />
+    const effectiveDate = "February 20, 2026";
+    return (
+        <div className="min-h-screen flex flex-col bg-white text-gray-800 font-sans">
+            {/* Navbar */}
+            <Navbar />
 
       {/* Content Section */}
       <main className="flex-grow py-12">
@@ -17,6 +18,7 @@ export default function TermsPage() {
           
           <div className="space-y-8 text-sm leading-relaxed text-gray-700">
             <section className="space-y-4">
+              <p className="mb-4">Effective Date: {effectiveDate}</p>
               <p>
                 You understand that your use of our website,{" "}
                 <a href="https://trueknoc.com/" className="text-purple-600 hover:underline">

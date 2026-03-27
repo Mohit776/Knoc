@@ -4,7 +4,7 @@ import Navbar from "../../components/Navbar";
 import Footer from "../../components/Footer";
 
 export default function DataSafetyPage() {
-    const effectiveDate = "March 27, 2026";
+    const effectiveDate = "February 20, 2026";
 
     return (
         <div className="min-h-screen bg-white text-black font-sans selection:bg-purple-100 flex flex-col">
