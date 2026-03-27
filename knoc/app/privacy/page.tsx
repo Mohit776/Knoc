@@ -1,9 +1,9 @@
-import React from 'react';
-import Link from 'next/link';
+
 import Navbar from '../../components/Navbar';
 import Footer from '../../components/Footer';
 
 export default function PrivacyPolicy() {
+    const effectiveDate = "March 27, 2026";
     return (
         <div className="min-h-screen bg-white text-black font-sans selection:bg-purple-100 flex flex-col">
             <Navbar />
@@ -15,6 +15,7 @@ export default function PrivacyPolicy() {
                 <div className="space-y-10 text-[14.5px] leading-relaxed text-[#2c2c2c]">
                     {/* Welcome Section */}
                     <section>
+                           <p className="mb-4">Effective Date: {effectiveDate}</p>
                         <h2 className="text-[17px] font-bold text-black mb-4">Welcome to Trueknoc</h2>
                         <p className="mb-4">
                             TrueKnoc is a smart doorbell solution that uses QR code technology to provide secure, electricity-free visitor

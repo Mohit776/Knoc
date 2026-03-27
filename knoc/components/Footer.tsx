@@ -88,6 +88,7 @@ export default function Footer() {
             <ul className="space-y-2">
               {[
                 { name: "Privacy Policy", href: "/privacy" },
+                { name: "Data Safety", href: "/datasafety" },
                 { name: "Terms and conditions", href: "/term" },
                 { name: "Cookie Policy", href: "#" },
                 { name: "Refund Policy", href: "#" },
