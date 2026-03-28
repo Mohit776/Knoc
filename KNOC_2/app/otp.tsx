@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import {
     View,
     Text,
@@ -14,9 +14,9 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { auth } from '../lib/firebase';
-import { signInWithPhoneNumber } from '@react-native-firebase/auth';
+import { signInWithPhoneNumber, onAuthStateChanged } from '@react-native-firebase/auth';
 import firestore from '@react-native-firebase/firestore';
-import { firebaseConfirmation } from './login';
+import { getConfirmation, setConfirmation } from '../lib/authStore';
 import { useNotification } from '../lib/NotificationProvider';
 import { Typography, s, vs, ms, Spacing, VSpacing, Radius, ButtonHeight, IconSize, FontFamily } from '../lib/typography';
 
@@ -29,6 +29,48 @@ const colors = {
     headerBorder: '#F2F2F7',
 };
 
+// ─── Error handler: only alerts for genuine auth failures ───
+// In production, the race condition is more aggressive due to Hermes/JSC
+// optimizations and faster native bridge calls. This function ensures
+// we NEVER show a false alert.
+function handleOtpError(
+    error: any,
+    mountedRef: React.MutableRefObject<boolean>,
+    isSuccess: boolean,
+) {
+    console.error('Firebase OTP verify error:', error);
+
+    // Gate 1: confirm() actually succeeded — this error is a race condition artifact.
+    // This is the most reliable check because isSuccess is a synchronous local
+    // variable, unlike auth.currentUser which has timing issues in production.
+    if (isSuccess) {
+        console.log('Ignoring error — isSuccess flag is true (race condition)');
+        return;
+    }
+
+    // Gate 2: Component already unmounted (navigated away by onAuthStateChanged)
+    if (!mountedRef.current) {
+        console.log('Ignoring error — component unmounted');
+        return;
+    }
+
+    // Gate 3: User is already signed in (backup check)
+    if (auth.currentUser) {
+        console.log('Ignoring error — auth.currentUser already exists');
+        return;
+    }
+
+    // Gate 4: Only show alerts for known, actionable Firebase error codes
+    const code = error?.code;
+    if (code === 'auth/invalid-verification-code') {
+        alert('Invalid OTP. Please check and try again.');
+    } else if (code === 'auth/code-expired' || code === 'auth/session-expired') {
+        alert('OTP has expired. Please tap "Resend OTP" to get a new one.');
+    }
+    // All other errors (including race condition artifacts) are silently ignored.
+    // Do NOT show a generic fallback alert — it causes the false "expired" UX.
+}
+
 export default function OTPScreen() {
     const router = useRouter();
     const { triggerSync } = useNotification();
@@ -37,12 +79,69 @@ export default function OTPScreen() {
     const [loading, setLoading] = useState(false);
     const inputs = useRef<(TextInput | null)[]>([]);
 
+    // ── Refs that survive re-renders and prevent race conditions ──
+    const confirmationRef = useRef<any>(null);       // Firebase confirmation object
+    const mountedRef = useRef(true);                  // Is the component still mounted?
+    const isVerifyingRef = useRef(false);             // Prevent duplicate verify calls
+
+    useEffect(() => {
+        confirmationRef.current = getConfirmation();
+        mountedRef.current = true;
+
+        // ── Auth state listener: handles ALL post-login navigation ──
+        // confirm() signs user in → onAuthStateChanged fires → we navigate here.
+        // The handleVerify function does NOT navigate manually.
+        const unsubscribe = onAuthStateChanged(auth, async (user) => {
+            if (!user || !mountedRef.current) return;
+
+            try {
+                const rawPhone = phone?.replace('+91', '').trim() || '';
+                await AsyncStorage.setItem('guest_phone', rawPhone);
+
+                const fullPhoneFormatted = `+91${rawPhone}`;
+                const snapshot = await firestore()
+                    .collection('qr_codes')
+                    .where('phone_number', '==', fullPhoneFormatted)
+                    .limit(1)
+                    .get();
+
+                if (!mountedRef.current) return;
+
+                if (!snapshot.empty) {
+                    const existingDoc = snapshot.docs[0];
+                    const existingData = existingDoc.data();
+                    const docId = existingDoc.id;
+
+                    await AsyncStorage.multiSet([
+                        ['has_onboarded', 'true'],
+                        ['user_name', existingData.name || ''],
+                        ['linked_qr_id', docId]
+                    ]);
+
+                    await triggerSync();
+                    if (mountedRef.current) router.replace('/(Tabs)/home');
+                } else {
+                    if (mountedRef.current) router.replace('/welcome');
+                }
+            } catch (firestoreError) {
+                console.error('Firestore post-auth error:', firestoreError);
+                if (mountedRef.current) router.replace('/welcome');
+            }
+        });
+
+        return () => {
+            mountedRef.current = false;
+            unsubscribe();
+        };
+    }, []);
+
+    // ── OTP input handlers ──
+
     const handleOtpChange = (value: string, index: number) => {
         const newOtp = [...otp];
         newOtp[index] = value;
         setOtp(newOtp);
 
-        // Auto-advance
         if (value && index < 5) {
             inputs.current[index + 1]?.focus();
         }
@@ -50,10 +149,11 @@ export default function OTPScreen() {
 
     const handleKeyPress = (e: any, index: number) => {
         if (e.nativeEvent.key === 'Backspace' && !otp[index] && index > 0) {
-            // Move to previous input on backspace if current is empty
             inputs.current[index - 1]?.focus();
         }
     };
+
+    // ── Verify OTP (race-condition safe) ──
 
     const handleVerify = async () => {
         const token = otp.join('');
@@ -62,69 +162,45 @@ export default function OTPScreen() {
             return;
         }
 
+        if (!confirmationRef.current) {
+            alert('Session expired. Please go back and request a new OTP.');
+            return;
+        }
+
+        // Prevent double-tap: if already verifying, bail out
+        if (isVerifyingRef.current) return;
+        isVerifyingRef.current = true;
         setLoading(true);
+
+        // Local success flag — the most reliable race condition guard.
+        // Set synchronously after confirm() resolves, BEFORE catch can run.
+        // Unlike auth.currentUser, this has zero timing ambiguity.
+        let isSuccess = false;
+
         try {
-            if (!firebaseConfirmation) {
-                alert('Session expired. Please go back and try again.');
-                return;
-            }
-
-            // Verify OTP with Firebase
-            await firebaseConfirmation.confirm(token);
-
-            // Success! Firebase user is now signed in. Save the phone for onboarding.
-            const rawPhone = phone?.replace('+91', '').trim() || '';
-            await AsyncStorage.setItem('guest_phone', rawPhone);
-
-            // Check if user is already linked in the database
-            const fullPhoneFormatted = `+91${rawPhone}`;
-            const snapshot = await firestore()
-                .collection('qr_codes')
-                .where('phone_number', '==', fullPhoneFormatted)
-                .limit(1)
-                .get();
-
-            if (!snapshot.empty) {
-                // User exists! Restore their session and skip onboarding
-                const existingDoc = snapshot.docs[0];
-                const existingData = existingDoc.data();
-                const docId = existingDoc.id;
-
-                // Always store the document ID as linked_qr_id (not the qr_id field)
-                await AsyncStorage.multiSet([
-                    ['has_onboarded', 'true'],
-                    ['user_name', existingData.name || ''],
-                    ['linked_qr_id', docId]
-                ]);
-
-                // Sync FCM token to Firestore (centralized — NotificationProvider)
-                await triggerSync();
-
-                router.replace('/(Tabs)/home');
-                return;
-            }
-
-            // New user: Head to the welcome screen for onboarding flow
-            router.replace('/welcome');
+            await confirmationRef.current.confirm(token);
+            // confirm() resolved without error → OTP was valid.
+            // Firebase has signed the user in internally.
+            isSuccess = true;
+            // Do NOT navigate here. onAuthStateChanged handles navigation.
         } catch (error: any) {
-            console.error('Firebase OTP verify error:', error);
-            if (error.code === 'auth/invalid-verification-code') {
-                alert('Invalid OTP. Please check and try again.');
-            } else if (error.code === 'auth/session-expired') {
-                alert('OTP expired. Please request a new one.');
-            } else {
-                alert('Unexpected error during verification.');
-            }
+            // Pass isSuccess to the error handler — if true, this error
+            // is a race condition artifact and will be silently ignored.
+            handleOtpError(error, mountedRef, isSuccess);
         } finally {
-            setLoading(false);
+            isVerifyingRef.current = false;
+            if (mountedRef.current) setLoading(false);
         }
     };
+
+    // ── Resend OTP (creates a NEW confirmation object) ──
 
     const handleResend = async () => {
         if (!phone) return;
         try {
-            // Re-send OTP via Firebase
-            await signInWithPhoneNumber(auth, phone, undefined, true);
+            const newConfirmation = await signInWithPhoneNumber(auth, phone, undefined, true);
+            confirmationRef.current = newConfirmation;
+            setConfirmation(newConfirmation);
             alert('OTP sent again successfully!');
         } catch (err: any) {
             console.error('Resend error:', err);
@@ -136,9 +212,10 @@ export default function OTPScreen() {
         }
     };
 
+    // ── UI ──
+
     return (
         <SafeAreaView style={styles.safeArea}>
-            {/* Header */}
             <View style={styles.header}>
                 <TouchableOpacity
                     onPress={() => router.back()}
@@ -153,8 +230,6 @@ export default function OTPScreen() {
                 behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
             >
                 <View style={styles.content}>
-                    {/* KNOC App Logo */}
-
                     <Text style={styles.title}>Your OTP is on its way</Text>
 
                     <View style={styles.subtitleRow}>
@@ -166,7 +241,6 @@ export default function OTPScreen() {
                         </TouchableOpacity>
                     </View>
 
-                    {/* OTP Input Row */}
                     <View style={styles.otpContainer}>
                         {otp.map((digit, index) => (
                             <TextInput

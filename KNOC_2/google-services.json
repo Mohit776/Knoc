@@ -7,9 +7,9 @@
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:981884824732:android:beb9ebe5e909f4d33f9159",
+        "mobilesdk_app_id": "1:981884824732:android:12b2187632b40f0f3f9159",
         "android_client_info": {
-          "package_name": "com.knoc.app"
+          "package_name": "com.trueknoc.myapp"
         }
       },
       "oauth_client": [
@@ -17,7 +17,7 @@
           "client_id": "981884824732-i0vge46u5kboheu959kt2imeh6atkmia.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
-            "package_name": "com.knoc.app",
+            "package_name": "com.trueknoc.myapp",
             "certificate_hash": "c19a784c61a965212fb1d2ce45c50a05867b2d34"
           }
         }

@@ -17,6 +17,9 @@
 /.next/
 /out/
 
+# firebase
+trueknoc-57525-firebase-adminsdk-fbsvc-7ac8723150.json
+
 # production
 /build
 

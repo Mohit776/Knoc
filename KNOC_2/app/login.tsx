@@ -14,6 +14,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { auth } from '../lib/firebase';
 import { signInWithPhoneNumber } from '@react-native-firebase/auth';
+import { setConfirmation } from '../lib/authStore';
 import { Typography, s, vs, ms, Spacing, VSpacing, Radius, ButtonHeight, FontFamily } from '../lib/typography';
 
 // Design system colors based on previous Knoc colors and the new image
@@ -26,8 +27,7 @@ const colors = {
     divider: '#C7C7CC',
 };
 
-// Store the Firebase confirmation result globally so the OTP screen can access it
-export let firebaseConfirmation: any = null;
+
 
 export default function LoginScreen() {
     const [phoneNumber, setPhoneNumber] = useState('');
@@ -46,7 +46,7 @@ export default function LoginScreen() {
         try {
             // Firebase sends the OTP SMS automatically
             const confirmation = await signInWithPhoneNumber(auth, fullPhone);
-            firebaseConfirmation = confirmation;
+            setConfirmation(confirmation);
 
             router.push({
                 pathname: '/otp',

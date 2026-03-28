@@ -2,7 +2,7 @@
   "expo": {
     "name": "Trueknoc",
     "slug": "Trueknoc",
-    "version": "1.0.0",
+    "version": "1.3.0",
     "orientation": "portrait",
     "icon": "./assets/new_knoc/base.png",
     "scheme": "truknoc",
@@ -14,7 +14,7 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.knoc.app",
+      "bundleIdentifier": "com.trueknoc.myapp",
       "googleServicesFile": "./GoogleService-Info.plist",
       "infoPlist": {
         "UIBackgroundModes": [
@@ -35,9 +35,10 @@
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
-      "package": "com.knoc.app",
+      "package": "com.trueknoc.myapp",
       "permissions": [
         "android.permission.CAMERA"
+        
       ]
     },
     "web": {
