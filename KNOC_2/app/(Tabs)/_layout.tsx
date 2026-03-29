@@ -1,10 +1,16 @@
 import { Tabs } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../../lib/themeContext';
-import { Typography, vs, ms } from '../../lib/typography';
+import { vs, ms } from '../../lib/typography';
 
 export default function TabsLayout() {
     const { colors } = useTheme();
+    const insets = useSafeAreaInsets();
+
+    // Extra bottom inset for devices with gesture nav or 3-button nav bar
+    const tabBarPaddingBottom = vs(6) + insets.bottom;
+    const tabBarHeight = vs(55) + insets.bottom;
 
     return (
         <Tabs
@@ -16,9 +22,9 @@ export default function TabsLayout() {
                     backgroundColor: colors.cardBg,
                     borderTopWidth: 1,
                     borderTopColor: colors.separator,
-                    paddingBottom: vs(10),
+                    paddingBottom: tabBarPaddingBottom,
                     paddingTop: vs(4),
-                    height: vs(60),
+                    height: tabBarHeight,
                 },
                 tabBarLabelStyle: {
                     fontFamily: 'Gilroy-Medium',

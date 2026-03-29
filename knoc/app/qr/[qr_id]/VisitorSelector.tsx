@@ -369,7 +369,7 @@ export default function VisitorSelector({ qrId, location, isLinked }: Props) {
     ══════════════════════════════════════════ */
     return (
         <div className="flex flex-col min-h-screen bg-white" style={{ fontFamily: 'Inter, system-ui, sans-serif' }}>
-            <div className="flex flex-col w-full max-w-md mx-auto px-5 pt-10 pb-8 min-h-screen">
+            <div className="flex flex-col w-full max-w-md mx-auto px-5 pt-10 pb-8 min-h-screen mt-20">
 
                 <KnocLogo />
 
@@ -440,7 +440,7 @@ export default function VisitorSelector({ qrId, location, isLinked }: Props) {
                     />
                 </div>
 
-                <div style={{ flex: 1 }} />
+
 
                 {/* Request Entry button */}
                 <ActionButtons

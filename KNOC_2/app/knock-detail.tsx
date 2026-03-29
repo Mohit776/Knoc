@@ -102,8 +102,8 @@ export default function KnockDetailScreen() {
                         <Image
                             source={
                                 isDelivery
-                                    ? require('../assets/logo/Ellipse 1174 (1).png')
-                                    : require('../assets/logo/Ellipse 1174.png')
+                                    ? require('../assets/new_knoc/Ellipse 1174 (1).svg')
+                                    : require('../assets/new_knoc/Ellipse 1174.svg')
                             }
                             style={styles.knockAvatar}
                             contentFit="cover"

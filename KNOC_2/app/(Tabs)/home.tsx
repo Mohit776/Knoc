@@ -53,7 +53,7 @@ export default function HomeScreen() {
     const [linkedQrId, setLinkedQrId] = useState<string | null>(null);
     const [locationName, setLocationName] = useState<string>('Home');
     const [userName, setUserName] = useState<string>('');
-    const [hideBadge, setHideBadge] = useState(false);
+    const [badgeDismissedAt, setBadgeDismissedAt] = useState<string | null>(null);
     const notificationListener = useRef<EventSubscription | undefined>(undefined);
     const responseListener = useRef<EventSubscription | undefined>(undefined);
 
@@ -71,12 +71,14 @@ export default function HomeScreen() {
     const loadLinkedQr = useCallback(async () => {
         try {
             // Fast path: read from AsyncStorage first (set during onboarding)
-            const [[, cachedName], [, cachedQrId]] = await AsyncStorage.multiGet([
+            const [[, cachedName], [, cachedQrId], [, cachedDismissedAt]] = await AsyncStorage.multiGet([
                 'user_name',
                 'linked_qr_id',
+                'badge_dismissed_at',
             ]);
 
             if (cachedName) setUserName(cachedName);
+            if (cachedDismissedAt) setBadgeDismissedAt(cachedDismissedAt);
             if (cachedQrId) {
                 setLinkedQrId(cachedQrId);
                 return cachedQrId;
@@ -350,12 +352,16 @@ export default function HomeScreen() {
         return { entry, exit, total: displayLogs.length };
     }, [displayLogs]);
 
-    useEffect(() => {
-        setHideBadge(false);
-    }, [displayLogs]);
+    // Only count unanswered logs that arrived AFTER the last badge dismiss
+    const unansweredCount = React.useMemo(() => {
+        return displayLogs.filter(log => {
+            if (log.response) return false; // already answered
+            if (!badgeDismissedAt) return true; // never dismissed — count all
+            return new Date(log.created_at).getTime() > new Date(badgeDismissedAt).getTime();
+        }).length;
+    }, [displayLogs, badgeDismissedAt]);
 
-    const unansweredCount = displayLogs.filter(log => !log.response).length;
-    const displayBadgeCount = hideBadge ? 0 : unansweredCount;
+    const displayBadgeCount = unansweredCount;
 
     return (
         <SafeAreaView style={styles.safeArea} edges={['top']}>
@@ -368,7 +374,11 @@ export default function HomeScreen() {
                 />
                 <TouchableOpacity 
                     hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-                    onPress={() => setHideBadge(true)}
+                    onPress={async () => {
+                        const now = new Date().toISOString();
+                        setBadgeDismissedAt(now);
+                        await AsyncStorage.setItem('badge_dismissed_at', now);
+                    }}
                 >
                     <View>
                         <Image
