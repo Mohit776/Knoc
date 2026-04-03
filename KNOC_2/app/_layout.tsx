@@ -191,7 +191,7 @@ export default function RootLayout() {
         <OfflineBanner />
         <Stack screenOptions={{ headerShown: false }}>
           <Stack.Screen name="index" />
-          <Stack.Screen name="(Tabs)" />
+          <Stack.Screen name="(Tabs)" options={{ gestureEnabled: false }} />
           <Stack.Screen name="otp" />
           <Stack.Screen name="onboard-qr" />  
           <Stack.Screen name="knock-detail" options={{ presentation: 'fullScreenModal' }} />

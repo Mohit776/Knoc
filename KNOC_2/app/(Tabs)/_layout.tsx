@@ -1,12 +1,27 @@
-import { Tabs } from 'expo-router';
+import { Tabs, useFocusEffect } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../../lib/themeContext';
 import { vs, ms } from '../../lib/typography';
+import { BackHandler } from 'react-native';
+import { useCallback } from 'react';
 
 export default function TabsLayout() {
     const { colors } = useTheme();
     const insets = useSafeAreaInsets();
+
+    useFocusEffect(
+        useCallback(() => {
+            const onBackPress = () => {
+                BackHandler.exitApp();
+                return true;
+            };
+
+            const subscription = BackHandler.addEventListener('hardwareBackPress', onBackPress);
+
+            return () => subscription.remove();
+        }, [])
+    );
 
     // Extra bottom inset for devices with gesture nav or 3-button nav bar
     const tabBarPaddingBottom = vs(6) + insets.bottom;

@@ -330,7 +330,7 @@ export default function HomeScreen() {
         const today = new Date();
         const yesterday = new Date(today);
         yesterday.setDate(today.getDate() - 1);
-        
+
         const todayStr = today.toDateString();
         const yesterdayStr = yesterday.toDateString();
 
@@ -372,7 +372,7 @@ export default function HomeScreen() {
                     style={styles.logo}
                     contentFit="contain"
                 />
-                <TouchableOpacity 
+                <TouchableOpacity
                     hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
                     onPress={async () => {
                         const now = new Date().toISOString();
@@ -461,8 +461,8 @@ export default function HomeScreen() {
                                         style={[styles.visitRow, isDenied && styles.visitRowDenied]}
                                     >
                                         <Text style={styles.visitLabel} numberOfLines={1} ellipsizeMode="tail">
-                                            {isDenied 
-                                                ? 'Not Approved' 
+                                            {isDenied
+                                                ? 'Not Approved'
                                                 : (log.visitorType === 'delivery' ? 'Delivery Parcel' : 'Visitor')}
                                         </Text>
                                         <Text style={styles.visitTime} numberOfLines={1}>

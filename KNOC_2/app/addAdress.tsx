@@ -152,8 +152,8 @@ const AddressScreen: React.FC = () => {
           </View>
 
           {/* Save Button */}
-          <TouchableOpacity 
-            style={[styles.button, loading && { opacity: 0.7 }]} 
+          <TouchableOpacity
+            style={[styles.button, loading && { opacity: 0.7 }]}
             onPress={saveAddress}
             disabled={loading}
           >
