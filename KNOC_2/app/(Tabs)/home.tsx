@@ -529,7 +529,7 @@ const getStyles = (colors: any, isDark: boolean) => StyleSheet.create({
     badgeText: {
         color: '#FFFFFF',
         fontSize: ms(12),
-        fontFamily: 'Gilroy-Bold',
+        fontFamily: 'Inter-Bold',
     },
     divider: {
         height: 1,
@@ -572,7 +572,7 @@ const getStyles = (colors: any, isDark: boolean) => StyleSheet.create({
     statLabel: {
         ...Typography.title,
         fontSize: ms(14),
-        fontFamily: 'Gilroy-ExtraBold',
+        fontFamily: 'Inter-ExtraBold',
         color: colors.textPrimary,
     },
     statValueBox: {
@@ -663,7 +663,7 @@ const getStyles = (colors: any, isDark: boolean) => StyleSheet.create({
     },
     showMoreText: {
         ...Typography.buttonSmall,
-        fontFamily: 'Gilroy-SemiBold',
+        fontFamily: 'Inter-SemiBold',
         color: colors.primary,
     },
 });

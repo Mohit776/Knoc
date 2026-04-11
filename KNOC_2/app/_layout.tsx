@@ -20,15 +20,8 @@ SplashScreen.preventAutoHideAsync().catch(() => {
   // If called before the native module is ready, silently ignore
 });
 
-// ─── Force Gilroy as the global default font ───────────────────────────────
-// React Native's Text and TextInput both expose defaultProps which lets us
-// set a style that applies to every instance unless overridden by a closer style.
-// This must be done at module level so it takes effect before any render.
-(Text as any).defaultProps = (Text as any).defaultProps ?? {};
-(Text as any).defaultProps.style = { fontFamily: FontFamily.regular };
-
-(TextInput as any).defaultProps = (TextInput as any).defaultProps ?? {};
-(TextInput as any).defaultProps.style = { fontFamily: FontFamily.regular };
+// NOTE: Global default font is applied inside RootLayout AFTER fonts have
+// loaded to prevent InflateException / SIGBUS crashes on cold start.
 // ────────────────────────────────────────────────────────────────────────────
 
 const OfflineBanner = () => {
@@ -98,13 +91,25 @@ function extractKnockData(response: Notifications.NotificationResponse | null | 
 export default function RootLayout() {
   const [customSplashDone, setCustomSplashDone] = useState(false);
   const [fontsLoaded, fontError] = useFonts({
-    'Gilroy-Regular': require('../assets/fonts/Gilroy-Regular.ttf'),
-    'Gilroy-Medium': require('../assets/fonts/Gilroy-Medium.ttf'),
-    'Gilroy-SemiBold': require('../assets/fonts/Gilroy-SemiBold.ttf'),
-    'Gilroy-Bold': require('../assets/fonts/Gilroy-Bold.ttf'),
-    'Gilroy-ExtraBold': require('../assets/fonts/Gilroy-ExtraBold.ttf'),
-    'Gilroy-Heavy': require('../assets/fonts/Gilroy-Heavy.ttf'),
+    'Inter-Regular': require('../assets/fonts/Inter-Regular.ttf'),
+    'Inter-Medium': require('../assets/fonts/Inter-Medium.ttf'),
+    'Inter-SemiBold': require('../assets/fonts/Inter-SemiBold.ttf'),
+    'Inter-Bold': require('../assets/fonts/Inter-Bold.ttf'),
+    'Inter-ExtraBold': require('../assets/fonts/Inter-ExtraBold.ttf'),
+    'Inter-Black': require('../assets/fonts/Inter-Black.ttf'),
   });
+
+  // ─── Apply global default font ONLY after fonts are loaded ──────────────
+  // Setting defaultProps before fonts are registered causes InflateException
+  // crashes on Android (the native view inflater can't find the font family).
+  useEffect(() => {
+    if (fontsLoaded && !fontError) {
+      (Text as any).defaultProps = (Text as any).defaultProps ?? {};
+      (Text as any).defaultProps.style = { fontFamily: FontFamily.regular };
+      (TextInput as any).defaultProps = (TextInput as any).defaultProps ?? {};
+      (TextInput as any).defaultProps.style = { fontFamily: FontFamily.regular };
+    }
+  }, [fontsLoaded, fontError]);
 
   const router = useRouter();
   const segments = useSegments();

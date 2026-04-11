@@ -3,7 +3,7 @@
  *
  * This module provides:
  * 1. A unified spacing / sizing scale via react-native-size-matters
- * 2. A font-family map (Gilroy weights)
+ * 2. A font-family map (Inter weights)
  * 3. Pre-defined text style presets (heading, subheading, body, …)
  *
  * Every numeric size in the app should come through the helpers exported here
@@ -16,12 +16,12 @@ import { TextStyle } from 'react-native';
 /* ───────────────────────── Font Family Map ───────────────────────── */
 
 export const FontFamily = {
-    regular: 'Gilroy-Regular',
-    medium: 'Gilroy-Medium',
-    semiBold: 'Gilroy-SemiBold',
-    bold: 'Gilroy-Bold',
-    extraBold: 'Gilroy-ExtraBold',
-    heavy: 'Gilroy-Heavy',
+    regular: 'Inter-Regular',
+    medium: 'Inter-Medium',
+    semiBold: 'Inter-SemiBold',
+    bold: 'Inter-Bold',
+    extraBold: 'Inter-ExtraBold',
+    heavy: 'Inter-Black',
 } as const;
 
 /* ──────────────────── Re-export scaling helpers ──────────────────── */

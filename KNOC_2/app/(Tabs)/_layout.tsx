@@ -42,7 +42,7 @@ export default function TabsLayout() {
                     height: tabBarHeight,
                 },
                 tabBarLabelStyle: {
-                    fontFamily: 'Gilroy-Medium',
+                    fontFamily: 'Inter-Medium',
                     fontSize: ms(12),
                 },
             }}
